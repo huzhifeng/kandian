@@ -298,10 +298,40 @@ var crawlerInterval = function () {
   // console.log(22);
 };
 
-
+var tagsCid = {};
+tagsCid['今日之声']     = "T1350383429665";
+tagsCid['每日轻松一刻'] = "T1348654628034";
+tagsCid['娱乐BigBang']  = "T1359605557219";
+tagsCid['科技万有瘾力'] = "T1359605530115";
+tagsCid['易百科']       = "T1355887570398";
+tagsCid['侃军事']       = "";
+var MAX_PAGE_NUM = 20;
 var crawlerAll = function () {
-  [tags[5]].forEach(function (tag) {
-    searchList(tag);
+  tags.forEach(function (tag) {
+    if(tagsCid[tag] == "") {
+        return true;
+    }
+    for(i=0; i<MAX_PAGE_NUM; i++)
+    {
+      var uri = util.format("http://c.3g.163.com/nc/article/list/%s/%d-20.html", tagsCid[tag], i*20);
+      //console.log("zhutest crawlerAll():tag="+tag+" uri="+uri);
+      request({uri: uri, headers: headers}, function (err, response, body) {
+      if (!err && response.statusCode === 200 && body) {
+        var jobj = JSON.parse(body)[tagsCid[tag]];
+        if (jobj.length > 0) {
+          jobj.forEach(function(obj) {
+              //console.log("zhutest crawlerAll():title="+obj['title']);
+              startGetDetail.emit('startGetDetail', obj['docid'], tag);
+          });
+        }
+        else {
+          i = MAX_PAGE_NUM;
+        }
+      } else {
+        console.log(err);
+      }
+      });
+    }
   });
 };
 

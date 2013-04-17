@@ -10,12 +10,12 @@ var generateMongoUrl = function(){
       obj = JSON.parse(vcap)['mongodb-1.8'][0]['credentials'];
   }
   // else {
-  //     return mongoskin.db('localhost', {database: 'ccz', safe: true});
+  //     return mongoskin.db('localhost', {database: 'kandian', safe: true});
   // }
 
   obj.hostname = (obj.hostname || 'localhost');
   obj.port = (obj.port || 27017);
-  obj.db = (obj.db || 'ccz');
+  obj.db = (obj.db || 'kandian');
   if (obj.username && obj.password) {
       return "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db;
   } else {

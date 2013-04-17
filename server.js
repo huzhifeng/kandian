@@ -10,6 +10,7 @@ var http = require('http');
 var interval = require('config').Config.interval;
 var app = require('./app');
 var crawlerInterval = require('./netease').crawlerInterval;
+var crawlerAll = require('./netease').crawlerAll;
 
 // crawler
 var netEaseCrawler = function () {
@@ -58,9 +59,9 @@ var netEaseCrawler = function () {
 
 // remove cluster
 http.createServer(app).listen(app.get('port'), function(){
-  crawlerInterval();
-  setInterval(netEaseCrawler, interval);
-  console.log("setInterval(netEaseCrawler, " + interval + ")");
+  crawlerAll();
+  setInterval(crawlerAll, interval);
+  console.log("setInterval(crawlerAll, " + interval + ")");
 
   // if ('development' == app.get('env')) {
   //   var child = null;
