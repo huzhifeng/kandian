@@ -1,0 +1,32 @@
+{
+  "name": "kandian",
+  "version": "0.1.0",
+  "homepage": "http://kandian.huzhifeng.com",
+  "description": "kandian",
+  "author": "huzhifeng",
+  "private": true,
+  "scripts": {
+    "start": "node server"
+  },
+  "dependencies": {
+    "express": ">=3.0.0",
+    "express-hbs": "*",
+    "moment": "*",
+    "connect-flash": "*",
+    "request": "*",
+    "async": "*",
+    "rss": "*",
+    "cheerio": "*",
+    "lodash": "*",
+    "config": "*",
+    "mongojs": "*"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-cssmin": "~0.4.2",
+    "grunt-contrib-uglify": ">=0.1.0"
+  },
+  "engines": {
+    "node": ">= 0.6.0"
+  }
+}
