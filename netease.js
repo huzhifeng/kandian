@@ -299,8 +299,8 @@ var crawlerInterval = function () {
 };
 
 var tagsCid = {};
-tagsCid['今日之声']     = "T1350383429665";
-tagsCid['每日轻松一刻'] = "T1348654628034";
+tagsCid['今日之声']     = "T1348654628034";
+tagsCid['每日轻松一刻'] = "T1350383429665";
 tagsCid['娱乐BigBang']  = "T1359605557219";
 tagsCid['科技万有瘾力'] = "T1359605530115";
 tagsCid['易百科']       = "T1355887570398";
