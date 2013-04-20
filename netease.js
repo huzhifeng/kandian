@@ -46,22 +46,10 @@ var searchLink = 'http://c.3g.163.com/nc/article/search/%s.html';
 
 var totalNum = 43576;
 var cid = 'T1295501906343';
-// var todayVoice = '今日之声';
-// var relaxedMoment = '每日轻松一刻';
-// var entertainmentBigBang = '娱乐BigBang';
-// var tech = '科技万有瘾力';
-
-// var tags = ['今日之声', '每日轻松一刻', '科技万有瘾力', '娱乐BigBang', '易百科', '侃军事'];
 var tags = _.keys(tt);
 // var declare = '（所有推荐均撷取自网友的智慧言辞，仅出于传递信息的目的，不代表网易官方声音。网友可通过各大微博 @网易新闻客户端 与我们就文章内容交流、声明或侵删。）';
 var localDeclare = '（所有推荐均撷取自网友的智慧言辞，仅出于传递信息的目的，不代表本站声音。）';
 var easeDeclare = '【你对本文的观点赞同么？你还有什么想知道的么？本文所有内容均来自于网络。】';
-// var tt = {
-//   '今日之声': 'todayVoice',
-//   '每日轻松一刻': 'relaxedMoment',
-//   '娱乐BigBang': 'entertainmentBigBang',
-//   '科技万有瘾力': 'tech'
-// };
 
 var startGetDetail = new EventEmitter();
 
@@ -248,11 +236,6 @@ var getList = function(num) {
         jobj.forEach(function(obj) {
           var title = obj['title'];
           // console.log(title, num);
-          // if (title.indexOf(entertainmentBigBang) !== -1 ||
-          //   title.indexOf(todayVoice) !== -1 ||
-          //   title.indexOf(dailyHappy) !== -1) {
-          //   startGetDetail.emit('startGetDetail', obj['docid']);
-          // }
           for (var i = 0; i < tags.length; i++) {
             if (title.indexOf(tags[i]) !== -1) {
               startGetDetail.emit('startGetDetail', obj['docid'], tags[i]);
@@ -298,26 +281,20 @@ var crawlerInterval = function () {
   // console.log(22);
 };
 
-var tagsCid = {};
-tagsCid['今日之声']     = "T1348654628034";
-tagsCid['每日轻松一刻'] = "T1350383429665";
-tagsCid['娱乐BigBang']  = "T1359605557219";
-tagsCid['科技万有瘾力'] = "T1359605530115";
-tagsCid['易百科']       = "T1355887570398";
-tagsCid['侃军事']       = "";
 var MAX_PAGE_NUM = 20;
 var crawlerAll = function () {
   tags.forEach(function (tag) {
-    if(tagsCid[tag] == "") {
+    var cid = tt[tag];
+    if(cid == "") {
         return true;
     }
     for(i=0; i<MAX_PAGE_NUM; i++)
     {
-      var uri = util.format("http://c.3g.163.com/nc/article/list/%s/%d-20.html", tagsCid[tag], i*20);
+      var uri = util.format("http://c.3g.163.com/nc/article/list/%s/%d-20.html", cid, i*20);
       //console.log("zhutest crawlerAll():tag="+tag+" uri="+uri);
       request({uri: uri, headers: headers}, function (err, response, body) {
       if (!err && response.statusCode === 200 && body) {
-        var jobj = JSON.parse(body)[tagsCid[tag]];
+        var jobj = JSON.parse(body)[cid];
         if (jobj.length > 0) {
           jobj.forEach(function(obj) {
               //console.log("zhutest crawlerAll():title="+obj['title']);
