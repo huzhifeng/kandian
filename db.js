@@ -1,6 +1,3 @@
-
-
-// var mongoskin = require('mongoskin');
 var mongojs = require('mongojs');
 
 var generateMongoUrl = function(){
@@ -9,9 +6,6 @@ var generateMongoUrl = function(){
   if (vcap) {
       obj = JSON.parse(vcap)['mongodb-1.8'][0]['credentials'];
   }
-  // else {
-  //     return mongoskin.db('localhost', {database: 'kandian', safe: true});
-  // }
 
   obj.hostname = (obj.hostname || 'localhost');
   obj.port = (obj.port || 27017);
@@ -25,7 +19,5 @@ var generateMongoUrl = function(){
 
 var dbUrl = generateMongoUrl();
 
-
 exports.dbUrl = dbUrl;
-// exports.db = mongoskin.db(dbUrl, {safe: true});
 exports.db = mongojs(dbUrl);

@@ -5,7 +5,7 @@ module.exports = {
     siteName: '看点',
     cookieSecret: '#$%nnja5720',
     salt: '#$%%^^^',
-    port: 3000,
+    port: 1000,
     interval: 1000 * 60 * 10,
     staticMaxAge: 3600000 * 24 * 1,
     limit: 15,

@@ -1,19 +1,10 @@
-// var fs = require('fs');
-// var http = require('http');
-// var path = require('path');
-// var url = require('url');
 var util = require('util');
-
 var EventEmitter = require('events').EventEmitter;
-
-// var cheerio = require('cheerio');
 var request = require('request');
 var moment = require('moment');
-// var batch = require('batchflow');
 // var _ = require("underscore");
 var _ = require("lodash");
 var cheerio = require('cheerio');
-
 var tt = require('config').Config.tt;
 var News = require('./models/news');
 
@@ -42,7 +33,6 @@ var detailLink = 'http://c.3g.163.com/nc/article/%s/full.html';
 
 // 搜索: http://c.3g.163.com/nc/article/search/5q%2BP5pel6L275p2%2B5LiA5Yi7.html
 var searchLink = 'http://c.3g.163.com/nc/article/search/%s.html';
-
 
 var totalNum = 43576;
 var cid = 'T1295501906343';
