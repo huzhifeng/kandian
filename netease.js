@@ -70,6 +70,7 @@ var getDetail = function(docid, tag, mustUpdate) {
               isUpdate = true;
             }
             if (!result || isUpdate) {
+              obj['site'] = "netease";
               obj['jsonstr'] = body;
               obj['body'] = jObj['body'];
 

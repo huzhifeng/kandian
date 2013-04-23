@@ -61,7 +61,7 @@ var get163All = function (req, res, next) {
 };
 
 var viewNews = function (req, res, next) {
-  // console.log(req.params.id);
+  //console.log(req.params.docid);
   ///////////////////////
   News.findOne({docid: req.params.docid}, function (err, result) {
     if (!err) {

@@ -20,6 +20,8 @@
     "lodash": "*",
     "config": "*",
     "mongojs": "*"
+    "xml2js": "*"
+    "jsdom": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.0",

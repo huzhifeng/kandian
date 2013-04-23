@@ -1,10 +1,5 @@
-
-
-// var db = require('config').db;
 var db = require('../db').db;
 var limit = require('config').Config.limit;
-
-// db.bind('news');
 var news = db.collection('news');
 
 /**
@@ -67,7 +62,6 @@ exports.page = function (query, page, callback) {
     }
   });
 };
-
 
 exports.insert = function (obj, callback) {
   news.insert(obj, function (err, result) {
