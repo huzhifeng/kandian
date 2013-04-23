@@ -1,0 +1,238 @@
+SoHu:
+1. http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=1&rt=json
+{
+  channelId: "1",
+  selection: 1,
+  focals: [
+    {
+      newsId: "7213333",
+      newsType: "3",
+      time: "2013-04-21 02:56",
+      updateTime: "1366505967000",
+      title: "总理的早餐：一碗米粥一袋咸菜",
+      digNum: "0",
+      commentNum: "1383",
+      description: "雅安不眠夜:李克强总理挑灯夜战",
+      newsLink: "news://1_7213333",
+      link2: "news://channelId=1&newsId=7213333",
+      listPic: "http://cache.k.sohu.com/img8/wb/2013/04/21/1366505379113.jpg?color=black"
+    }
+  ],
+  articles: [
+    {
+      newsId: "7206721",
+      newsType: "3",
+      time: "2013-04-20 14:58",
+      updateTime: "1366447950000",
+      title: "[热辣评]私家车 别给灾区添堵",
+      digNum: "0",
+      commentNum: "666",
+      description: "灾后最需要的是有序的行动，混乱只能降低救援速度！",
+      newsLink: "news://1_7206721",
+      link2: "news://channelId=1&newsId=7206721",
+      listPic: "http://cache.k.sohu.com/img7/adapt/wb/fetch/2013/04/20/1382150913_180_180.jpg"
+    },
+  ]
+}
+
+2. http://api.k.sohu.com/api/news/article.go?newsId=7189277
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<root>
+  <newsId>7189277</newsId>
+  <type>新闻</type>
+  <title>
+    <![CDATA[ 神吐槽:透明男厕所让人羞射 ]]>
+  </title>
+  <time>2013-04-19 19:33</time>
+  <updateTime>1366371524000</updateTime>
+  <commentNum>751</commentNum>
+  <digNum>0</digNum>
+  <content><![CDATA[文章完整内容...]]></content>
+  <shareContent>
+    <![CDATA[
+    神吐槽:透明男厕所让人羞射 星期五啦，今天的神吐槽小编可是为大家准备了夜用加长版嗷！亲，你准备好了吗？ http://3g.k.sohu.com/t/n7189277 @搜狐新闻客户端
+    ]]>
+  </shareContent>
+  <link>http://3g.k.sohu.com/t/n7189277</link>
+</root>
+
+3. http://api.k.sohu.com/api/news/article.go?newsId=7189277&channelId=1&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&recommendNum=3&refer=3&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<root>
+  <newsId>7189277</newsId>
+  <type>新闻</type>
+  <title>
+    <![CDATA[ 神吐槽:透明男厕所让人羞射 ]]>
+  </title>
+  <time>2013-04-19 19:33</time>
+  <updateTime>1366371524000</updateTime>
+  <commentNum>751</commentNum>
+  <digNum>0</digNum>
+  <images>
+    <image>http://cache.k.sohu.com/img7/adapt/wb/fetch/2013/04/19/1412132563_620_1000.jpg#</image>
+    <image>http://cache.k.sohu.com/img7/adapt/wb/fetch/2013/04/19/1413056084_620_1000.jpg#</image>
+  </images>
+  <content><![CDATA[文章完整内容...]]></content>
+  <shareContent>
+    <![CDATA[
+    神吐槽:透明男厕所让人羞射 星期五啦，今天的神吐槽小编可是为大家准备了夜用加长版嗷！亲，你准备好了吗？ http://3g.k.sohu.com/t/n7189277 @搜狐新闻客户端
+    ]]>
+  </shareContent>
+  <link>http://3g.k.sohu.com/t/n7189277</link>
+</root>
+
+NetEase
+1. http://c.3g.163.com/nc/article/list/T1350383429665/0-20.html
+{
+  T1350383429665: [
+    {
+      url_3w: "http://help.3g.163.com/13/0420/18/8SU5DCQI00964JJM.html",
+      docid: "8SU5DCQI00964JJM",
+      title: "每日　　一刻(4月20日)",
+      replyCount: 13929,
+      priority: 60,
+      lmodify: "2013-04-20 22:45:28",
+      imgsrc: "http://img4.cache.netease.com/3g/2013/4/20/20130420192230db73b.png",
+      subtitle: "",
+      digest: "今天没有"轻松",但我们不能缺席,我们都是雅安人！",
+      ptime: "2013-04-20 18:49:52",
+      url: "http://3g.163.com/ntes/13/0420/18/8SU5DCQI00964JJM.html"
+    },
+    {
+      url_3w: "http://help.3g.163.com/13/0419/17/8SRFHIMS00964JJM.html",
+      docid: "8SRFHIMS00964JJM",
+      title: "每日轻松一刻（4月19日晚间）",
+      replyCount: 11209,
+      priority: 60,
+      lmodify: "2013-04-19 19:22:25",
+      imgsrc: "http://img3.cache.netease.com/3g/2013/4/19/201304191903003cf9d.jpg",
+      subtitle: "",
+      digest: "就算中了万箭穿心的命，也要有万丈光芒的心。",
+      ptime: "2013-04-19 17:49:12",
+      url: "http://3g.163.com/ntes/13/0419/17/8SRFHIMS00964JJM.html"
+    },
+  ]
+}
+2. http://c.3g.163.com/nc/article/8SRFHIMS00964JJM/full.html
+{
+  "8SRFHIMS00964JJM":{
+    "template":"normal",
+    "body":"文章完整内容...",
+    "replyCount":11209,
+    "link":[],
+    "votes":[{"voteid":"22069"}],
+    "img":[
+      {"ref":"","alt":"","src":"http://img4.cache.netease.com/2008/2013/4/19/201304191557319e517.jpg"},
+      {"ref":"","alt":"","src":"http://img3.cache.netease.com/2008/2013/4/19/20130419155900244b4.jpg"}
+    ],
+    "relative":[],
+    "docid":"8SRFHIMS00964JJM",
+    "topics":["iosnews","luntanjinghua","androidnews","qingsongyike"],
+    "title":"每日轻松一刻（4月19日晚间）",
+    "picnews":true,
+    "replyBoard":"3g_bbs",
+    "source":"网易新媒体",
+    "hasNext":false,
+    "ptime":"2013-04-19 17:49:12",
+    "video":[]
+  }
+}
+
+Links:
+/*
+每日轻松一刻2012-09-13
+http://c.3g.163.com/nc/article/list/T1350383429665/0-20.html
+http://c.3g.163.com/nc/article/list/T1350383429665/160-20.html
+今日之声2012-06-18
+http://c.3g.163.com/nc/article/list/T1348654628034/0-20.html
+http://c.3g.163.com/nc/article/list/T1348654628034/260-20.html
+易百科2012-11-21 
+http://c.3g.163.com/nc/article/list/T1355887570398/0-20.html
+http://c.3g.163.com/nc/article/list/T1355887570398/100-20.html
+科技万有瘾力2012-11-06 
+http://c.3g.163.com/nc/article/list/T1359605530115/0-20.html
+http://c.3g.163.com/nc/article/list/T1359605530115/0-20.html
+娱乐BigBang2012-11-21
+http://c.3g.163.com/nc/article/list/T1359605557219/0-20.html
+http://c.3g.163.com/nc/article/list/T1359605557219/0-20.html
+一周军情观察2012-10-26 
+http://c.3g.163.com/nc/article/list/T1359613635637/0-20.html
+http://c.3g.163.com/nc/article/list/T1359613635637/0-20.html
+一周媒体速递2012-11-05 
+http://c.3g.163.com/nc/article/list/T1359605600543/0-20.html
+http://c.3g.163.com/nc/article/list/T1359605600543/0-20.html
+历史七日谈2012-10-28 
+http://c.3g.163.com/nc/article/list/T1359605505216/0-20.html
+http://c.3g.163.com/nc/article/list/T1359605505216/0-20.html
+新闻杂谈
+http://c.3g.163.com/nc/article/list/T1363682618061/0-20.html
+新闻漫画
+http://c.3g.163.com/nc/article/list/T1363328192298/0-20.html
+另一面
+http://c.3g.163.com/nc/article/list/T1348654756909/0-20.html
+
+网易新闻另一面
+http://news.163.com/special/163theotherside/
+http://news.163.com/special/000121E2/houpinglun090603.html
+
+SoHu独家策划栏目列表：
+http://m.sohu.com/cr/4710/
+http://m.sohu.com/api/cr/4710/?page=1
+神吐槽: 
+http://m.sohu.com/cl/4734/ 
+http://m.sohu.com/api/cl/4734/?page=3
+先知道: 
+http://m.sohu.com/cl/4735/
+http://m.sohu.com/api/cl/4735/?page=3
+热辣评: 
+http://m.sohu.com/cl/4736/
+http://m.sohu.com/api/cl/4736/?page=1
+特别策划: 
+http://m.sohu.com/cl/4741/
+http://m.sohu.com/api/cl/4741/?page=1
+狐揭秘: 
+http://m.sohu.com/cl/4745/
+http://m.sohu.com/api/cl/4745/?page=1
+显示文章: 
+http://m.sohu.com/n/373315625/
+
+SoHu新闻客户端
+首页：
+http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=1&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
+http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=2&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
+http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=3&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
+可只带以下参数即可
+http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=1&rt=json
+channelId(1~37)
+神吐槽
+http://api.k.sohu.com/api/news/article.go?newsId=7189277&channelId=1&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&recommendNum=3&refer=3&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
+可只带以下参数
+http://api.k.sohu.com/api/news/article.go?newsId=7189277&channelId=1
+http://api.k.sohu.com/api/news/article.go?newsId=7189277
+
+原文链接:
+http://3g.k.sohu.com/t/n7189277
+
+今日谈：
+http://api.k.sohu.com/api/channel/news.go?channelId=33&num=100&page=1&rt=json
+
+
+喷嚏图卦
+http://dapenti.org/blog/blog.asp?subjectid=70&name=xilei
+http://yuedu.163.com/source/44a05021-7aef-4a97-98fd-abe48945e5fd_1
+http://dapenti.org/blog/app/dapenti.apk
+http://dapenti.org/blog/tuguaapp.asp
+
+河蟹娱乐http://hxyl.net/
+萝卜网http://luo.bo/
+我烧网http://woshao.com/
+有意思吧http://www.u148.net/
+掘图志http://juetuzhi.net/
+煎蛋：http://jandan.net/
+
+一五一十部落
+http://yuedu.163.com/source/61af48e8-bf4d-4706-a3ef-d7b573236e65_1
+http://my1510.cn/
+一五一十周刊
+http://my1510.cn/author.php?1510file
+*/
