@@ -149,7 +149,7 @@ var getDetail = function(entry, tag, mustUpdate) {
   });//request
 };
 
-var MAX_PAGE_NUM = 1;
+var MAX_PAGE_NUM = 20;
 var crawlerAll = function () {
 //  tags.forEach(function (tag) {
     for(page=1; page<=MAX_PAGE_NUM; page++)

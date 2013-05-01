@@ -1,6 +1,7 @@
 
 var home = require('./home');
 var node = require('./node');
+var site = require('./site');
 var search = require('./search');
 var rss = require('./rss');
 var download = require('./download');
@@ -27,10 +28,13 @@ exports = module.exports = function(app, checkAuth) {
   app.get('/news/:docid', home.viewNews);
   app.get('/tag/:tag', node.index);
   app.get('/tag/:tag/page/:page', node.index);
+  app.get('/site/:site', site.index);
+  app.get('/site/:site/page/:page', site.index);
 
 
   // admin
   app.get('/oo/i', admin.login);
+  app.get('/admin/login', admin.login);
   app.get('/admin/logout', admin.logout);
   app.post('/admin/saveLogin', admin.saveLogin);
   app.get('/admin/setup', admin.setup);

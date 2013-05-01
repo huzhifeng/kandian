@@ -138,6 +138,162 @@ NetEase
   }
 }
 
+Sina:
+1. http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=5&from=6031095012&chwm=5062_0060&uid=b5bcb55e11c594d0
+http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=5
+{
+  status: 0,
+  data: {
+    is_intro: "1",
+    list: [
+      {
+      id: "124-8468729-news-cms",
+      title: "新观察(第二百五十期)",
+      source: "新观察",
+      link: "http://news.sina.cn/?sa=t124v71d8468729",
+      pic: "http://r3.sinaimg.cn/120914/2013/0423/f7/c/38411391/auto.jpg",
+      intro: "别让企业捐赠变了味：媒体炮制的捐款排行榜成了道德绑架。",
+      pubDate: 1366681803,
+      comments: "1-1-26920084_0_gn",
+      category: "cms",
+      comment: 16
+      },
+      {
+      id: "124-8461405-news-cms",
+      title: "今日网言:雅安吃紧 泰州紧吃",
+      source: "新浪文化",
+      link: "http://news.sina.cn/?sa=t124v71d8461405",
+      pic: "http://r3.sinaimg.cn/120914/2013/0422/f2/5/90409786/auto.jpg",
+      intro: "雅安遭遇7.0级地震重创；江苏官员却大吃豪宴，遭到围堵。",
+      pubDate: 1366628786,
+      comments: "1-1-26912582_0_gn",
+      category: "cms",
+      comment: 1023
+      },
+    ]
+  }
+}
+2. http://data.3g.sina.com.cn/api/t/art/index.php?graphic_mix=1&s_tag=1&id=124-8468729-news-cms&wm=b207&version=4&pos=news_toutiao_85&from=6031095012&chwm=5062_0060&uid=b5bcb55e11c594d0
+http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8468729-news-cms
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<rss version="2.0">
+  <channel>
+    <title>
+      <![CDATA[ 新观察:别让企业捐赠变了味 ]]>
+    </title>
+    <description>
+      <![CDATA[ http://sina.cn ]]>
+    </description>
+    <link>http://sina.cn</link>
+    <language>zh-cn</language>
+    <generator>SINA.CN</generator>
+    <ttl>5</ttl>
+    <copyright>
+      <![CDATA[
+      Copyright 1996 - 2010 SINA Inc. All Rights Reserved
+      ]]>
+    </copyright>
+    <pubDate>Wed, 24 Apr 2013 04:35:13 GMT</pubDate>
+    <category>
+      <![CDATA[ news ]]>
+    </category>
+    <item>
+      <id>124-8468729-news-cms</id>
+      <title>
+        <![CDATA[ 新观察:别让企业捐赠变了味 ]]>
+      </title>
+      <source>
+        <![CDATA[ 新观察 ]]>
+      </source>
+      <link>http://news.sina.cn/?sa=t124d8468729v2357</link>
+      <author>SINA.CN</author>
+      <guid>http://news.sina.cn/?sa=t124d8468729v2357</guid>
+      <category>
+        <![CDATA[ news ]]>
+      </category>
+      <pubDate>Tue, 23 Apr 2013 01:50:03 GMT</pubDate>
+      <comments>1-1-26920084_0_gn</comments>
+      <description>
+        <![CDATA[文章完整内容]]>
+        <![CDATA[文章完整内容]]>
+      </description>
+      <enclosure url="http://r3.sinaimg.cn/1/2013/0423/5b/c/82410817/auto.jpg" length="10000" type="image/jpeg" alt="企业为四川雅安捐款" size="550x413"/>
+    </item>
+  </channel>
+</rss>
+
+QQ:
+1. http://inews.qq.com/getQQNewsListItems?store=62&hw=Xiaomi_MI2&devid=1366805394774330052&ids=NEW2013042300034102%2CNEW2013042300053205%2CNEW2013042300107202%2CNEW2013042400067200%2CNEW2013042300136501%2CNEW2013042300113101%2CNEW2013042400012305%2CNEW2013042300086500%2CNEW2013042300096701%2CNEW2013042300024704%2CNEW2013042400009102%2CNEW2013042300137701%2CNEW2013042300044801%2CNEW2013042300146404%2CNEW2013042300003208%2CNEW2013042300009600%2CNEW2013042400004502%2CNEW2013042200156600%2CNEW2013042300094509&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
+http://inews.qq.com/getQQNewsListItems?store=62&ids=NEW2013042300034102%2CNEW2013042300053205%2CNEW2013042300107202%2CNEW2013042400067200%2CNEW2013042300136501%2CNEW2013042300113101%2CNEW2013042400012305%2CNEW2013042300086500%2CNEW2013042300096701%2CNEW2013042300024704%2CNEW2013042400009102%2CNEW2013042300137701%2CNEW2013042300044801%2CNEW2013042300146404%2CNEW2013042300003208%2CNEW2013042300009600%2CNEW2013042400004502%2CNEW2013042200156600%2CNEW2013042300094509
+{
+  ret: 0,
+  newslist: [
+    {
+      id: "NEW2013042400067200",
+      uinnick: "腾讯新闻",
+      uinname: "news_news_top",
+      title: "【话题】8级抗震建筑为何会倒",
+      surl: "http://view.inews.qq.com/a/NEW2013042400067200",
+      weiboid: "",
+      commentid: "40694618",
+      url: "http://view.inews.qq.com/a/NEW2013042400067200",
+      time: "2013-04-24 10:26:50",
+      timestamp: 1366770542,
+      articletype: "0",
+      thumbnails: [
+        "http://pnewsapp.tc.qq.com/newsapp_ls/0/3974234_small/0"
+      ],
+      qishu: "",
+      source: "今日话题",
+      imagecount: 1,
+      comment: "",
+      flag: "2",
+      tag: [ ],
+      thumbnails_qqnews: [
+        "http://pnewsapp.tc.qq.com/newsapp_ls/0/3974234_small/0"
+      ],
+      voteId: 4037570,
+      voteNum: 2,
+      abstract: "芦山地震部分区域的烈度已经超过当地建筑抗震设防标准。",
+      pushCommentCount: 0,
+      graphicLiveID: "",
+      specialID: "",
+      thumbnails_qqnews_photo: [ ],
+      showType: "three"
+    },
+   ]
+}
+
+2. http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013042400067200&store=62&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
+http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013042400067200
+{
+  ret: 0,
+  id: "NEW2013042400067200",
+  url: "http://view.inews.qq.com/a/NEW2013042400067200",
+  topic: "",
+  surl: "http://view.inews.qq.com/a/NEW2013042400067200",
+  content: [
+    {
+      type: 1,
+      value: "导语：昨日，一则新闻《汶川地震后所建8级抗震建筑不抵7级地震》广为传播。起因是，21日雅安市宝兴县县长亲口承认“全县房屋几乎全部受损”，这一官方说法激起网民愤慨，因为这其中就包括“汶川地震后重建的建筑”。我们应该如何看待这次地震中房屋倒塌的现象？"
+    },
+    {
+      type: 2,
+      value: "http://pnewsapp.tc.qq.com/newsapp_bt/0/3972770/640",
+      width: 470,
+      height: 340
+    },
+    {
+      type: 1,
+      value: "文章正文"
+    },
+    {
+      type: 1,
+      value: "结语：从目前情况看，在芦山和宝兴两地，包括学校和医院在内的公共建筑基本没有在地震中完全垮塌的，这说明我国公共工程建设的强制性国标，在汶川地震后得到了反思和贯彻，但对于农民的私宅，如何做好抗震的监督，仍有很长的路需要走。"
+    }
+  ]
+}
+
 Links:
 /*
 每日轻松一刻2012-09-13
@@ -216,6 +372,13 @@ http://3g.k.sohu.com/t/n7189277
 今日谈：
 http://api.k.sohu.com/api/channel/news.go?channelId=33&num=100&page=1&rt=json
 
+Sina:
+今日网言: http://news.sina.com.cn/z/jinriwangyan/
+http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=5&from=6031095012&chwm=5062_0060&uid=b5bcb55e11c594d0
+http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8461405-news-cms
+
+IFeng:
+http://api.3g.ifeng.com/
 
 喷嚏图卦
 http://dapenti.org/blog/blog.asp?subjectid=70&name=xilei
