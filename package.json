@@ -20,7 +20,7 @@
     "lodash": "*",
     "config": "*",
     "mongojs": "*"
-    "xml2js": "*"
+    "xml2json": "*"
     "jsdom": "*"
   },
   "devDependencies": {

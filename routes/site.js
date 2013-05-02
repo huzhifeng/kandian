@@ -1,7 +1,8 @@
-var async = require('async');
+﻿var async = require('async');
 var News = require('../models/news');
 var tt = require('config').Config.tt;
 var hotQty = require('config').Config.hotQty;
+var site2name = require('../lib/utils').site2name;
 
 var index = function (req, res, next) {
   var site = req.params.site;
@@ -34,7 +35,7 @@ var index = function (req, res, next) {
   function (err, results) {
     if (! err) {
       // console.log(currentPage, pages);
-      res.render('site', {pageTitle: site,
+      res.render('site', {pageTitle: site2name(site),
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, site: site, active: tt[site],
         baseUrl: '/site/' + encodeURIComponent(site) + '/page/',

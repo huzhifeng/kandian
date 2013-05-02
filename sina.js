@@ -2,30 +2,35 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");
-var sohuTags = require('config').Config.sohuTags;
-var tags = _.keys(sohuTags);
+var sinaTags = require('config').Config.sinaTags;
+var tags = _.keys(sinaTags);
 var News = require('./models/news');
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;;
 var headers = {
     'User-Agent': 'NTES Android',
-    'Referer': 'http://api.k.sohu.com/'
+    'Referer': 'http://api.sina.cn/'
 };
-// http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=1&rt=json
-var listLink = 'http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=%d&rt=json';
-// http://api.k.sohu.com/api/news/article.go?newsId=7189277
-var detailLink = 'http://api.k.sohu.com/api/news/article.go?newsId=%s';
+// http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
+var listLink = 'http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=%d';
+// http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8468729-news-cms
+var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
 
-function pickImg(html) {
-  var document = jsdom(html);
-  objs = document.getElementsByTagName('img');
+function pickImg(enclosure) {
+  var objs = enclosure;
+  //console.log("zhutest pickImg() util.inspect(objs)="+util.inspect(objs));
   var img = [];
-  if(objs) {
-    for(i=0; i<objs.length; i++) {
-      img[i] = {};
-      img[i]['src'] = objs[i].getAttribute('data-src');
-      img[i]['alt'] = objs[i].getAttribute('alt');
-      img[i]['data-src'] = objs[i].getAttribute("src");
+  if(objs){
+    if(objs[0]) {
+      for(i=0; i<objs.length; i++) {
+        img[i] = {};
+        img[i]['src'] = objs[i]['url'].replace(/auto\.jpg/, "original.jpg");;
+        img[i]['alt'] = objs[i]['alt'];
+        img[i]['size'] = objs[i]["size"];
+      }
+    }
+    else {
+      img[0] = objs;
     }
   }
   return img;
@@ -38,37 +43,37 @@ startGetDetail.on('startGetDetail', function (obj) {
 });
 
 var getDetail = function(entry, tag, mustUpdate) {
-  var docid = entry['newsId']
+  var docid = entry['id']
   var uri = util.format(detailLink, docid);
   //console.log(uri);
   request({uri: uri, headers: headers}, function (err, response, body) {
     if (!err && response.statusCode === 200) {
       //console.log("zhutest getDetail() util.inspect(body)="+util.inspect(body));
       var json = xml2json.toJson(body,{object:true, sanitize:false});
-      var jObj = json['root'];
+      var jObj = json['rss']["channel"]["item"];
       var obj = {};
-      obj['docid'] = docid;//jObj['newsId'];
+      obj['docid'] = jObj['id'];
       
       News.findOne({docid: obj['docid']}, function(err, result) {
         if(!err) {
           var isUpdate = false;
           if (mustUpdate) {
             isUpdate = true;
-          } else if (result && !result.disableAutoUpdate && (result.body !== jObj['content'] || result.title !== jObj['title'].trim().replace(/\s+/g, ''))) {
+          } else if (result && !result.disableAutoUpdate && (result.body !== jObj['description'] || result.title !== jObj['title'].trim().replace(/\s+/g, ''))) {
             isUpdate = true;
           }
           if (!result || isUpdate) {
-            obj['site'] = "sohu";
+            obj['site'] = "sina";
             obj['jsonstr'] = body;
-            obj['body'] = jObj['content'].replace(/90_90/gi,"602_1000");//小图片替换为大图片
+            obj['body'] = jObj['description'];
 
-            obj['img'] = pickImg(obj['body']);
+            obj['img'] = pickImg(jObj['enclosure']);
             obj['video'] = [];
             obj['link'] = jObj['link'];
 
             obj['title'] = jObj['title'].trim().replace(/\s+/g, '');
-            obj['ptime'] = jObj['time'];
-            obj['time'] = new Date(Date.parse(jObj['time']));
+            obj['ptime'] = jObj['pubDate'];
+            obj['time'] = new Date(Date.parse(jObj['pubDate']));
             obj['marked'] = obj['body'];
             
             if (isUpdate) {
@@ -109,9 +114,9 @@ var getDetail = function(entry, tag, mustUpdate) {
 
             // img lazyloading
             for(i=0; i<obj['img'].length; i++) {
-              var imgHtml = util.format('<img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript>',
-                obj['img'][i]['alt'], obj['img'][i]['data-src'], obj['img'][i]['alt'], obj['img'][i]['data-src']);
-              //obj['marked'] = obj['marked'].replace(/<img.*?\/>/gi, imgHtml);
+              var imgHtml = util.format('<br/><img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript><br/>',
+                obj['img'][i]['alt'], obj['img'][i]['src'], obj['img'][i]['alt'], obj['img'][i]['src']);
+              obj['marked'] = obj['marked'].replace(/<br\/><br\/>/, imgHtml);
               //console.log("zhutest imgHtml="+imgHtml);
             };
 
@@ -143,13 +148,13 @@ var getDetail = function(entry, tag, mustUpdate) {
   });//request
 };
 
-var MAX_PAGE_NUM = 20;
+var MAX_PAGE_NUM = 25;
 var crawlerAll = function () {
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     var uri = util.format(listLink, page);
     request({uri: uri, headers: headers}, function (err, response, body) {
       if (!err && response.statusCode === 200 && body) {
-        var jobj = JSON.parse(body)["articles"];
+        var jobj = JSON.parse(body)["data"]["list"];
         if (jobj.length > 0) {
           jobj.forEach(function(obj) {
             for(var i = 0; i < tags.length; i++) {
