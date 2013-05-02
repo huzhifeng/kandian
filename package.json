@@ -19,8 +19,8 @@
     "cheerio": "*",
     "lodash": "*",
     "config": "*",
-    "mongojs": "*"
-    "xml2json": "*"
+    "mongojs": "*",
+    "xml2json": "*",
     "jsdom": "*"
   },
   "devDependencies": {
