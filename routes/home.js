@@ -36,7 +36,7 @@ var index = function (req, res, next) {
   function (err, results) {
     if (! err) {
       // console.log(currentPage, pages);
-      res.render('home', {pageTitle: '看点,精挑细选,必须好看!',
+      res.render('home', {pageTitle: '看点---有看点，更精彩！',
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, baseUrl: '/page/',hotNews: results.hotNewss.hotNewss});
     } else {

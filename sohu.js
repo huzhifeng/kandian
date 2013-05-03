@@ -38,7 +38,7 @@ startGetDetail.on('startGetDetail', function (obj) {
 });
 
 var getDetail = function(entry, tag, mustUpdate) {
-  var docid = entry['newsId']
+  var docid = entry['newsId'];
   var uri = util.format(detailLink, docid);
   //console.log(uri);
   request({uri: uri, headers: headers}, function (err, response, body) {
@@ -66,7 +66,7 @@ var getDetail = function(entry, tag, mustUpdate) {
             obj['video'] = [];
             obj['link'] = jObj['link'];
 
-            obj['title'] = jObj['title'].trim().replace(/\s+/g, '');
+            obj['title'] = entry['title'].trim().replace(/\s+/g, '');
             obj['ptime'] = jObj['time'];
             obj['time'] = new Date(Date.parse(jObj['time']));
             obj['marked'] = obj['body'];

@@ -1,16 +1,11 @@
-
-/*
- * home page.
- */
-
 var async = require('async');
-
 var News = require('../models/news');
-
 var tt = require('config').Config.tt;
-
 var hotQty = require('config').Config.hotQty;
+var mergeDict = require('../lib/utils').mergeDict;
 
+tt = mergeDict(tt,require('config').Config.sohuTags);
+tt = mergeDict(tt,require('config').Config.sinaTags);
 
 var index = function (req, res, next) {
 
