@@ -5,10 +5,11 @@ var _ = require("lodash");
 var sinaTags = require('config').Config.sinaTags;
 var tags = _.keys(sinaTags);
 var News = require('./models/news');
+var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;;
 var headers = {
-    'User-Agent': 'NTES Android',
+    'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
     'Referer': 'http://api.sina.cn/'
 };
 // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
@@ -18,20 +19,21 @@ var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
 
 function pickImg(enclosure) {
   var objs = enclosure;
-  //console.log("zhutest pickImg() util.inspect(objs)="+util.inspect(objs));
+  var i = 0;
+  //console.log("zhutest file[" + __filename + "]" + " pickImg() util.inspect(objs)="+util.inspect(objs));
   var img = [];
   if(objs){
     if(objs[0]) {
       for(i=0; i<objs.length; i++) {
-        img[i] = {};
-        img[i]['src'] = objs[i]['url'].replace(/auto\.jpg/, "original.jpg");;
-        img[i]['alt'] = objs[i]['alt'];
-        img[i]['size'] = objs[i]["size"];
+        img[i] = objs[i];
       }
     }
     else {
       img[0] = objs;
     }
+  }
+  for(i=0; i<img.length; i++) {
+    img[i]['url'] = img[i]['url'].replace(/auto\.jpg/, "original.jpg");
   }
   return img;
 }
@@ -48,11 +50,11 @@ var getDetail = function(entry, tag, mustUpdate) {
   //console.log(uri);
   request({uri: uri, headers: headers}, function (err, response, body) {
     if (!err && response.statusCode === 200) {
-      //console.log("zhutest getDetail() util.inspect(body)="+util.inspect(body));
+      //console.log("zhutest file[" + __filename + "]" + " getDetail() util.inspect(body)="+util.inspect(body));
       var json = xml2json.toJson(body,{object:true, sanitize:false});
       var jObj = json['rss']["channel"]["item"];
       var obj = {};
-      obj['docid'] = jObj['id'];
+      obj['docid'] = entry['id'];
       
       News.findOne({docid: obj['docid']}, function(err, result) {
         if(!err) {
@@ -107,17 +109,16 @@ var getDetail = function(entry, tag, mustUpdate) {
           
             // cover
             obj['cover'] = entry['listPic'];
-            if (obj['img'][1]) {
-              //console.log("zhutest cover="+obj['img'][1]['src']);
-              obj['cover'] = obj['img'][1]['src'];
+            if (obj['img'][0]) {
+              //console.log("zhutest file[" + __filename + "]" + " cover="+obj['img'][0]['url']);
+              obj['cover'] = obj['img'][0]['url'];
             }
 
             // img lazyloading
             for(i=0; i<obj['img'].length; i++) {
-              var imgHtml = util.format('<br/><img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript><br/>',
-                obj['img'][i]['alt'], obj['img'][i]['src'], obj['img'][i]['alt'], obj['img'][i]['src']);
+              var imgHtml = genLazyLoadHtml(obj['img'][i]['alt'], obj['img'][i]['url']);
               obj['marked'] = obj['marked'].replace(/<br\/><br\/>/, imgHtml);
-              //console.log("zhutest imgHtml="+imgHtml);
+              //console.log("zhutest file[" + __filename + "]" + " imgHtml="+imgHtml);
             };
 
             if (isUpdate) {
@@ -136,7 +137,7 @@ var getDetail = function(entry, tag, mustUpdate) {
 
           }
           else {
-            console.log("zhutest already exist");
+            console.log("zhutest file[" + __filename + "]" + " already exist");
           }
         } else {
           console.log(err);
@@ -159,7 +160,7 @@ var crawlerAll = function () {
           jobj.forEach(function(obj) {
             for(var i = 0; i < tags.length; i++) {
               if (obj['title'].indexOf(tags[i]) !== -1) {
-                //console.log("zhutest crawlerAll():title="+obj['title']);
+                //console.log("zhutest file[" + __filename + "]" + " crawlerAll():title="+obj['title']);
                 startGetDetail.emit('startGetDetail', obj);
               }
             }

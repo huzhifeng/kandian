@@ -1,28 +1,15 @@
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var moment = require('moment');
-// var _ = require("underscore");
 var _ = require("lodash");
 var cheerio = require('cheerio');
 var tt = require('config').Config.tt;
 var News = require('./models/news');
 
 var headers = {
-    // 'User-Agent': 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11',
     'User-Agent': 'NTES Android',
     'Referer': 'http://www.163.com/'
 };
-
-/**
- * 头条：http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html, total: 43576
- * 军事：http://c.3g.163.com/nc/article/headline/T1295505447897/0-20.html
- * 科技：http://c.3g.163.com/nc/article/headline/T1295507084100/0-20.html
- * 国内：http://c.3g.163.com/nc/article/headline/T1295505330581/0-20.html
- * 国际：http://c.3g.163.com/nc/article/headline/T1295505403327/0-20.html
- * 足球：http://c.3g.163.com/nc/article/headline/T1297306817918/0-20.html
- * 社会：http://c.3g.163.com/nc/article/headline/T1295505301714/0-20.html
- */
 
 // http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html
 // http://c.3g.163.com/nc/article/headline/T1295501906343/0-1.html
@@ -101,10 +88,6 @@ var getDetail = function(docid, tag, mustUpdate) {
               
               if (tag) {
                 obj['tags'] = [tag];
-              } else if (obj['title'].indexOf('轻松一刻') !== -1) {
-                obj['tags'] = ['每日轻松一刻'];
-              } else if (obj['title'].indexOf('今日声音') !== -1) {
-                obj['tags'] = ['今日之声'];
               } else {
                 for (var i = 0; i < tags.length; i++) {
                   if (obj['title'].indexOf(tags[i]) !== -1) {
@@ -282,13 +265,13 @@ var crawlerAll = function () {
     for(i=0; i<MAX_PAGE_NUM; i++)
     {
       var uri = util.format("http://c.3g.163.com/nc/article/list/%s/%d-20.html", cid, i*20);
-      //console.log("zhutest crawlerAll():tag="+tag+" uri="+uri);
+      //console.log("zhutest file[" + __filename + "]" + " crawlerAll():tag="+tag+" uri="+uri);
       request({uri: uri, headers: headers}, function (err, response, body) {
       if (!err && response.statusCode === 200 && body) {
         var jobj = JSON.parse(body)[cid];
         if (jobj.length > 0) {
           jobj.forEach(function(obj) {
-              //console.log("zhutest crawlerAll():title="+obj['title']);
+              //console.log("zhutest file[" + __filename + "]" + " crawlerAll():title="+obj['title']);
               startGetDetail.emit('startGetDetail', obj['docid'], tag);
           });
         }

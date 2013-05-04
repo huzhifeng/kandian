@@ -43,7 +43,7 @@ var getDetail = function(entry, tag, mustUpdate) {
   //console.log(uri);
   request({uri: uri, headers: headers}, function (err, response, body) {
     if (!err && response.statusCode === 200) {
-      //console.log("zhutest getDetail() util.inspect(body)="+util.inspect(body));
+      //console.log("zhutest file[" + __filename + "]" + " getDetail() util.inspect(body)="+util.inspect(body));
       var json = xml2json.toJson(body,{object:true, sanitize:false});
       var jObj = json['root'];
       var obj = {};
@@ -103,7 +103,7 @@ var getDetail = function(entry, tag, mustUpdate) {
             // cover
             obj['cover'] = entry['listPic'];
             if (obj['img'][1]) {
-              //console.log("zhutest cover="+obj['img'][1]['src']);
+              //console.log("zhutest file[" + __filename + "]" + " cover="+obj['img'][1]['src']);
               obj['cover'] = obj['img'][1]['src'];
             }
 
@@ -112,7 +112,7 @@ var getDetail = function(entry, tag, mustUpdate) {
               var imgHtml = util.format('<img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript>',
                 obj['img'][i]['alt'], obj['img'][i]['data-src'], obj['img'][i]['alt'], obj['img'][i]['data-src']);
               //obj['marked'] = obj['marked'].replace(/<img.*?\/>/gi, imgHtml);
-              //console.log("zhutest imgHtml="+imgHtml);
+              //console.log("zhutest file[" + __filename + "]" + " imgHtml="+imgHtml);
             };
 
             if (isUpdate) {
@@ -131,7 +131,7 @@ var getDetail = function(entry, tag, mustUpdate) {
 
           }
           else {
-            console.log("zhutest already exist");
+            console.log("zhutest file[" + __filename + "]" + " already exist");
           }
         } else {
           console.log(err);
@@ -154,7 +154,7 @@ var crawlerAll = function () {
           jobj.forEach(function(obj) {
             for(var i = 0; i < tags.length; i++) {
               if (obj['title'].indexOf(tags[i]) !== -1) {
-                //console.log("zhutest crawlerAll():title="+obj['title']);
+                //console.log("zhutest file[" + __filename + "]" + " crawlerAll():title="+obj['title']);
                 startGetDetail.emit('startGetDetail', obj);
               }
             }
