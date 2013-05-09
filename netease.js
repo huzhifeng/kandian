@@ -2,300 +2,245 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");
-var cheerio = require('cheerio');
-var tt = require('config').Config.tt;
+//var cheerio = require('cheerio');
+var neteaseTags = require('config').Config.tt;
+var tags = _.keys(neteaseTags);
 var News = require('./models/news');
-
+var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
+var jsdom = require("jsdom").jsdom;;
 var headers = {
     'User-Agent': 'NTES Android',
     'Referer': 'http://www.163.com/'
 };
-
 // http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html
-// http://c.3g.163.com/nc/article/headline/T1295501906343/0-1.html
-var listLink = 'http://c.3g.163.com/nc/article/headline/T1295501906343/%d-20.html';
-// http://c.3g.163.com/nc/article/8GOVEI0L00964JJM/full.html 今日之声
-// http://c.3g.163.com/nc/article/8GOU51KG00964JJM/full.html 每日轻松一刻
+var headlineLink = 'http://c.3g.163.com/nc/article/headline/T1295501906343/%d-20.html';
+// http://c.3g.163.com/nc/article/list/T1350383429665/0-20.html
+var tagLink = 'http://c.3g.163.com/nc/article/list/%s/%d-20.html';
+// http://c.3g.163.com/nc/article/8GOVEI0L00964JJM/full.html
 var detailLink = 'http://c.3g.163.com/nc/article/%s/full.html';
-
-// 搜索: http://c.3g.163.com/nc/article/search/5q%2BP5pel6L275p2%2B5LiA5Yi7.html
+// http://c.3g.163.com/nc/article/search/5q%2BP5pel6L275p2%2B5LiA5Yi7.html
 var searchLink = 'http://c.3g.163.com/nc/article/search/%s.html';
-
-var totalNum = 43576;
-var cid = 'T1295501906343';
-var tags = _.keys(tt);
-// var declare = '（所有推荐均撷取自网友的智慧言辞，仅出于传递信息的目的，不代表网易官方声音。网友可通过各大微博 @网易新闻客户端 与我们就文章内容交流、声明或侵删。）';
-var localDeclare = '（所有推荐均撷取自网友的智慧言辞，仅出于传递信息的目的，不代表本站声音。）';
-var easeDeclare = '【你对本文的观点赞同么？你还有什么想知道的么？本文所有内容均来自于网络。】';
 
 var startGetDetail = new EventEmitter();
 
-startGetDetail.on('startGetDetail', function (docid, tag) {
-  getDetail(docid, tag);
+startGetDetail.on('startGetDetail', function (entry, tag) {
+  getDetail(entry, tag);
 });
 
-var getDetail = function(docid, tag, mustUpdate) {
-  // console.log(docid);
-  var uri = util.format(detailLink, docid);
-  // console.log(uri);
-  request({uri: uri, headers: headers}, function (err, response, body) {
-    if (!err && response.statusCode === 200) {
-      // console.log(body);
-      var jObj = JSON.parse(body)[docid];
-      if (!_.isEmpty(jObj)) {
-        // console.log(obj);
-        var obj = {};
-        
-        obj['docid'] = jObj['docid'];
-        
-        News.findOne({docid: obj['docid']}, function(err, result) {
-          if(!err) {
-            var isUpdate = false;
-            if (mustUpdate) {
-              isUpdate = true;
-            } else if (result && !result.disableAutoUpdate && (result.body !== jObj['body'] || result.title !== jObj['title'].trim().replace(/\s+/g, ''))) {
-              isUpdate = true;
-            }
-            if (!result || isUpdate) {
-              obj['site'] = "netease";
-              obj['jsonstr'] = body;
-              obj['body'] = jObj['body'];
-
-              obj['img'] = jObj['img'];
-              obj['video'] = jObj['video'];
-              obj['link'] = jObj['link'];
-
-              obj['title'] = jObj['title'].trim().replace(/\s+/g, '');
-              obj['ptime'] = jObj['ptime'];
-              obj['time'] = new Date(Date.parse(jObj['ptime']));
-              obj['marked'] = jObj['body'].replace('<!--@@PRE-->', '【').replace('<!--@@PRE-->', '】<br/>');
-              obj['marked'] = obj['marked'].replace(/（(本文中)?所有推荐均撷取自网友的智慧言辞.+(声明或侵删)?|(或声明更多){1}。）/, localDeclare);
-              // obj['marked'] = obj['marked'].replace(/（\s*(本文中)?(所有)?(推荐)?(均)?撷取自网友(的)?智慧.+(声明或侵删)?|(或声明更多)?。\s*）/, localDeclare);
-              obj['marked'] = obj['marked'].replace(/【诚聘】.+你懂的。/, '');
-              obj['marked'] = obj['marked'].replace(/【你对本文的观点赞同么[？?]你还有什么想知道的么[？?].+本文所有内容均来自于网络(，如有侵权或不当请联系我们)?。】/, easeDeclare);
-              
-              obj['marked'] = obj['marked'].replace(/【易百科现在开放订阅了！你可以一次查看易百科所有你感兴趣的文章，我们的栏目在网易新闻原创分组中。你对本文的观点赞同么?你还有什么想知道的么?欢迎发表跟帖或者微博@网易新闻客户端 表达你的观点和建议。本文所有内容均来自于网络。】/,
-                easeDeclare);
-
-              obj['marked'] = obj['marked'].replace(/网易新闻客户端祝您圣诞快乐。/, '17轻松祝您圣诞快乐。');
-              
-              if (isUpdate) {
-                obj['updated'] = new Date();
-              } else {
-                obj['created'] = new Date();
-                obj['views'] = 1;
-              }
-              
-              if (tag) {
-                obj['tags'] = [tag];
-              } else {
-                for (var i = 0; i < tags.length; i++) {
-                  if (obj['title'].indexOf(tags[i]) !== -1) {
-                    obj['tags'] = [tags[i]];
-                    break;
-                  }
-                }
-              }
-
-              // digest
-              var minLong = 170;
-              var maxLong = 300;
-              var end = 3;
-              var tmpBody = obj['body'].split('<\/p>');
-              obj['digest'] = tmpBody.slice(0, end).join().replace(/<p>/g, '').replace(/<br\s*(\/)?>/gi, '').trim().replace(/\s+/g, '');
-              if (obj['digest'].length < minLong) {
-                obj['digest'] = tmpBody.slice(0, ++end).join().replace(/<p>/g, '').replace(/<br\s*(\/)?>/gi, '').trim().replace(/\s+/g, '');
-              } else if (obj['digest'].length > maxLong) {
-                obj['digest'] = tmpBody.slice(0, --end).join().replace(/<p>/g, '').replace(/<br\s*(\/)?>/gi, '').trim().replace(/\s+/g, '');
-              }
-              if (obj['digest'].length > maxLong) {
-                obj['digest'] = tmpBody.slice(0, --end).join().replace(/<p>/g, '').replace(/<br\s*(\/)?>/gi, '').trim().replace(/\s+/g, '');
-              }
-              if (obj['digest']) {
-                var $ = cheerio.load(util.format('<div id="main">%s</div>', obj['digest']));
-                obj['digest'] = $('#main').text();
-              }
-            
-              // cover
-              if (obj['img'][0]) {
-                obj['cover'] = obj['img'][0]['src'];
-              } else if (obj['video'][0]) {
-                obj['cover'] = obj['video'][0]['cover'];
-              }
-
-              // var t = tt[obj['tags'][0]];
-              // img
-              obj['img'].forEach(function (img) {
-                // console.log(img);
-                var imgHtml = util.format('<img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript>',
-                  img['alt'], img['src'], img['alt'], img['src']);
-                obj['marked'] = obj['marked'].replace(img['ref'], imgHtml);
-              });
-
-              // video
-              obj['video'].forEach(function (v) {
-                var vHtml = util.format('<a title="%s" href="%s" target="_blank"><img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript></a>',
-                  v['alt'], v['url_mp4'], v['alt'], v['cover'], v['alt'], v['cover']);
-                obj['marked'] = obj['marked'].replace(v['ref'], vHtml);
-              });
-
-              // link
-              obj['link'].forEach(function (l) {
-                if (l['ref'].indexOf(';详细') !== -1 ) {
-                  var lid = l['id'];
-                  if (!lid) {
-                    lid = l['href'].split('/').slice(-1).toString().split('.')[0];
-                  }
-                  obj['marked'] = obj['marked'].replace(l['ref'],
-                  util.format('<a href="http://3g.163.com/touch/article.html?docid=%s" target="_blank" title="%s">%s</a>',
-                    lid, l['title'], l['title']));
-                } else if (! l['id']) {
-                  obj['marked'] = obj['marked'].replace(l['ref'],
-                  util.format('<a href="%s" target="_blank" title="%s">%s</a>', l['href'], l['title'], l['title']));
-                } else {
-                  var isOut = true;
-                  for (var i = 0; i < tags.length; i++) {
-                    if (l['ref'].indexOf(tags[i]) !== -1) {
-                      obj['marked'] = obj['marked'].replace(l['ref'],
-                        util.format('<a href="/news/%s" target="_blank" title="%s">%s</a>', l['id'], l['title'], l['title']));
-                      isOut = false;
-                      break;
-                    }
-                  }
-                  if (isOut) {
-                    obj['marked'] = obj['marked'].replace(l['ref'],
-                      util.format('<a href="http://3g.163.com/touch/article.html?docid=%s" target="_blank" title="%s">%s</a>',
-                        l['id'], l['title'], l['title']));
-                  }
-                }
-                
-              });
-
-              // console.log(obj['title']);
-              if (isUpdate) {
-                News.update({docid: result.docid}, obj, function (err, result) {
-                  if(err) {
-                    console.log(err);
-                  }
-                });
-              } else {
-                News.insert(obj, function (err, result) {
-                  if(err) {
-                    console.log(err);
-                  }
-                });
-              }
-
-
-            }
-          } else {
-            console.log(err);
-          }
-        });
-      }
-    } else {
-      console.log(err);
+var getDetail = function(entry, tag) {
+  var docid = util.format("%s",entry['docid']);
+  var url = util.format(detailLink, docid);
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (res.statusCode != 200) || (!body)) {
+        console.log("hzfdbg file[" + __filename + "]" + " getDetail():error");
+        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        return;
     }
-  });
-};
+    //console.log("hzfdbg file[" + __filename + "]" + " getDetail() util.inspect(body)="+util.inspect(body));
+    var json = JSON.parse(body);
+    var jObj = json[docid];
+    var obj = {};
+    obj['docid'] = docid;
 
-var getList = function(num) {
-  // console.log(num);
-  var uri = util.format(listLink, num);
-  request({uri: uri, headers: headers}, function (err, response, body) {
-    if (!err && response.statusCode === 200 && body) {
-      // console.log(response);
-      var jobj = JSON.parse(body)[cid];
-      if (jobj.length > 0) {
-        jobj.forEach(function(obj) {
-          var title = obj['title'];
-          // console.log(title, num);
+    News.findOne({docid: obj['docid']}, function(err, result) {
+      if(err) {
+        console.log("hzfdbg file[" + __filename + "]" + " News.findOne():error");
+        return;
+      }
+      var isUpdate = false;
+      if (result && !result.disableAutoUpdate && (result.title !== entry['title'].trim().replace(/\s+/g, ''))) {
+        isUpdate = true;
+      }
+      if (!result || isUpdate) {
+        obj['site'] = "netease";
+        obj['jsonstr'] = body;
+        obj['body'] = jObj['body'];
+        obj['img'] = jObj['img'];
+        obj['video'] = jObj['video'];
+        obj['link'] = jObj['link'];
+        obj['title'] = jObj['title'].trim().replace(/\s+/g, '');
+        obj['ptime'] = jObj['ptime'];
+        obj['time'] = new Date(Date.parse(jObj['ptime']));
+        obj['marked'] = jObj['body'].replace('<!--@@PRE-->', '【').replace('<!--@@PRE-->', '】<br/>');
+
+        if (isUpdate) {
+          obj['updated'] = new Date();
+        } else {
+          obj['created'] = new Date();
+          obj['views'] = 1;
+        }
+
+        if (tag) {
+          obj['tags'] = [tag];
+        } else {
           for (var i = 0; i < tags.length; i++) {
-            if (title.indexOf(tags[i]) !== -1) {
-              startGetDetail.emit('startGetDetail', obj['docid'], tags[i]);
+            if (obj['title'].indexOf(tags[i]) !== -1 || entry['title'].indexOf(tags[i]) !== -1) {
+              obj['tags'] = [tags[i]];
               break;
             }
           }
+        }
+
+        //remove all html tag,
+        //refer to <<How to remove HTML Tags from a string in Javascript>>
+        //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
+        //and https://github.com/tmpvar/jsdom
+        var window = jsdom().createWindow();
+        var mydiv = window.document.createElement("div");
+        mydiv.innerHTML = obj['body'];
+        // digest
+        var maxDigest = 300;
+        obj['digest'] = mydiv.textContent.slice(0,maxDigest);
+
+        // cover
+        if(entry['imgsrc']) {
+          obj['cover'] = entry['imgsrc'];
+        } else if (obj['img'][0]) {
+          obj['cover'] = obj['img'][0]['src'];
+        } else if (obj['video'][0]) {
+          obj['cover'] = obj['video'][0]['cover'];
+        }
+
+        // img lazyloading
+        obj['img'].forEach(function (img) {
+          var imgHtml = genLazyLoadHtml(img['alt'], img['src']);
+          obj['marked'] = obj['marked'].replace(img['ref'], imgHtml);
         });
-       
-      }
-    } else {
-      console.log(err);
-    }
-  });
+
+        // video
+        obj['video'].forEach(function (v) {
+          var vHtml = util.format('<a title="%s" href="%s" target="_blank"><img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript></a>',
+            v['alt'], v['url_mp4'], v['alt'], v['cover'], v['alt'], v['cover']);
+          obj['marked'] = obj['marked'].replace(v['ref'], vHtml);
+        });
+
+        if (isUpdate) {
+          News.update({docid: result.docid}, obj, function (err, result) {
+            if(err) {
+              console.log(err);
+            }
+          });
+        } else {
+          News.insert(obj, function (err, result) {
+            if(err) {
+              console.log(err);
+            }
+          });
+        }
+      }//if (!result || isUpdate)
+    });//News.findOne
+  });//request
+};
+
+var crawlerOne = function (docid, tag) {
+  getDetail(docid, tag);
 };
 
 var searchList = function (tag) {
-  var uri = util.format(searchLink, encodeURIComponent(tag));
-  request({uri: uri, headers: headers}, function (err, response, body) {
-    if (!err && response.statusCode === 200 && body) {
-      // console.log(response);
-      var jobj = JSON.parse(body);
-      if (jobj.length > 0) {
-        jobj.forEach(function(obj) {
-          // var title = obj['title'];
-          startGetDetail.emit('startGetDetail', obj['docid'], tag);
-        });
-       
-      }
-    } else {
-      console.log(err);
+  var url = util.format(searchLink, encodeURIComponent(tag));
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (res.statusCode != 200) || (!body)) {
+      console.log("hzfdbg file[" + __filename + "]" + " searchList():error");
+      console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+      return;
     }
-  });
-};
-
-// get163(baseLink);
-
-// var arr = [1, 2, 3];
-// arr.forEach(function (a) {
-//   setTimeout(function() {console.log(a);}, 3000);
-// });
-var crawlerInterval = function () {
-  getList(0);
-  // console.log(22);
-};
-
-var MAX_PAGE_NUM = 20;
-var crawlerAll = function () {
-  tags.forEach(function (tag) {
-    var cid = tt[tag];
-    if(cid == "") {
-        return true;
+    var json = JSON.parse(body);
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " searchList():JSON.parse() error");
+      return;
     }
-    for(i=0; i<MAX_PAGE_NUM; i++)
-    {
-      var uri = util.format("http://c.3g.163.com/nc/article/list/%s/%d-20.html", cid, i*20);
-      //console.log("zhutest file[" + __filename + "]" + " crawlerAll():tag="+tag+" uri="+uri);
-      request({uri: uri, headers: headers}, function (err, response, body) {
-      if (!err && response.statusCode === 200 && body) {
-        var jobj = JSON.parse(body)[cid];
-        if (jobj.length > 0) {
-          jobj.forEach(function(obj) {
-              //console.log("zhutest file[" + __filename + "]" + " crawlerAll():title="+obj['title']);
-              startGetDetail.emit('startGetDetail', obj['docid'], tag);
-          });
+    var newsList = json;
+    if(newsList.length <= 0) {
+      console.log("hzfdbg file[" + __filename + "]" + " searchList():newsList empty");
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      for(var i = 0; i < tags.length; i++) {
+        if (newsEntry['title'].indexOf(tags[i]) !== -1) {
+         console.log("hzfdbg file[" + __filename + "]" + " searchList():title="+newsEntry['title']);
+         startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
         }
-        else {
-          i = MAX_PAGE_NUM;
-        }
-      } else {
-        console.log(err);
+      }//for
+    });//forEach
+  });//request
+};
+
+var crawlerHeadLine = function () {
+  var MAX_PAGE_NUM = 20;
+  var page = 0;
+  for(page=0; page<=MAX_PAGE_NUM; page++) {
+    var url = util.format(headlineLink, page*20);
+    request({uri: url, headers: headers}, function (err, res, body) {
+      if(err || (res.statusCode != 200) || (!body)) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
+        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        return;
       }
-      });
-    }
-  });
+      var json = JSON.parse(body);
+      if(!json) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
+        return;
+      }
+      var newsList = json["T1295501906343"];
+      if(newsList.length <= 0) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
+        return;
+      }
+      newsList.forEach(function(newsEntry) {
+        for(var i = 0; i < tags.length; i++) {
+          if(neteaseTags[tags[i]]) {//crawlerTags will handle these tags, so skip them here
+            continue;
+          }
+          if (newsEntry['title'].indexOf(tags[i]) !== -1) {
+           console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
+           startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
+          }
+        }//for
+      });//forEach
+    });//request
+  }//for
 };
 
-var crawlerOne = function (docid, tag, mustUpdate) {
-  getDetail(docid, tag, mustUpdate);
+var crawlerTag = function (tag, id) {
+  var MAX_PAGE_NUM = 20;
+  var page = 0;
+  for(page=0; page<=MAX_PAGE_NUM; page++) {
+    var url = util.format(tagLink, id, page*20);
+    request({uri: url, headers: headers}, function (err, res, body) {
+      if(err || (res.statusCode != 200) || (!body)) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():error");
+        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        return;
+      }
+      var json = JSON.parse(body);
+      if(!json) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():JSON.parse() error");
+        return;
+      }
+      var newsList = json[id];
+      if(newsList.length <= 0) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():newsList empty in url " + url);
+        return;
+     }
+     newsList.forEach(function(newsEntry) {
+       console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():title="+newsEntry['title']);
+       startGetDetail.emit('startGetDetail', newsEntry, tag);
+     });//forEach
+    });//request
+  }//for
 };
 
-exports.crawlerAll = crawlerAll;
-exports.crawlerInterval = crawlerInterval;
+var crawlerTags = function () {
+    tags.forEach(function(tagName) {
+      if(neteaseTags[tagName]) {
+        crawlerTag(tagName,neteaseTags[tagName]);
+      }
+    });
+}
+
+exports.crawlerHeadLine = crawlerHeadLine;
+exports.crawlerTags = crawlerTags;
 exports.crawlerOne = crawlerOne;
-// getDetail('8GOU51KG00964JJM');
-// getDetail('8GRC4JDP00964JJM');
-// crawlerAll();
-// crawlerInterval();
-// console.log(1);
-// searchList('每日轻松一刻');
+crawlerTags();
+crawlerHeadLine();
+//searchList('每日轻松一刻');
