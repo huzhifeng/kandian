@@ -1,11 +1,14 @@
-/*
- * home page.
- */
 var async = require('async');
 var News = require('../models/news');
 var crawlerAll = require('../netease').crawlerAll;
-var tt = require('config').Config.tt;
+var tt = require('config').Config.neteaseTags;
 var hotQty = require('config').Config.hotQty;
+var mergeDict = require('../lib/utils').mergeDict;
+
+tt = mergeDict(tt,require('config').Config.sohuTags);
+tt = mergeDict(tt,require('config').Config.sinaTags);
+tt = mergeDict(tt,require('config').Config.qqTags);
+tt = mergeDict(tt,require('config').Config.ifengTags);
 
 var index = function (req, res, next) {
   var getNewss = function (callback) {
@@ -124,7 +127,6 @@ var viewNews = function (req, res, next) {
     }
   });
 };
-
 
 exports.index = index;
 exports.about = about;

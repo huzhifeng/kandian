@@ -1,11 +1,13 @@
 var async = require('async');
 var News = require('../models/news');
-var tt = require('config').Config.tt;
+var tt = require('config').Config.neteaseTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
 
 tt = mergeDict(tt,require('config').Config.sohuTags);
 tt = mergeDict(tt,require('config').Config.sinaTags);
+tt = mergeDict(tt,require('config').Config.qqTags);
+tt = mergeDict(tt,require('config').Config.ifengTags);
 
 var index = function (req, res, next) {
 
@@ -50,6 +52,5 @@ var index = function (req, res, next) {
   });
 
 };
-
 
 exports.index = index;

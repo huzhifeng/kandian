@@ -1,6 +1,5 @@
 ﻿var async = require('async');
 var News = require('../models/news');
-var tt = require('config').Config.tt;
 var hotQty = require('config').Config.hotQty;
 var site2name = require('../lib/utils').site2name;
 
@@ -37,7 +36,7 @@ var index = function (req, res, next) {
       // console.log(currentPage, pages);
       res.render('site', {pageTitle: site2name(site),
         currentPage: results.newss.currentPage, pages: results.newss.pages,
-        news: results.newss.newss, site: site, active: tt[site],
+        news: results.newss.newss, site: site, active: site,
         baseUrl: '/site/' + encodeURIComponent(site) + '/page/',
         hotNews: results.hotNewss.hotNewss});
     } else {

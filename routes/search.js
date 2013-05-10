@@ -1,14 +1,4 @@
-
-/*
- * search page.
- */
-
-var async = require('async');
-
 var News = require('../models/news');
-
-var tt = require('config').Config.tt;
-
 
 var index = function (req, res, next) {
   var page = parseInt(Number(req.query.page) || 1, 10);

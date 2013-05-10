@@ -132,7 +132,15 @@ var crawlerHeadLine = function () {
         console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
         return;
       }
-      var json = JSON.parse(body);
+      var json = null;
+      try {
+        json = JSON.parse(body);
+      }
+      catch (e) {
+        json = null;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
+        console.log(e);
+      }
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
         return;
@@ -145,7 +153,7 @@ var crawlerHeadLine = function () {
           //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():util.inspect(item)="+util.inspect(item));
           //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+item['body']['title']);
           for(k=0; k<tags.length; k++) {
-            if(ifengTags[tags[k]]) {//crawlerTags will handle these tags, so skip them here
+            if(ifengTags[tags[k]].indexOf("ifeng_") === -1) {//crawlerTags will handle these tags, so skip them here
               continue;
             }
             if ((item['body']['title'].indexOf(tags[k]) !== -1) || (item['body']['source'].indexOf(tags[k]) !== -1)) {

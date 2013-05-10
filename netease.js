@@ -3,7 +3,7 @@ var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");
 //var cheerio = require('cheerio');
-var neteaseTags = require('config').Config.tt;
+var neteaseTags = require('config').Config.neteaseTags;
 var tags = _.keys(neteaseTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
@@ -37,14 +37,22 @@ var getDetail = function(entry, tag) {
         return;
     }
     //console.log("hzfdbg file[" + __filename + "]" + " getDetail() util.inspect(body)="+util.inspect(body));
-    var json = JSON.parse(body);
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " getDeatil():JSON.parse() catch error");
+      console.log(e);
+    }
     var jObj = json[docid];
     var obj = {};
     obj['docid'] = docid;
 
     News.findOne({docid: obj['docid']}, function(err, result) {
       if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " News.findOne():error");
+        console.log("hzfdbg file[" + __filename + "]" + " News.findOne():error " + err);
         return;
       }
       var isUpdate = false;
@@ -144,7 +152,15 @@ var searchList = function (tag) {
       console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
       return;
     }
-    var json = JSON.parse(body);
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " searchList():JSON.parse() catch error");
+      console.log(e);
+    }
     if(!json) {
       console.log("hzfdbg file[" + __filename + "]" + " searchList():JSON.parse() error");
       return;
@@ -176,7 +192,15 @@ var crawlerHeadLine = function () {
         console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
         return;
       }
-      var json = JSON.parse(body);
+      var json = null;
+      try {
+        json = JSON.parse(body);
+      }
+      catch (e) {
+        json = null;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
+        console.log(e);
+      }
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
         return;
@@ -188,7 +212,7 @@ var crawlerHeadLine = function () {
       }
       newsList.forEach(function(newsEntry) {
         for(var i = 0; i < tags.length; i++) {
-          if(neteaseTags[tags[i]]) {//crawlerTags will handle these tags, so skip them here
+          if(neteaseTags[tags[i]].indexOf("netease_") === -1) {//crawlerTags will handle these tags, so skip them here
             continue;
           }
           if (newsEntry['title'].indexOf(tags[i]) !== -1) {
@@ -212,7 +236,15 @@ var crawlerTag = function (tag, id) {
         console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
         return;
       }
-      var json = JSON.parse(body);
+      var json = null;
+      try {
+        json = JSON.parse(body);
+      }
+      catch (e) {
+        json = null;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():JSON.parse() catch error");
+        console.log(e);
+      }
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():JSON.parse() error");
         return;
