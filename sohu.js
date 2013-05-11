@@ -12,7 +12,7 @@ var headers = {
     'User-Agent': 'NTES Android',
     'Referer': 'http://api.k.sohu.com/'
 };
-// http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=1&rt=json
+// http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=1&showPic=1&rt=json
 var headlineLink = 'http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=%d&rt=json';
 // http://api.k.sohu.com/api/flow/newslist.go?subId=681&pubId=0&sid=18&rt=flowCallback&pageNum=1
 var tagLink = 'http://api.k.sohu.com/api/flow/newslist.go?subId=%s&pubId=0&sid=18&rt=json&pageNum=%d';
@@ -43,6 +43,10 @@ startGetDetail.on('startGetDetail', function (entry, tag) {
 var getDetail = function(entry, tag) {
   var docid = util.format("%s",entry['newsId']);
   var url = util.format(detailLink, docid);
+  /*if(tag === "图粹") {
+    console.log("hzfdbg file[" + __filename + "]" + " getDetail():tc"+entry['title']);
+    url = util.format("http://api.k.sohu.com/api/photos/gallery.go?newsId=%s", docid);
+  }*/
   request({uri: url, headers: headers}, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getDetail():error");
@@ -178,7 +182,7 @@ var crawlerHeadLine = function () {
             continue;
           }
           if (newsEntry['title'].indexOf(tags[i]) !== -1) {
-           console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
+           //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
            startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
           }
         }//for
@@ -217,7 +221,7 @@ var crawlerTag = function (tag, id) {
         return;
      }
      newsList.forEach(function(newsEntry) {
-       console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():title="+newsEntry['title']);
+       //console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():title="+newsEntry['title']);
        startGetDetail.emit('startGetDetail', newsEntry, tag);
      });//forEach
     });//request

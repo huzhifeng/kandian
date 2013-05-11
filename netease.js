@@ -173,7 +173,7 @@ var searchList = function (tag) {
     newsList.forEach(function(newsEntry) {
       for(var i = 0; i < tags.length; i++) {
         if (newsEntry['title'].indexOf(tags[i]) !== -1) {
-         console.log("hzfdbg file[" + __filename + "]" + " searchList():title="+newsEntry['title']);
+         //console.log("hzfdbg file[" + __filename + "]" + " searchList():title="+newsEntry['title']);
          startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
         }
       }//for
@@ -216,7 +216,7 @@ var crawlerHeadLine = function () {
             continue;
           }
           if (newsEntry['title'].indexOf(tags[i]) !== -1) {
-           console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
+           //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
            startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
           }
         }//for
@@ -255,7 +255,7 @@ var crawlerTag = function (tag, id) {
         return;
      }
      newsList.forEach(function(newsEntry) {
-       console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():title="+newsEntry['title']);
+       //console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():title="+newsEntry['title']);
        startGetDetail.emit('startGetDetail', newsEntry, tag);
      });//forEach
     });//request

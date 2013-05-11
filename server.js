@@ -26,9 +26,9 @@ http.createServer(app).listen(app.get('port'), function(){
     console.log("Crawler Init Success!");
   });
   setInterval(crawlerNeteaseHeadLine, interval);
-  setInterval(crawlerNeteaseTags, interval*4);
+  setInterval(crawlerNeteaseTags, interval*2);
   setInterval(crawlerSohuHeadLine, interval);
-  setInterval(crawlerSohuTags, interval*4);
+  setInterval(crawlerSohuTags, interval*2);
   setInterval(crawlerSinaHeadLine, interval);
   setInterval(crawlerQqHeadLine, interval);
   setInterval(crawlerIfengHeadLine, interval);

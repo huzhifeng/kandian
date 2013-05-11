@@ -157,7 +157,7 @@ var crawlerHeadLine = function () {
               continue;
             }
             if ((item['body']['title'].indexOf(tags[k]) !== -1) || (item['body']['source'].indexOf(tags[k]) !== -1)) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']);
+              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']);
               //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item="+util.inspect(item));
               startGetDetail.emit('startGetDetail', item, tags[k]);
             }

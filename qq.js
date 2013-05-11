@@ -207,7 +207,7 @@ var crawlerHeadLine = function () {
               continue;
             }
             if ((newsEntry['title'].indexOf(tags[i]) !== -1) || (newsEntry['source'].indexOf(tags[i]) !== -1)) {
-             console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl title="+newsEntry['title']);
+             //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl title="+newsEntry['title']);
              startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
             }
           }//for
