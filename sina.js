@@ -142,7 +142,7 @@ var getDetail = function(entry, tag) {
 };
 
 var crawlerHeadLine = function () {
-  var MAX_PAGE_NUM = 25;
+  var MAX_PAGE_NUM = 5;
   var page = 1;
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(headlineLink, page);

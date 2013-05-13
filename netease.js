@@ -182,7 +182,7 @@ var searchList = function (tag) {
 };
 
 var crawlerHeadLine = function () {
-  var MAX_PAGE_NUM = 20;
+  var MAX_PAGE_NUM = 5;
   var page = 0;
   for(page=0; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(headlineLink, page*20);
@@ -226,7 +226,7 @@ var crawlerHeadLine = function () {
 };
 
 var crawlerTag = function (tag, id) {
-  var MAX_PAGE_NUM = 20;
+  var MAX_PAGE_NUM = 2;
   var page = 0;
   for(page=0; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(tagLink, id, page*20);

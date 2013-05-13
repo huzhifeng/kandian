@@ -13,7 +13,7 @@ tt = mergeDict(tt,require('config').Config.ifengTags);
 var index = function (req, res, next) {
   var getNewss = function (callback) {
     var page = req.params.page || 1;
-    News.page({}, page, function (err, currentPage, pages, result) {
+    News.page({"site":{"$nin":["qq"]}}, page, function (err, currentPage, pages, result) {
       if (! err) {
         callback(null, {currentPage: currentPage, pages: pages, newss: result});
       } else {

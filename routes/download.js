@@ -17,8 +17,9 @@ var baseDir = process.cwd() + '/tmp/';
 var downloadTxt = function (req, res, next) {
   var docid = req.params.docid.trim();
   // console.log(req.get('User-Agent'));
+  res.send("Not support yet!");
 
-  News.findOne({docid: docid}, function (err, result) {
+  /*News.findOne({docid: docid}, function (err, result) {
     if (! err) {
       if (result) {
         var filename = util.format('%s_%s.txt', result.title.replace(/\s+/g, '').replace(/[：:]/g, '-'),
@@ -65,7 +66,7 @@ var downloadTxt = function (req, res, next) {
     } else {
       next(new Error(err.message));
     }
-  });
+  });*/
 
 
 };
