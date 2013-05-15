@@ -226,9 +226,9 @@ var crawlerHeadLine = function () {
 };
 
 var crawlerTag = function (tag, id) {
-  var MAX_PAGE_NUM = 2;
+  var MAX_PAGE_NUM = 1;
   var page = 0;
-  for(page=0; page<=MAX_PAGE_NUM; page++) {
+  for(page=0; page<MAX_PAGE_NUM; page++) {
     var url = util.format(tagLink, id, page*20);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
@@ -264,7 +264,7 @@ var crawlerTag = function (tag, id) {
 
 var crawlerTags = function () {
     tags.forEach(function(tagName) {
-      if(neteaseTags[tagName]) {
+      if(neteaseTags[tagName].indexOf("netease_") === -1) {
         crawlerTag(tagName,neteaseTags[tagName]);
       }
     });

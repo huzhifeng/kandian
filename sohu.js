@@ -192,7 +192,7 @@ var crawlerHeadLine = function () {
 };
 
 var crawlerTag = function (tag, id) {
-  var MAX_PAGE_NUM = 2;
+  var MAX_PAGE_NUM = 1;
   var page = 1;
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(tagLink, id, page);
@@ -230,7 +230,7 @@ var crawlerTag = function (tag, id) {
 
 var crawlerTags = function () {
     tags.forEach(function(tagName) {
-      if(sohuTags[tagName]) {
+      if(sohuTags[tagName].indexOf("sohu_") === -1) {
         crawlerTag(tagName,sohuTags[tagName]);
       }
     });

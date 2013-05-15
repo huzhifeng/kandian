@@ -25,7 +25,7 @@ var index = function (req, res, next) {
           (news.cover || 'http://huzhifeng.com/img/noImg.gif'), title, news.digest);
         feed.item({
           title: news.title,
-          description: digest,
+          description: news.marked,
           url: 'http://huzhifeng.com/news/' + docid, // link to the item
           author: 'huzhifeng',
           date: news.ptime // any format that js Date can parse.

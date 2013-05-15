@@ -1,8 +1,8 @@
 
 module.exports = {
   Config: {
-    port: 2000,
-    interval: 1000 * 60 * 20,
+    port: 3000,
+    interval: 1000 * 60 * 30,
     staticMaxAge: 3600000 * 24 * 15,
     limit: 15
   }
