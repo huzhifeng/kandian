@@ -7,7 +7,7 @@ var tags = _.keys(sinaTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var xml2json = require('xml2json');
-var jsdom = require("jsdom").jsdom;;
+var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
     'Referer': 'http://api.sina.cn/'
@@ -141,15 +141,21 @@ var getDetail = function(entry, tag) {
   });//request
 };
 
+var crawlAllHeadLine = 1; //Crawl more headline at the first time
 var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 5;
   var page = 1;
+  if(crawlAllHeadLine) {
+    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
+    MAX_PAGE_NUM = 20;
+    crawlAllHeadLine = 0;
+  }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(headlineLink, page);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
-        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
         return;
       }
       var json = null;

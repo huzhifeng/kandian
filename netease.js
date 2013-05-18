@@ -7,7 +7,7 @@ var neteaseTags = require('config').Config.neteaseTags;
 var tags = _.keys(neteaseTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var jsdom = require("jsdom").jsdom;;
+var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'NTES Android',
     'Referer': 'http://www.163.com/'
@@ -181,15 +181,21 @@ var searchList = function (tag) {
   });//request
 };
 
+var crawlAllHeadLine = 1; //Crawl more headline at the first time
 var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 5;
   var page = 0;
+  if(crawlAllHeadLine) {
+    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
+    MAX_PAGE_NUM = 20;
+    crawlAllHeadLine = 0;
+  }
   for(page=0; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(headlineLink, page*20);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
-        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
         return;
       }
       var json = null;
@@ -233,7 +239,7 @@ var crawlerTag = function (tag, id) {
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():error");
-        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
         return;
       }
       var json = null;
