@@ -9,9 +9,10 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': '~...260(android)',
-    'Referer': 'http://inews.qq.com/'
+    'Referer': 'http://inews.qq.com'
 };
 // http://inews.qq.com/getQQNewsIndexAndItems?store=63&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
+// http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.7.0
 var headlineLink = 'http://inews.qq.com/getQQNewsIndexAndItems?store=%d';
 // http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013050300143202&store=63&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
 var detailLink = 'http://inews.qq.com/getQQNewsNormalHtmlContent?id=%s';

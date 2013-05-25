@@ -10,9 +10,10 @@ var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
-    'Referer': 'http://api.sina.cn/'
+    'Referer': 'http://api.sina.cn'
 };
 // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
+// http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=25
 var headlineLink = 'http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=%d';
 // http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8468729-news-cms
 var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
@@ -147,7 +148,7 @@ var crawlerHeadLine = function () {
   var page = 1;
   if(crawlAllHeadLine) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 20;
+    MAX_PAGE_NUM = 25;
     crawlAllHeadLine = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {

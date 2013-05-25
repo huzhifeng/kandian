@@ -1,14 +1,18 @@
 var async = require('async');
 var News = require('../models/news');
 var crawlerAll = require('../netease').crawlerAll;
-var tt = require('config').Config.neteaseTags;
+var neteaseTags = require('config').Config.neteaseTags;
+var sohuTags = require('config').Config.sohuTags;
+var sinaTags = require('config').Config.sinaTags;
+var qqTags = require('config').Config.qqTags;
+var ifengTags = require('config').Config.ifengTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
 
-tt = mergeDict(tt,require('config').Config.sohuTags);
-tt = mergeDict(tt,require('config').Config.sinaTags);
-tt = mergeDict(tt,require('config').Config.qqTags);
-tt = mergeDict(tt,require('config').Config.ifengTags);
+var tt = mergeDict(neteaseTags, sohuTags);
+tt = mergeDict(tt, sinaTags);
+tt = mergeDict(tt, qqTags);
+tt = mergeDict(tt, ifengTags);
 
 var index = function (req, res, next) {
   var getNewss = function (callback) {
@@ -52,6 +56,10 @@ var index = function (req, res, next) {
 
 var about = function (req, res, next) {
   res.render('about', {pageTitle: '关于', active: 'about'});
+};
+
+var sitemap = function (req, res, next) {
+  res.render('sitemap', {pageTitle: '站点地图'});
 };
 
 var wx = function (req, res, next) {
@@ -130,6 +138,7 @@ var viewNews = function (req, res, next) {
 
 exports.index = index;
 exports.about = about;
+exports.sitemap = sitemap;
 exports.wx = wx;
 
 exports.get163All = get163All;

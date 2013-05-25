@@ -9,9 +9,10 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.0.4; sdk Build/MR1)',
-    'Referer': 'http://api.3g.ifeng.com/'
+    'Referer': 'http://api.3g.ifeng.com'
 };
 // http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=1&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800
+// http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=50&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800
 var headlineLink = 'http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=%d&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800';
 // http://api.iapps.ifeng.com/news/detail.json?aid=29584735
 var detailLink = 'http://api.iapps.ifeng.com/news/detail.json?aid=%s';
@@ -127,7 +128,7 @@ var crawlerHeadLine = function () {
   var page = 1;
   if(crawlAllHeadLine) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 5;
+    MAX_PAGE_NUM = 50;
     crawlAllHeadLine = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -163,7 +164,7 @@ var crawlerHeadLine = function () {
               continue;
             }
             if ((item['body']['title'].indexOf(tags[k]) !== -1) || (item['body']['source'].indexOf(tags[k]) !== -1)) {
-              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']);
+              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']+item['body']['editTime']);
               //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item="+util.inspect(item));
               startGetDetail.emit('startGetDetail', item, tags[k]);
             }

@@ -22,6 +22,7 @@ hbs.registerHelper('timeFormat', helpers.timeFormat);
 hbs.registerHelper('miniImg', helpers.miniImg);
 hbs.registerHelper('urlEncode', helpers.urlEncode);
 hbs.registerHelper('tag2c', helpers.tag2c);
+hbs.registerHelper('tags2sitemap', helpers.tags2sitemap);
 hbs.registerHelper('pagination', helpers.pagination);
 
 /**

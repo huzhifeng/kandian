@@ -10,9 +10,10 @@ var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'NTES Android',
-    'Referer': 'http://api.k.sohu.com/'
+    'Referer': 'http://api.k.sohu.com'
 };
-// http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=1&showPic=1&rt=json
+// http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=1&showPic=1&rt=json
+// http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=1650&showPic=1&rt=json
 var headlineLink = 'http://api.k.sohu.com/api/channel/news.go?channelId=1&num=100&page=%d&rt=json';
 // http://api.k.sohu.com/api/flow/newslist.go?subId=681&pubId=0&sid=18&rt=flowCallback&pageNum=1
 var tagLink = 'http://api.k.sohu.com/api/flow/newslist.go?subId=%s&pubId=0&sid=18&rt=json&pageNum=%d';
@@ -153,7 +154,7 @@ var crawlerHeadLine = function () {
   var page = 1;
   if(crawlAllHeadLine) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 20;
+    MAX_PAGE_NUM = 1650;
     crawlAllHeadLine = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -178,7 +179,7 @@ var crawlerHeadLine = function () {
         return;
       }
       var newsList = json["articles"];
-      if(newsList.length <= 0) {
+      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
         return;
       }

@@ -13,6 +13,7 @@ exports = module.exports = function(app, checkAuth) {
   app.get('/rss', rss.index);
 
   app.get('/about', home.about);
+  app.get('/sitemap', home.sitemap);
   app.get('/page/:page', home.index);
 
   app.get('/search', search.index);

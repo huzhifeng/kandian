@@ -11,7 +11,7 @@ module.exports = {
     limit: 15,
     hotQty: 4,
     maxRssItems: 50,
-    neteaseTags: {
+    neteaseTags: { //把apk改成zip, 解压进入/assets/default_columns.txt, 这个文件里面包含了全部栏目
       '轻松一刻': 'T1350383429665',
       '今日之声': 'T1348654628034',
       '娱乐BigBang': 'T1359605557219',
@@ -27,10 +27,11 @@ module.exports = {
       '另一面': 'T1348654756909',
       '深度': 'T1348648233485',
       '独家解读': 'T1348654778699',
-      '女人': 'T1364183816404',
-      '一周新闻日历': '',*/
+      '女人': 'T1364183816404',*/
+      '一周新闻日历': 'netease_yzxwrl',
       '读写客': 'netease_dxk',
       '尖峰娱论': 'netease_jfyl',
+      '新闻故事': 'netease_xwgs',
     },
     sohuTags: {
       '先知道': '681',
@@ -84,13 +85,13 @@ module.exports = {
       '数据控':'qq_sjk',
       '视界':'qq_sj',
     },
-    ifengTags: {
+    ifengTags: { //把apk改成zip, 解压进入/assets/config.txt, 这个文件里面包含了全部栏目以及相关url, 另外/assets/temp.txt是json数据模板
       'FUN来了': 'ifeng_fun',
       '今日最大声':'ifeng_jrzds',
       '有报天天读':'ifeng_ybttd',
       '凤凰知道':'ifeng_fhzd',
       '史说新语': 'ifeng_ssxy',
-      '百步穿影':'ifeng_bbcy',
+      '百部穿影':'ifeng_bbcy', //http://ent.ifeng.com/movie/special/baibuchuanying/
       '财知道':'ifeng_czd',
       '观世变':'ifeng_gsb',
       /*'历史': '',

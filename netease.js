@@ -10,10 +10,12 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'NTES Android',
-    'Referer': 'http://www.163.com/'
+    'Referer': 'http://www.163.com'
 };
 // http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html
+// http://c.3g.163.com/nc/article/headline/T1348647909107/400-20.html
 var headlineLink = 'http://c.3g.163.com/nc/article/headline/T1295501906343/%d-20.html';
+var headlineLink2 = 'http://c.3g.163.com/nc/article/headline/T1348647909107/%d-20.html';
 // http://c.3g.163.com/nc/article/list/T1350383429665/0-20.html
 var tagLink = 'http://c.3g.163.com/nc/article/list/%s/%d-20.html';
 // http://c.3g.163.com/nc/article/8GOVEI0L00964JJM/full.html
@@ -185,13 +187,20 @@ var crawlAllHeadLine = 1; //Crawl more headline at the first time
 var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 5;
   var page = 0;
+  var urls = [];
+  var url_num = 0;
+  var i = 0;
   if(crawlAllHeadLine) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 20;
     crawlAllHeadLine = 0;
   }
   for(page=0; page<=MAX_PAGE_NUM; page++) {
-    var url = util.format(headlineLink, page*20);
+    urls[url_num++] = util.format(headlineLink, page*20);
+    urls[url_num++] = util.format(headlineLink2, page*20);
+  }
+  for(i=0; i<url_num; i++) {
+    var url = urls[i];
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
@@ -212,6 +221,9 @@ var crawlerHeadLine = function () {
         return;
       }
       var newsList = json["T1295501906343"];
+      if(!newsList) {
+        newsList = json["T1348647909107"];
+      }
       if(newsList.length <= 0) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
         return;
