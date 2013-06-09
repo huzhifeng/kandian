@@ -6,12 +6,15 @@ var sinaTags = require('config').Config.sinaTags;
 var tags = _.keys(sinaTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
+var genFindCmd = require('./lib/utils').genFindCmd;
+var encodeDocID = require('./lib/utils').encodeDocID;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
     'Referer': 'http://api.sina.cn'
 };
+var site = "sina";
 // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
 // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=25
 var headlineLink = 'http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=%d';
@@ -58,88 +61,74 @@ var getDetail = function(entry, tag) {
     var json = xml2json.toJson(body,{object:true, sanitize:false});
     var jObj = json['rss']["channel"]["item"];
     var obj = {};
-    obj['docid'] = docid;
 
-    News.findOne({docid: obj['docid']}, function(err, result) {
+    News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " News.findOne():error " + err);
+        console.log("hzfdbg file[" + __filename + "]" + " getDeatil(), News.findOne():error " + err);
         return;
       }
-      var isUpdate = false;
-      if (result && !result.disableAutoUpdate && (result.title !== entry['title'].trim().replace(/\s+/g, ''))) {
-        isUpdate = true;
+      if (result) {
+        //console.log("hzfdbg file[" + __filename + "]" + " getDeatil(), News.findOne():exist ");
+        return;
       }
-      if (!result || isUpdate) {
-        obj['site'] = "sina";
-        obj['jsonstr'] = body;
-        obj['body'] = jObj['description'];
-        obj['img'] = pickImg(jObj['enclosure']);
-        obj['video'] = [];
-        obj['link'] = jObj['link'];
-        obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
-        obj['ptime'] = jObj['pubDate'];
-        obj['time'] = new Date(Date.parse(jObj['pubDate']));
-        obj['marked'] = obj['body'];
+      obj['docid'] = encodeDocID(site, docid);
+      obj['site'] = site;
+      //obj['jsonstr'] = body; // delete it to save db size
+      obj['body'] = jObj['description'];
+      obj['img'] = pickImg(jObj['enclosure']);
+      obj['video'] = [];
+      obj['link'] = jObj['link'];
+      obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
+      obj['ptime'] = jObj['pubDate'];
+      obj['time'] = new Date(Date.parse(jObj['pubDate']));
+      obj['marked'] = obj['body'];
 
-       if (isUpdate) {
-          obj['updated'] = new Date();
-        } else {
-          obj['created'] = new Date();
-          obj['views'] = 1;
-        }
+      obj['created'] = new Date();
+      obj['views'] = 1;
 
-        if (tag) {
-          obj['tags'] = [tag];
-        } else {
-          for (var i = 0; i < tags.length; i++) {
-            if (obj['title'].indexOf(tags[i]) !== -1 || entry['title'].indexOf(tags[i]) !== -1) {
-              obj['tags'] = [tags[i]];
-              break;
-            }
+      if (tag) {
+        obj['tags'] = [tag];
+      } else {
+        for (var i = 0; i < tags.length; i++) {
+          if (obj['title'].indexOf(tags[i]) !== -1 || entry['title'].indexOf(tags[i]) !== -1) {
+            obj['tags'] = [tags[i]];
+            break;
           }
         }
+      }
 
-        //remove all html tag,
-        //refer to <<How to remove HTML Tags from a string in Javascript>>
-        //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-        //and https://github.com/tmpvar/jsdom
-        var window = jsdom().createWindow();
-        var mydiv = window.document.createElement("div");
-        mydiv.innerHTML = obj['body'];
-        // digest
-        var maxDigest = 300;
-        obj['digest'] = mydiv.textContent.slice(0,maxDigest);
+      //remove all html tag,
+      //refer to <<How to remove HTML Tags from a string in Javascript>>
+      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
+      //and https://github.com/tmpvar/jsdom
+      var window = jsdom().createWindow();
+      var mydiv = window.document.createElement("div");
+      mydiv.innerHTML = obj['body'];
+      // digest
+      var maxDigest = 300;
+      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
 
-        // cover
-        obj['cover'] = entry['pic'];
-        if (obj['img'][0]) {
-          obj['cover'] = obj['img'][0]['url'];
-          //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj['cover']);
+      // cover
+      obj['cover'] = entry['pic'];
+      if (obj['img'][0]) {
+        obj['cover'] = obj['img'][0]['url'];
+        //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj['cover']);
+      }
+
+      // img lazyloading
+      for(i=0; i<obj['img'].length; i++) {
+        var imgHtml = genLazyLoadHtml(obj['img'][i]['alt'], obj['img'][i]['url']);
+        obj['marked'] = obj['marked'].replace(/<br\/><br\/>/, imgHtml);
+        //console.log("hzfdbg file[" + __filename + "]" + " imgHtml="+imgHtml);
+      };
+
+      News.insert(obj, function (err, result) {
+        if(err) {
+          console.log("hzfdbg file[" + __filename + "]" + " getDetail(), News.insert():error " + err);
         }
-
-        // img lazyloading
-        for(i=0; i<obj['img'].length; i++) {
-          var imgHtml = genLazyLoadHtml(obj['img'][i]['alt'], obj['img'][i]['url']);
-          obj['marked'] = obj['marked'].replace(/<br\/><br\/>/, imgHtml);
-          //console.log("hzfdbg file[" + __filename + "]" + " imgHtml="+imgHtml);
-        };
-
-        if (isUpdate) {
-          News.update({docid: result.docid}, obj, function (err, result) {
-            if(err) {
-              console.log(err);
-            }
-          });
-        } else {
-          News.insert(obj, function (err, result) {
-            if(err) {
-              console.log(err);
-            }
-          });
-        }
-      }//if (!result || isUpdate)
-    });//News.findOne
-  });//request
+      }); // News.insert
+    }); // News.findOne
+  }); // request
 };
 
 var crawlAllHeadLine = 1; //Crawl more headline at the first time
@@ -173,7 +162,7 @@ var crawlerHeadLine = function () {
         return;
       }
       var newsList = json["data"]["list"];
-      if(newsList.length <= 0) {
+      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
         return;
       }
@@ -182,9 +171,27 @@ var crawlerHeadLine = function () {
           if(sinaTags[tags[i]].indexOf("sina_") === -1) {//crawlerTags will handle these tags, so skip them here
             continue;
           }
-          if (newsEntry['title'].indexOf(tags[i]) !== -1) {
-           //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
-           startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
+          try {
+            if (newsEntry['title'].indexOf(tags[i]) !== -1) {
+              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
+              //startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
+              newsEntry['tagName'] = tags[i];
+              News.findOne(genFindCmd(site, newsEntry['id']), function(err, result) {
+                if(err) {
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
+                  return;
+                }
+                if (!result) {
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
+                  startGetDetail.emit('startGetDetail', newsEntry, newsEntry['tagName']);
+                }
+              }); // News.findOne
+            }
+          }
+          catch (e) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
+            console.log(e);
+            continue;
           }
         }//for
       });//forEach

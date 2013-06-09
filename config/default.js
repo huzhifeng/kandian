@@ -72,13 +72,16 @@ module.exports = {
     sinaTags: {
       '今日网言': 'sina_jrwy',
       '新观察': 'sina_xgc',
-      /*'海外观察': '',*/
+      '海外观察': 'sina_hwgc',
       '军情茶馆': 'sina_jqcg',
+      '万花筒': 'sina_wht',
     },
     qqTags: {
       '留声机': 'qq_lsj',
       '讲武堂': 'qq_jwt',
       '西洋镜': 'qq_xyj',
+      '问编辑': 'qq_wbj',
+      '新闻哥': 'qq_xwg',
       /*'猜新闻': '',
       '话题':'',
       '一周图片':'',*/
@@ -94,6 +97,7 @@ module.exports = {
       '百部穿影':'ifeng_bbcy', //http://ent.ifeng.com/movie/special/baibuchuanying/
       '财知道':'ifeng_czd',
       '观世变':'ifeng_gsb',
+      '深度':'ifeng_sd',
       /*'历史': '',
       '独家评': '',
       '独家': '',

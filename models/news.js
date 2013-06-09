@@ -8,7 +8,6 @@ var news = db.collection('news');
  * docid
  * ptime
  * body
- * jsonstr
  * img
  * video
  * link

@@ -8,6 +8,8 @@ var qqTags = require('config').Config.qqTags;
 var ifengTags = require('config').Config.ifengTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
+var decodeDocID = require('../lib/utils').decodeDocID;
+var encodeDocID = require('../lib/utils').encodeDocID;
 
 var tt = mergeDict(neteaseTags, sohuTags);
 tt = mergeDict(tt, sinaTags);
@@ -74,7 +76,14 @@ var get163All = function (req, res, next) {
 var viewNews = function (req, res, next) {
   //console.log(req.params.docid);
   ///////////////////////
-  News.findOne({docid: req.params.docid}, function (err, result) {
+  var cmd = {"docid": req.params.docid};
+  var decode_id = decodeDocID(req.params.docid);
+  if(decode_id == req.params.docid) {
+    cmd = {"docid": {"$in": [req.params.docid, encodeDocID("netease", req.params.docid), encodeDocID("sohu", req.params.docid), encodeDocID("sina", req.params.docid), encodeDocID("qq", req.params.docid), encodeDocID("ifeng", req.params.docid)]}};
+  }else {
+    cmd = {"docid": {"$in": [req.params.docid, decode_id]}};
+  }
+  News.findOne(cmd, function (err, result) {
     if (!err) {
       // console.log(result);
       if (result) {
