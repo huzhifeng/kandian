@@ -11,14 +11,11 @@ var encodeDocID = require('./lib/utils').encodeDocID;
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.0.4; sdk Build/MR1)',
-    'Referer': 'http://api.3g.ifeng.com'
+    'Host': 'api.3g.ifeng.com'
 };
 var site = "ifeng";
-// http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=1&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800
-// http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=50&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800
-var headlineLink = 'http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=%d&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800';
 // http://api.iapps.ifeng.com/news/detail.json?aid=29584735
-var detailLink = 'http://api.iapps.ifeng.com/news/detail.json?aid=%s';
+//var detailLink = 'http://api.iapps.ifeng.com/news/detail.json?aid=%s';
 
 function pickImg(html) {
   var document = jsdom(html);
@@ -34,11 +31,11 @@ function pickImg(html) {
 
 var startGetDetail = new EventEmitter();
 
-startGetDetail.on('startGetDetail', function (entry, tag) {
-  getDetail(entry, tag);
+startGetDetail.on('startGetNewsDetail', function (entry) {
+  getNewsDetail(entry);
 });
 
-var getDetail = function(entry, tag) {
+var getNewsDetail = function(entry) {
   var docid = entry['meta']['documentId'];
   var jObj = entry;
   var obj = {};
@@ -48,7 +45,7 @@ var getDetail = function(entry, tag) {
       return;
     }
     if (result) {
-      //console.log("hzfdbg file[" + __filename + "]" + " getDeatil(), News.findOne():exist ");
+      //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
       return;
     }
     obj['docid'] = encodeDocID(site, docid);
@@ -64,17 +61,7 @@ var getDetail = function(entry, tag) {
     obj['marked'] = obj['body'];
     obj['created'] = new Date();
     obj['views'] = 1;
-
-    if (tag) {
-      obj['tags'] = [tag];
-    } else {
-      for (var i = 0; i < tags.length; i++) {
-        if ((obj['title'].indexOf(tags[i]) !== -1) || (jObj['body']['title'].indexOf(tags[i]) !== -1) || (jObj['body']['source'].indexOf(tags[i]) !== -1)) {
-          obj['tags'] = [tags[i]];
-          break;
-        }
-      }
-    }
+    obj['tags'] = entry['tagName'];
 
     //remove all html tag,
     //refer to <<How to remove HTML Tags from a string in Javascript>>
@@ -102,20 +89,23 @@ var getDetail = function(entry, tag) {
 
     News.insert(obj, function (err, result) {
       if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getDetail(), News.insert():error " + err);
+        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
       }
     }); // News.insert
   }); // News.findOne
 };
 
-var crawlAllHeadLine = 1; //Crawl more headline at the first time
+var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
-  var MAX_PAGE_NUM = 2;
+  // http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=1&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800
+  // http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=50&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800
+  var headlineLink = 'http://api.3g.ifeng.com/newAndroidNews?id=SYDT10,SYLB10&type=imgchip,irank&picwidth=300&page=%d&gv=3.6.0&av=3.6.0&uid=357719001482474&proid=ifengnews&os=android_15&df=androidphone&vt=5&screen=480x800';
+  var MAX_PAGE_NUM = 3;
   var page = 1;
-  if(crawlAllHeadLine) {
+  if(crawlerHeadLineFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 50;
-    crawlAllHeadLine = 0;
+    crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(headlineLink, page);
@@ -157,7 +147,6 @@ var crawlerHeadLine = function () {
             if(ifengTags[tags[k]].indexOf("ifeng_") === -1) {//crawlerTags will handle these tags, so skip them here
               continue;
             }
-            item['tagName'] = tags[k];
             if((!item['body']) || (!item['body']['title'])) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():null item['body']");
               continue;
@@ -166,7 +155,8 @@ var crawlerHeadLine = function () {
               if ((item['body']['title'].indexOf(tags[k]) !== -1) || (item['body']['source'].indexOf(tags[k]) !== -1)) {
                 //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']+item['body']['editTime']);
                 //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item="+util.inspect(item));
-                startGetDetail.emit('startGetDetail', item, tags[k]);
+                item['tagName'] = tags[k];
+                startGetDetail.emit('startGetNewsDetail', item, tags[k]);
                 /*News.findOne(genFindCmd(site, item['meta']['documentId']), function(err, result) {
                  if(err) {
                  console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(), News.findOne():error " + err);
@@ -174,7 +164,7 @@ var crawlerHeadLine = function () {
                  }
                  if (!result) {
                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']+item['body']['editTime']+item['tagName']);
-                 startGetDetail.emit('startGetDetail', item, item['tagName']);
+                 startGetDetail.emit('startGetNewsDetail', item, item['tagName']);
                  }else {
                  console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(), News.findOne():exist ");
                  return;
@@ -194,5 +184,10 @@ var crawlerHeadLine = function () {
   }//for
 };
 
+var ifengCrawler = function() {
+  crawlerHeadLine();
+}
+
 exports.crawlerHeadLine = crawlerHeadLine;
-crawlerHeadLine();
+exports.ifengCrawler = ifengCrawler;
+ifengCrawler();

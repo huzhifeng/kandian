@@ -11,15 +11,11 @@ var encodeDocID = require('./lib/utils').encodeDocID;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 var headers = {
-    'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
-    'Referer': 'http://api.sina.cn'
+  'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
+  //'Host': 'api.sina.cn',// Don't set host because it will cause HTTP request failed
+  'Referer': 'http://api.sina.cn'
 };
 var site = "sina";
-// http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
-// http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=25
-var headlineLink = 'http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=%d';
-// http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8468729-news-cms
-var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
 
 function pickImg(enclosure) {
   var objs = enclosure;
@@ -44,31 +40,33 @@ function pickImg(enclosure) {
 
 var startGetDetail = new EventEmitter();
 
-startGetDetail.on('startGetDetail', function (entry, tag) {
-  getDetail(entry, tag);
+startGetDetail.on('startGetNewsDetail', function (entry) {
+  getNewsDetail(entry);
 });
 
-var getDetail = function(entry, tag) {
+var getNewsDetail = function(entry) {
+  // http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8468729-news-cms
+  var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
   var docid = util.format("%s",entry['id']);
   var url = util.format(detailLink, docid);
   request({uri: url, headers: headers}, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " getDetail():error");
-        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
+        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
         return;
     }
-    //console.log("hzfdbg file[" + __filename + "]" + " getDetail() util.inspect(body)="+util.inspect(body));
+    //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail() util.inspect(body)="+util.inspect(body));
     var json = xml2json.toJson(body,{object:true, sanitize:false});
     var jObj = json['rss']["channel"]["item"];
     var obj = {};
 
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getDeatil(), News.findOne():error " + err);
+        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
         return;
       }
       if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getDeatil(), News.findOne():exist ");
+        //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
         return;
       }
       obj['docid'] = encodeDocID(site, docid);
@@ -85,17 +83,7 @@ var getDetail = function(entry, tag) {
 
       obj['created'] = new Date();
       obj['views'] = 1;
-
-      if (tag) {
-        obj['tags'] = [tag];
-      } else {
-        for (var i = 0; i < tags.length; i++) {
-          if (obj['title'].indexOf(tags[i]) !== -1 || entry['title'].indexOf(tags[i]) !== -1) {
-            obj['tags'] = [tags[i]];
-            break;
-          }
-        }
-      }
+      obj['tags'] = entry['tagName'];
 
       //remove all html tag,
       //refer to <<How to remove HTML Tags from a string in Javascript>>
@@ -124,21 +112,24 @@ var getDetail = function(entry, tag) {
 
       News.insert(obj, function (err, result) {
         if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getDetail(), News.insert():error " + err);
+          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
         }
       }); // News.insert
     }); // News.findOne
   }); // request
 };
 
-var crawlAllHeadLine = 1; //Crawl more headline at the first time
+var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
-  var MAX_PAGE_NUM = 5;
+  // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
+  // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=25
+  var headlineLink = 'http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=%d';
+  var MAX_PAGE_NUM = 3;
   var page = 1;
-  if(crawlAllHeadLine) {
+  if(crawlerHeadLineFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 25;
-    crawlAllHeadLine = 0;
+    crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     var url = util.format(headlineLink, page);
@@ -174,7 +165,6 @@ var crawlerHeadLine = function () {
           try {
             if (newsEntry['title'].indexOf(tags[i]) !== -1) {
               //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
-              //startGetDetail.emit('startGetDetail', newsEntry, tags[i]);
               newsEntry['tagName'] = tags[i];
               News.findOne(genFindCmd(site, newsEntry['id']), function(err, result) {
                 if(err) {
@@ -183,7 +173,7 @@ var crawlerHeadLine = function () {
                 }
                 if (!result) {
                   console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
-                  startGetDetail.emit('startGetDetail', newsEntry, newsEntry['tagName']);
+                  startGetDetail.emit('startGetNewsDetail', newsEntry);
                 }
               }); // News.findOne
             }
@@ -199,5 +189,10 @@ var crawlerHeadLine = function () {
   }//for
 };
 
+var sinaCrawler = function() {
+  crawlerHeadLine();
+}
+
 exports.crawlerHeadLine = crawlerHeadLine;
-crawlerHeadLine();
+exports.sinaCrawler = sinaCrawler;
+sinaCrawler();
