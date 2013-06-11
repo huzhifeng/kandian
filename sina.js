@@ -75,7 +75,16 @@ var getNewsDetail = function(entry) {
       obj['body'] = jObj['description'];
       obj['img'] = pickImg(jObj['enclosure']);
       obj['video'] = [];
-      obj['link'] = jObj['link'];
+      obj['link'] = "";
+      if(jObj['link']) {
+        obj['link'] = jObj['link']; // http://news.sina.cn/?sa=t124d8940595v2357
+      }else if(jObj['guid']) {
+        obj['link'] = jObj['guid']; // http://news.sina.cn/?sa=t124d8940595v2357
+      }else if(entry['link']) {
+        obj['link'] = entry['link']; // http://news.sina.cn/?sa=d8940595t124v71
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), link null");
+      }
       obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['pubDate'];
       obj['time'] = new Date(Date.parse(jObj['pubDate']));
@@ -132,6 +141,7 @@ var crawlerHeadLine = function () {
     crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
+    (function(page) {
     var url = util.format(headlineLink, page);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
@@ -154,7 +164,7 @@ var crawlerHeadLine = function () {
       }
       var newsList = json["data"]["list"];
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
@@ -186,6 +196,7 @@ var crawlerHeadLine = function () {
         }//for
       });//forEach
     });//request
+    })(page);
   }//for
 };
 

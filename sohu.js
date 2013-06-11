@@ -75,7 +75,12 @@ var getNewsDetail = function(entry) {
       obj['body'] = jObj['content'].replace(/90_90/gi,"602_1000");//小图片替换为大图片
       obj['img'] = pickImg(obj['body']);
       obj['video'] = [];
-      obj['link'] = jObj['link'];
+      obj['link'] = "";
+      if(jObj['link']) {
+        obj['link'] = jObj['link']; // http://3g.k.sohu.com/t/n7189277
+      }else {
+        obj['link'] = util.format("http://3g.k.sohu.com/t/n%s", docid); // http://3g.k.sohu.com/t/n7189277
+      }
       obj['title'] = entry['title'].trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['time'];
       obj['time'] = new Date(Date.parse(jObj['time']));
@@ -182,7 +187,7 @@ function pickPhotos(obj) {
 
 var getPhotoDetail = function(entry) {
   // http://api.k.sohu.com/api/photos/gallery.go?gid=78233&from=tag&fromId=455&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
-  //http://api.k.sohu.com/api/photos/gallery.go?gid=78233
+  // http://api.k.sohu.com/api/photos/gallery.go?gid=78233
   var docid = util.format("%s",entry['gid']);
   var url = util.format("http://api.k.sohu.com/api/photos/gallery.go?gid=%s&from=tag&fromId=%s&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", docid, entry['tagId']);
   request({uri: url, headers: headers}, function (err, res, body) {
@@ -214,7 +219,12 @@ var getPhotoDetail = function(entry) {
       obj['body'] = genBodyHtml(jObj);
       obj['img'] = pickPhotos(jObj);
       obj['video'] = [];
-      obj['link'] = jObj['shareLink'];
+      obj['link'] = "";
+      if(jObj['shareLink']) {
+        obj['link'] = jObj['shareLink']; // http://3g.k.sohu.com/t/p78321
+      }else {
+        obj['link'] = util.format("http://3g.k.sohu.com/t/p%s", docid); // http://3g.k.sohu.com/t/p78321
+      }
       obj['title'] = entry['title'].trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['time'];
       obj['time'] = new Date(Date.parse(jObj['time']));
@@ -264,6 +274,7 @@ var crawlerHeadLine = function () {
     crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
+    (function(page) {
     var url = util.format(headlineLink, page);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
@@ -286,7 +297,7 @@ var crawlerHeadLine = function () {
       }
       var newsList = json["articles"];
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
@@ -317,6 +328,7 @@ var crawlerHeadLine = function () {
         }//for
       });//forEach
     });//request
+    })(page);
   }//for
 };
 
@@ -330,6 +342,7 @@ var crawlerPhoto = function (tag, id) {
     crawlerPhotoFirstTime[tag] = 1;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
+    (function(page) {
     var url = "";
     if(1 == page) {
       url = util.format("http://api.k.sohu.com/api/photos/list.go?&tagId=%s&rt=json&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", id);
@@ -357,7 +370,7 @@ var crawlerPhoto = function (tag, id) {
       }
       var newsList = json["news"];
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        //console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
@@ -381,6 +394,7 @@ var crawlerPhoto = function (tag, id) {
         }
       });//forEach
     });//request
+    })(page);
   }//for
 };
 
@@ -405,6 +419,7 @@ var crawlerTag = function (tag, id) {
     crawlerTagFirstTime[tag] = 1;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
+    (function(page) {
     var url = util.format(tagLink, id, page);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
@@ -444,6 +459,7 @@ var crawlerTag = function (tag, id) {
         }); // News.findOne
       });//forEach
     });//request
+    })(page);
   }//for
 };
 

@@ -69,7 +69,14 @@ var getNewsDetail = function(entry) {
       obj['body'] = jObj['body'];
       obj['img'] = jObj['img'];
       obj['video'] = jObj['video'];
-      obj['link'] = jObj['link'];
+      obj['link'] = "";
+      if(entry['url_3w']) {
+        obj['link'] = entry['url_3w']; // http://help.3g.163.com/13/0611/08/912V2VCS00963VRO.html
+      }else if(entry['url']) {
+        obj['link'] = entry['url']; // http://3g.163.com/ntes/13/0611/08/912V2VCS00963VRO.html
+      }else {
+        obj['link'] = util.format("http://3g.163.com/touch/article.html?docid=%s", docid); // http://3g.163.com/touch/article.html?docid=912V2VCS00963VRO
+      }
       obj['title'] = jObj['title'].trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['ptime'];
       obj['time'] = new Date(Date.parse(jObj['ptime']));
@@ -196,7 +203,10 @@ var getPhotoDetail = function(entry) {
       obj['body'] = genBodyHtml(jObj);
       obj['img'] = pickImg(jObj);
       obj['video'] = [];
-      obj['link'] = jObj['url'];
+      obj['link'] = "";
+      if(jObj['url']) {
+        obj['link'] = jObj['url']; // http://sports.163.com/photoview/011U0005/99130.html#p=90Q9LN0D4FFF0005
+      }
       obj['title'] = entry['setname'].trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['createdate'];
       obj['time'] = obj['ptime'];
@@ -246,24 +256,18 @@ var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
   // http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html
   // http://c.3g.163.com/nc/article/headline/T1348647909107/400-20.html
-  var headlineLink = 'http://c.3g.163.com/nc/article/headline/T1295501906343/%d-20.html';
+  //var headlineLink = 'http://c.3g.163.com/nc/article/headline/T1295501906343/%d-20.html';
   var headlineLink2 = 'http://c.3g.163.com/nc/article/headline/T1348647909107/%d-20.html';
   var MAX_PAGE_NUM = 3;
   var page = 0;
-  var urls = [];
-  var url_num = 0;
-  var i = 0;
   if(crawlerHeadLineFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 20;
     crawlerHeadLineFirstTime = 0;
   }
-  for(page=0; page<=MAX_PAGE_NUM; page++) {
-    //urls[url_num++] = util.format(headlineLink, page*20);
-    urls[url_num++] = util.format(headlineLink2, page*20);
-  }
-  for(i=0; i<url_num; i++) {
-    var url = urls[i];
+  for(page=0; page<MAX_PAGE_NUM; page++) {
+    (function(page) {
+    var url = util.format(headlineLink2, page*20);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
@@ -288,7 +292,7 @@ var crawlerHeadLine = function () {
         newsList = json["T1295501906343"];
       }
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
@@ -319,12 +323,14 @@ var crawlerHeadLine = function () {
         }//for
       });//forEach
     });//request
+    })(page);
   }//for
 };
 
 var crawlerPhotoFirstTime = 1; //Crawl more pages at the first time
 var crawlerPhoto = function () {
   var MAX_PAGE_NUM = 1;
+  var page = 0;
   var urls = [
     "/list/0096/54GJ0096.json",
     "/morelist/0096/54GJ0096/22074.json",
@@ -365,13 +371,7 @@ var crawlerPhoto = function () {
     "/morelist/0096/54GJ0096/13649.json",
     "/morelist/0096/54GJ0096/13644.json"
   ];
-  var url_num = 0;
-  var i = 0;
   var prefix = "http://c.3g.163.com/photo/api%s";
-
-  for(i=0; i<urls.length; i++) {
-    urls[url_num++] = util.format(prefix, urls[i]);
-  }
 
   if(crawlerPhotoFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): All");
@@ -379,8 +379,9 @@ var crawlerPhoto = function () {
     crawlerPhotoFirstTime = 0;
   }
 
-  for(i=0; i<MAX_PAGE_NUM; i++) {
-    var url = urls[i];
+  for(page=0; page<MAX_PAGE_NUM; page++) {
+    (function(page) {
+    var url = util.format(prefix, urls[page]);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
@@ -402,7 +403,7 @@ var crawlerPhoto = function () {
       }
       var newsList = json;
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
@@ -425,6 +426,7 @@ var crawlerPhoto = function () {
         }
       });//forEach
     });//request
+    })(page);
   }//for
 };
 
@@ -440,6 +442,7 @@ var crawlerTag = function (tag, id) {
     crawlerTagFirstTime[tag] = 1;
   }
   for(page=0; page<MAX_PAGE_NUM; page++) {
+    (function(page) {
     var url = util.format(tagLink, id, page*20);
     request({uri: url, headers: headers}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
@@ -479,6 +482,7 @@ var crawlerTag = function (tag, id) {
         }); // News.findOne
       });//forEach
     });//request
+    })(page);
   }//for
 };
 

@@ -77,7 +77,14 @@ var getNewsDetail = function(entry) {
         }
       });
       obj['video'] = [];
-      obj['link'] = jObj['url'];
+      obj['link'] = "";
+      if(jObj['url']) {
+        obj['link'] = jObj['url']; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else if(jObj['surl']) {
+        obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else {
+        obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
+      }
       obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
       obj['ptime'] = entry['time'];
       obj['time'] = new Date(entry['time']);
@@ -126,6 +133,7 @@ var crawlerHeadLine = function () {
     crawlerHeadLineFirstTime = 0;
   }
   for(page=63; page<=MAX_PAGE_NUM; page++) {
+    (function(page) {
     var url = util.format(headlineLink, page);
     //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():url="+url);
     request({uri: url, headers: headers}, function (err, res, body) {
@@ -186,7 +194,7 @@ var crawlerHeadLine = function () {
         }
         var newsList = newJson["newslist"];
         if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl newsList empty");
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl newsList empty in url " + url);
           return;
         }
         newsList.forEach(function(newsEntry) {
@@ -219,6 +227,7 @@ var crawlerHeadLine = function () {
         });//forEach
       });//request newUrl
     });//request url
+    })(page);
   }//for
 };
 
