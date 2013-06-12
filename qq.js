@@ -6,13 +6,15 @@ var qqTags = require('config').Config.qqTags;
 var tags = _.keys(qqTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
+var genQqFindCmd = require('./lib/utils').genQqFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var jsdom = require("jsdom").jsdom;
 var headers = {
     'User-Agent': '~...260(android)',
     'Host': 'inews.qq.com'
 };
+// http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013050300143202&store=63&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
+var detailLink = 'http://inews.qq.com/getQQNewsNormalHtmlContent?id=%s';
 var site = "qq";
 
 var startGetDetail = new EventEmitter();
@@ -22,8 +24,6 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
 });
 
 var getNewsDetail = function(entry) {
-  // http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013050300143202&store=63&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
-  var detailLink = 'http://inews.qq.com/getQQNewsNormalHtmlContent?id=%s';
   var docid = util.format("%s",entry['id']);
   var url = util.format(detailLink, docid);
   request({uri: url, headers: headers}, function (err, res, body) {
@@ -49,7 +49,7 @@ var getNewsDetail = function(entry) {
     var jObj = json;
     var obj = {};
 
-    News.findOne(genFindCmd(site, docid), function(err, result) {
+    News.findOne(genQqFindCmd(site, entry), function(err, result) {
       if(err) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
         return;
@@ -78,7 +78,11 @@ var getNewsDetail = function(entry) {
       });
       obj['video'] = [];
       obj['link'] = "";
-      if(jObj['url']) {
+      if(entry['url']) {
+        obj['link'] = entry['url']; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else if(entry['surl']) {
+        obj['link'] = entry['surl']; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else if(jObj['url']) {
         obj['link'] = jObj['url']; // http://view.inews.qq.com/a/NEW2013050300143202
       }else if(jObj['surl']) {
         obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/NEW2013050300143202
@@ -119,6 +123,56 @@ var getNewsDetail = function(entry) {
     });//News.findOne
   });//request
 };
+
+var findTagInSummary = function(entry) {
+  var i = 0, j = 0;
+
+  if(!entry) {
+    console.log("findTagInSummary() null obj");
+    console.log(util.inspect(entry));
+    return "";
+  }
+
+  for(i=0; i<tags.length; i++) {
+    if (entry['title'] && (entry['title'].indexOf(tags[i]) !== -1)) {
+      return tags[i];
+    }else if (entry['source'] && (entry['source'].indexOf(tags[i]) !== -1)) {
+      return tags[i];
+    }else if (entry['abstract'] && (entry['abstract'].indexOf(tags[i]) !== -1)) {
+      return tags[i];
+    }else if(entry['tag']) {
+      for(j=0; j<entry['tag'].length; j++){
+        if((entry['tag'][j]) && (entry['tag'][j].indexOf(tags[i]) !== -1)) {
+          return tags[i];
+        }
+      } // for j=0
+    }
+  } // for i=0
+
+  return "";
+}
+
+var findTagInDetail = function(entry) {
+  var i = 0, j = 0;
+
+  if((!entry) || (!entry['content']) || (!entry['content'].length)) {
+    console.log("findTagInDetail() null obj");
+    console.log(util.inspect(entry));
+    return "";
+  }
+
+  for(i=0; i<entry['content'].length; i++){
+    if((entry['content'][i]['type']) && (entry['content'][i]['type'] === 1)) { // text
+      for(j=0; j<tags.length; j++) {
+        if((entry['content'][i]['value']) && (entry['content'][i]['value'].indexOf(tags[j]) !== -1)) {
+          return tags[j];
+        }
+      } // for j=0
+    }
+  } // for i=0
+
+  return "";
+}
 
 var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
@@ -161,6 +215,95 @@ var crawlerHeadLine = function () {
       }
       var ids = json["idlist"][0]["ids"];
       var i = 0;
+      ids.forEach(function(idsEntry) {
+        var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=63&ids=%s", idsEntry['id']);
+        request({uri: summaryUrl, headers: headers}, function (err, res, body) {
+          if(err || (res.statusCode != 200) || (!body)) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl error");
+            console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
+            return;
+          }
+          var summary_json = null;
+          try {
+            summary_json = JSON.parse(body);
+          }
+          catch (e) {
+            summary_json = null;
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() summary_json catch error");
+            console.log(e);
+          }
+          if(!summary_json) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() summary_json error");
+            return;
+          }
+          if(summary_json['ret'] != 0) {
+            console.log("zhutest file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ret="+summary_json['ret']);
+            return;
+          }
+          var newsList = summary_json["newslist"];
+          if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl newsList empty in url " + summaryUrl);
+            return;
+          }
+          var newsEntry =newsList[0];
+          try {
+            newsEntry['tagName'] = findTagInSummary(newsEntry);
+            if (newsEntry['tagName']) {
+              News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
+                if(err) {
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
+                  return;
+                }
+                if (!result) {
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                  startGetDetail.emit('startGetNewsDetail', newsEntry);
+                }
+              }); // News.findOne
+            }else {
+              var detailUrl = util.format(detailLink, newsEntry['id']);
+              request({uri: detailUrl, headers: headers}, function (err, res, body) {
+                if(err || (res.statusCode != 200) || (!body)) {
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl error");
+                  console.log(err);console.log(detailUrl);console.log(util.inspect(res));console.log(body);
+                  return;
+                }
+                var json = null;
+                try {
+                  json = JSON.parse(body);
+                }
+                catch (e) {
+                  json = null;
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl JSON.parse() catch error");
+                  console.log(e);
+                }
+                if((!json) || (json['ret'] != 0)) {
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl ret="+json['ret']);
+                  return;
+                }
+                var newsDetail = json;
+                newsEntry['tagName'] = findTagInDetail(newsDetail);
+                if (newsEntry['tagName']) {
+                  News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
+                    if(err) {
+                      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl News.findOne():error " + err);
+                      return;
+                    }
+                    if (!result) {
+                      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                      startGetDetail.emit('startGetNewsDetail', newsEntry);
+                    }
+                  }); // News.findOne
+                }
+              });
+            }
+          }
+          catch (e) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
+            console.log(e);
+          }
+        });
+      });
+      /*
       var newUrl = 'http://inews.qq.com/getQQNewsListItems?store=63&ids=';
       for(i=0; i<ids.length; i++) {
         newUrl += ids[i]['id'];
@@ -203,10 +346,10 @@ var crawlerHeadLine = function () {
               continue;
             }
             try {
-              if ((newsEntry['title'].indexOf(tags[i]) !== -1) || (newsEntry['source'].indexOf(tags[i]) !== -1)) {
+              if (findTagInSummary(newsEntry, tags[i])) {
                 //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl title="+newsEntry['title']);
                 newsEntry['tagName'] = tags[i];
-                News.findOne(genFindCmd(site, newsEntry['id']), function(err, result) {
+                News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
                   if(err) {
                     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
                     return;
@@ -226,6 +369,7 @@ var crawlerHeadLine = function () {
           }//for
         });//forEach
       });//request newUrl
+      */
     });//request url
     })(page);
   }//for
