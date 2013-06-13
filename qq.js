@@ -27,6 +27,10 @@ startGetDetail.on('startGetTopicDetail', function (entry) {
   getTopicDetail(entry);
 });
 
+startGetDetail.on('startGetPhotoDetail', function (entry) {
+  getPhotoDetail(entry);
+});
+
 var getNewsDetail = function(entry) {
   var docid = util.format("%s",entry['id']);
   var url = util.format(detailLink, docid);
@@ -93,7 +97,7 @@ var getNewsDetail = function(entry) {
       }else {
         obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
       }
-      obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
+      obj['title'] = entry['title'];//.trim().replace(/\s+/g, '');
       obj['ptime'] = entry['time'];
       obj['time'] = new Date(entry['time']);
       obj['marked'] = obj['body'];
@@ -190,7 +194,7 @@ var getTopicDetail = function(entry) {
       }else {
         obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
       }
-      obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
+      obj['title'] = entry['title'];//.trim().replace(/\s+/g, '');
       obj['ptime'] = entry['time'];
       obj['time'] = new Date(entry['time']);
       obj['marked'] = obj['body'];
@@ -225,7 +229,104 @@ var getTopicDetail = function(entry) {
   });//request
 };
 
-var findTagInSummary = function(entry) {
+var getPhotoDetail = function(entry) {
+  // http://inews.qq.com/getQQNewsSimpleHtmlContent?id=PIC2013061200601000&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0
+  var photoDetailLink = "http://inews.qq.com/getQQNewsSimpleHtmlContent?id=%s&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0";
+  var docid = util.format("%s",entry['id']);
+  var url = util.format(photoDetailLink, docid);
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (res.statusCode != 200) || (!body)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():error");
+      console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+      return;
+    }
+    //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail() util.inspect(body)="+util.inspect(body));
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():JSON.parse() catch error");
+      console.log(e);
+    }
+    if((!json) || (json['ret'] != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():ret="+json['ret']);
+      return;
+    }
+    var jObj = json;
+    var obj = {};
+
+    News.findOne(genQqFindCmd(site, entry), function(err, result) {
+      if(err) {
+        console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():error " + err);
+        return;
+      }
+      if (result) {
+        //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():exist ");
+        return;
+      }
+      obj['docid'] = encodeDocID(site, docid);
+      obj['site'] = site;
+      //obj['jsonstr'] = body; // delete it to save db size
+      obj['body'] = jObj['intro'] + jObj['content']['text'];
+      obj['img'] = [];
+      var attribute = jObj['attribute'];
+      var img_keys = _.keys(attribute);
+      img_keys.forEach(function(key){
+        obj['img'][obj['img'].length] = attribute[key]['url'];
+        var imgHtml = attribute[key]['desc'] + genLazyLoadHtml(attribute[key]['desc'], attribute[key]['url']);
+        obj['body'] = obj['body'].replace("<!--" + key + "-->", imgHtml); // <!--IMG_4-->
+      });
+      obj['video'] = [];
+      obj['link'] = "";
+      if(entry['url']) {
+        obj['link'] = entry['url']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(entry['surl']) {
+        obj['link'] = entry['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(jObj['url']) {
+        obj['link'] = jObj['url']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(jObj['surl']) {
+        obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else {
+        obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
+      }
+      obj['title'] = entry['title'];//.trim().replace(/\s+/g, '');
+      obj['ptime'] = entry['time'];
+      obj['time'] = new Date(entry['time']);
+      obj['marked'] = obj['body'];
+
+      obj['created'] = new Date();
+      obj['views'] = 1;
+      obj['tags'] = entry['tagName'];
+
+      //remove all html tag,
+      //refer to <<How to remove HTML Tags from a string in Javascript>>
+      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
+      //and https://github.com/tmpvar/jsdom
+      var window = jsdom().createWindow();
+      var mydiv = window.document.createElement("div");
+      mydiv.innerHTML = obj['body'];
+      // digest
+      var maxDigest = 300;
+      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
+
+      // cover
+      obj['cover'] = entry['thumbnails'][0];
+      if (obj['img'][0]) {
+        obj['cover'] = obj['img'][0];
+      }
+
+      News.insert(obj, function (err, result) {
+        if(err) {
+          console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.insert():error " + err);
+        }
+      });
+    });//News.findOne
+  });//request
+};
+
+var findTagInSummary = function(entry, tagType) {
   var i = 0, j = 0;
 
   if(!entry) {
@@ -235,6 +336,9 @@ var findTagInSummary = function(entry) {
   }
 
   for(i=0; i<tags.length; i++) {
+    if(qqTags[tags[i]].indexOf(tagType) === -1) {
+      continue;
+    }
     if (entry['title'] && (entry['title'].indexOf(tags[i]) !== -1)) {
       return tags[i];
     }else if (entry['source'] && (entry['source'].indexOf(tags[i]) !== -1)) {
@@ -348,7 +452,7 @@ var crawlerHeadLine = function () {
           }
           var newsEntry =newsList[0];
           try {
-            newsEntry['tagName'] = findTagInSummary(newsEntry);
+            newsEntry['tagName'] = findTagInSummary(newsEntry, "qq_news");
             if (newsEntry['tagName']) {
               News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
                 if(err) {
@@ -382,7 +486,7 @@ var crawlerHeadLine = function () {
                   return;
                 }
                 var newsDetail = json;
-                newsEntry['tagName'] = findTagInDetail(newsDetail);
+                newsEntry['tagName'] = findTagInDetail(newsDetail, "qq_news");
                 if (newsEntry['tagName']) {
                   News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
                     if(err) {
@@ -506,12 +610,119 @@ var crawlerTopic = function () {
   });//request url
 };
 
+var crawlerPhotoFirstTime = 1; //Crawl more pages at the first time
+var crawlerPhoto = function () {
+  // http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0
+  var photoLinks = [
+    'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0', // 精选
+    'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo_yl&appver=16_android_2.7.0', // 娱乐
+    'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo_mn&appver=16_android_2.7.0', // 美女
+    //'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo_qiqu&appver=16_android_2.7.0', // 奇趣
+    //'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo_sy&appver=16_android_2.7.0', //摄影
+  ];
+  var MAX_PAGE_NUM = 3;
+  var NEWS_NUM_PER_PAGE = 20;
+
+  if(crawlerPhotoFirstTime) {
+    console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): All");
+    MAX_PAGE_NUM = 10;
+    crawlerPhotoFirstTime = 0;
+  }
+
+  photoLinks.forEach(function(link) {
+  var url = link;
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (res.statusCode != 200) || (!body)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
+      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
+      return;
+    }
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() catch error");
+      console.log(e);
+    }
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() error");
+      return;
+    }
+    if(json['ret'] != 0) {
+      console.log("zhutest file[" + __filename + "]" + " crawlerPhoto():home page ret="+json['ret']);
+      return;
+    }
+    var ids = json["idlist"][0]["ids"];
+    if((MAX_PAGE_NUM * NEWS_NUM_PER_PAGE) < ids.length) {
+      ids = ids.slice(0,MAX_PAGE_NUM * NEWS_NUM_PER_PAGE)
+    }
+    ids.forEach(function(idsEntry) {
+      // http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=PIC2013061200601200&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0
+      var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0", idsEntry['id']);
+      request({uri: summaryUrl, headers: headers}, function (err, res, body) {
+        if(err || (res.statusCode != 200) || (!body)) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl error");
+          console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
+          return;
+        }
+        var summary_json = null;
+        try {
+          summary_json = JSON.parse(body);
+        }
+        catch (e) {
+          summary_json = null;
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() summary_json catch error");
+          console.log(e);
+        }
+        if(!summary_json) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() summary_json error");
+          return;
+        }
+        if(summary_json['ret'] != 0) {
+          console.log("zhutest file[" + __filename + "]" + " crawlerPhoto():summaryUrl ret="+summary_json['ret']);
+          return;
+        }
+        var newsList = summary_json["newslist"];
+        if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl newsList empty in url " + summaryUrl);
+          return;
+        }
+        var newsEntry =newsList[0];
+        try {
+          newsEntry['tagName'] = findTagInSummary(newsEntry, "qq_photo");
+          if (newsEntry['tagName']) {
+            News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
+              if(err) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(), News.findOne():error " + err);
+                return;
+              }
+              if (!result) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                startGetDetail.emit('startGetPhotoDetail', newsEntry);
+              }
+            }); // News.findOne
+          }
+        }
+        catch (e) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): catch error");
+          console.log(e);
+        }
+      });
+    });
+  });//request url
+  }); // forEach
+};
+
 var qqCrawler = function() {
   crawlerHeadLine();
   crawlerTopic();
+  crawlerPhoto();
 }
 
 exports.crawlerHeadLine = crawlerHeadLine;
 exports.crawlerTopic = crawlerTopic;
+exports.crawlerPhoto = crawlerPhoto;
 exports.qqCrawler = qqCrawler;
 qqCrawler();

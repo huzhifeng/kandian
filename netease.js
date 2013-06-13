@@ -465,7 +465,7 @@ var crawlerTag = function (tag, id) {
       }
       var newsList = json[id];
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():newsList empty in url " + url);
+        //console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {

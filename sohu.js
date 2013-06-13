@@ -297,7 +297,7 @@ var crawlerHeadLine = function () {
       }
       var newsList = json["articles"];
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
+        //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
@@ -370,7 +370,7 @@ var crawlerPhoto = function (tag, id) {
       }
       var newsList = json["news"];
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty in url " + url);
+        //console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
