@@ -23,6 +23,10 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
   getNewsDetail(entry);
 });
 
+startGetDetail.on('startGetTopicDetail', function (entry) {
+  getTopicDetail(entry);
+});
+
 var getNewsDetail = function(entry) {
   var docid = util.format("%s",entry['id']);
   var url = util.format(detailLink, docid);
@@ -118,6 +122,103 @@ var getNewsDetail = function(entry) {
       News.insert(obj, function (err, result) {
         if(err) {
           console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
+        }
+      });
+    });//News.findOne
+  });//request
+};
+
+var getTopicDetail = function(entry) {
+  // http://inews.qq.com/getQQNewsSimpleHtmlContent?id=TPC2013061100203800
+  var topicDetailLink = "http://inews.qq.com/getQQNewsSimpleHtmlContent?id=%s";
+  var docid = util.format("%s",entry['id']);
+  var url = util.format(topicDetailLink, docid);
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (res.statusCode != 200) || (!body)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():error");
+      console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+      return;
+    }
+    //console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail() util.inspect(body)="+util.inspect(body));
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():JSON.parse() catch error");
+      console.log(e);
+    }
+    if((!json) || (json['ret'] != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():ret="+json['ret']);
+      return;
+    }
+    var jObj = json;
+    var obj = {};
+
+    News.findOne(genQqFindCmd(site, entry), function(err, result) {
+      if(err) {
+        console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail(), News.findOne():error " + err);
+        return;
+      }
+      if (result) {
+        //console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail(), News.findOne():exist ");
+        return;
+      }
+      obj['docid'] = encodeDocID(site, docid);
+      obj['site'] = site;
+      //obj['jsonstr'] = body; // delete it to save db size
+      obj['body'] = jObj['intro'] + jObj['content']['text'];
+      obj['img'] = [];
+      var attribute = jObj['attribute'];
+      var img_keys = _.keys(attribute);
+      img_keys.forEach(function(key){
+        obj['img'][obj['img'].length] = attribute[key]['url'];
+        var imgHtml = genLazyLoadHtml("", attribute[key]['url']);
+        obj['body'] = obj['body'].replace("<!--" + key + "-->", imgHtml); // <!--IMG_4-->
+      });
+      obj['video'] = [];
+      obj['link'] = "";
+      if(entry['url']) {
+        obj['link'] = entry['url']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(entry['surl']) {
+        obj['link'] = entry['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(jObj['url']) {
+        obj['link'] = jObj['url']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(jObj['surl']) {
+        obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else {
+        obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
+      }
+      obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
+      obj['ptime'] = entry['time'];
+      obj['time'] = new Date(entry['time']);
+      obj['marked'] = obj['body'];
+
+      obj['created'] = new Date();
+      obj['views'] = 1;
+      obj['tags'] = entry['tagName'];
+
+      //remove all html tag,
+      //refer to <<How to remove HTML Tags from a string in Javascript>>
+      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
+      //and https://github.com/tmpvar/jsdom
+      var window = jsdom().createWindow();
+      var mydiv = window.document.createElement("div");
+      mydiv.innerHTML = obj['body'];
+      // digest
+      var maxDigest = 300;
+      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
+
+      // cover
+      obj['cover'] = entry['thumbnails'][0];
+      if (obj['img'][0]) {
+        obj['cover'] = obj['img'][0];
+      }
+
+      News.insert(obj, function (err, result) {
+        if(err) {
+          console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail(), News.insert():error " + err);
         }
       });
     });//News.findOne
@@ -303,82 +404,114 @@ var crawlerHeadLine = function () {
           }
         });
       });
-      /*
-      var newUrl = 'http://inews.qq.com/getQQNewsListItems?store=63&ids=';
-      for(i=0; i<ids.length; i++) {
-        newUrl += ids[i]['id'];
-        if(i<(ids.length-1)) {
-          newUrl += ',';
-        }
-      }
-      //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl="+newUrl);
-      request({uri: newUrl, headers: headers}, function (err, res, body) {
-        if(err || (res.statusCode != 200) || (!body)) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl error");
-          console.log(err);console.log(newUrl);console.log(util.inspect(res));console.log(body);
-          return;
-        }
-        var newJson = null;
-        try {
-          newJson = JSON.parse(body);
-        }
-        catch (e) {
-          newJson = null;
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
-          console.log(e);
-        }
-        if(!newJson) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl JSON.parse() error");
-          return;
-        }
-        if(newJson['ret'] != 0) {
-          console.log("zhutest file[" + __filename + "]" + " crawlerHeadLine():newUrl ret="+newJson['ret']);
-          return;
-        }
-        var newsList = newJson["newslist"];
-        if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl newsList empty in url " + url);
-          return;
-        }
-        newsList.forEach(function(newsEntry) {
-          for(var i = 0; i < tags.length; i++) {
-            if(qqTags[tags[i]].indexOf("qq_") === -1) {//crawlerTags will handle these tags, so skip them here
-              continue;
-            }
-            try {
-              if (findTagInSummary(newsEntry, tags[i])) {
-                //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl title="+newsEntry['title']);
-                newsEntry['tagName'] = tags[i];
-                News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
-                  if(err) {
-                    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
-                    return;
-                  }
-                  if (!result) {
-                    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newUrl title="+newsEntry['title']);
-                    startGetDetail.emit('startGetNewsDetail', newsEntry);
-                  }
-                }); // News.findOne
-              }
-            }
-            catch (e) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
-              console.log(e);
-              continue;
-            }
-          }//for
-        });//forEach
-      });//request newUrl
-      */
     });//request url
     })(page);
   }//for
 };
 
+var crawlerTopicFirstTime = 1; //Crawl more pages at the first time
+var crawlerTopic = function () {
+  // http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_topic&appver=16_android_2.7.0
+  var topicLink = 'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_topic&appver=16_android_2.7.0';
+  var MAX_PAGE_NUM = 3;
+  var NEWS_NUM_PER_PAGE = 20;
+
+  if(crawlerTopicFirstTime) {
+    console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): All");
+    MAX_PAGE_NUM = 10;
+    crawlerTopicFirstTime = 0;
+  }
+
+  var url = topicLink;
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (res.statusCode != 200) || (!body)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():error");
+      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
+      return;
+    }
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() catch error");
+      console.log(e);
+    }
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() error");
+      return;
+    }
+    if(json['ret'] != 0) {
+      console.log("zhutest file[" + __filename + "]" + " crawlerTopic():home page ret="+json['ret']);
+      return;
+    }
+    var ids = json["idlist"][0]["ids"];
+    if((MAX_PAGE_NUM * NEWS_NUM_PER_PAGE) < ids.length) {
+      ids = ids.slice(0,MAX_PAGE_NUM * NEWS_NUM_PER_PAGE)
+    }
+    ids.forEach(function(idsEntry) {
+      // http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=TPC2013061100203800
+      var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s", idsEntry['id']);
+      request({uri: summaryUrl, headers: headers}, function (err, res, body) {
+        if(err || (res.statusCode != 200) || (!body)) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl error");
+          console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
+          return;
+        }
+        var summary_json = null;
+        try {
+          summary_json = JSON.parse(body);
+        }
+        catch (e) {
+          summary_json = null;
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() summary_json catch error");
+          console.log(e);
+        }
+        if(!summary_json) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() summary_json error");
+          return;
+        }
+        if(summary_json['ret'] != 0) {
+          console.log("zhutest file[" + __filename + "]" + " crawlerTopic():summaryUrl ret="+summary_json['ret']);
+          return;
+        }
+        var newsList = summary_json["newslist"];
+        if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl newsList empty in url " + summaryUrl);
+          return;
+        }
+        var newsEntry =newsList[0];
+        try {
+          newsEntry['tagName'] = "今日话题";//findTagInSummary(newsEntry);
+          if (newsEntry['tagName']) {
+            News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
+              if(err) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(), News.findOne():error " + err);
+                return;
+              }
+              if (!result) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                startGetDetail.emit('startGetTopicDetail', newsEntry);
+              }
+            }); // News.findOne
+          }
+        }
+        catch (e) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): catch error");
+          console.log(e);
+        }
+      });
+    });
+  });//request url
+};
+
 var qqCrawler = function() {
   crawlerHeadLine();
+  crawlerTopic();
 }
 
 exports.crawlerHeadLine = crawlerHeadLine;
+exports.crawlerTopic = crawlerTopic;
 exports.qqCrawler = qqCrawler;
 qqCrawler();
