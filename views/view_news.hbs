@@ -19,36 +19,16 @@
   </div>
 
   <div class="news-content content-{{tag2c news.tags.[0]}}">
-    <p>【免责声明：本文自互联网收集而来，方便大家阅读，版权归原创者所有，如果侵犯了你的权益，请通知我们，我们会及时删除侵权内容，谢谢！<a href="{{#if news.link}}{{news.link}}{{else}}#{{/if}}" target="_blank">原文链接</a>】</p>
+   {{{news.marked}}}
     <br />
-   {{{news.marked}}}     
+    <p class="text-error">【免责声明：本文自互联网收集而来，方便大家阅读，版权归原创者所有，如果侵犯了你的权益，请通知我们，我们会及时删除侵权内容，谢谢！<a href="{{#if news.link}}{{news.link}}{{else}}#{{/if}}" target="_blank">原文链接</a>】</p>
   </div>
 <br>
-<div class="bdlikebutton"></div>
-<script id="bdlike_shell"></script>
-<script>
-var bdShare_config = {
-  "type":"medium",
-  "color":"blue",
-  "uid":"6107738",
-  "likeText":"内容很赞",
-  "likedText":"顶爆啦"
-};
-document.getElementById("bdlike_shell").src="http://bdimg.share.baidu.com/static/js/like_shell.js?t=" + Math.ceil(new Date()/3600000);
-</script>
-<br>
 <!-- Baidu Button BEGIN -->
-<div id="bdshare" class="bdshare_t bds_tools get-codes-bdshare">
-<span class="bds_more">分享到：</span>
-<a class="bds_qzone">QQ空间</a>
-<a class="bds_tsina">新浪微博</a>
-<a class="bds_tqq">腾讯微博</a>
-<a class="bds_t163">网易微博</a>
-<a class="shareCount"></a>
-</div>
-<script type="text/javascript" id="bdshare_js" data="type=tools&amp;uid=6107738" ></script>
+<script type="text/javascript" id="bdshare_js" data="type=slide&amp;img=1&amp;pos=left&amp;uid=3478522" ></script>
 <script type="text/javascript" id="bdshell_js"></script>
 <script type="text/javascript">
+var bds_config={"bdTop":150};
 document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + Math.ceil(new Date()/3600000);
 </script>
 <!-- Baidu Button END -->

@@ -19,7 +19,17 @@ tt = mergeDict(tt, ifengTags);
 var index = function (req, res, next) {
   var getNewss = function (callback) {
     var page = req.params.page || 1;
-    News.page({"site":{"$nin":["qq"]}}, page, function (err, currentPage, pages, result) {
+    var cmd = {
+      "$or":
+        [
+          {"site": {"$in": ["netease", "sohu"]}},
+          {
+            "site": "ifeng",
+            "tags": {"$in":["FUN来了","今日最大声","有报天天读","凤凰知道","史说新语","百部穿影"]},
+          }
+        ]
+    };//{"site":{"$nin":["qq"]}};
+    News.page(cmd, page, function (err, currentPage, pages, result) {
       if (! err) {
         callback(null, {currentPage: currentPage, pages: pages, newss: result});
       } else {
@@ -45,7 +55,7 @@ var index = function (req, res, next) {
   function (err, results) {
     if (! err) {
       // console.log(currentPage, pages);
-      res.render('home', {pageTitle: '看点---有看点，更精彩！',
+      res.render('home', {pageTitle: '看点网---有看点，更精彩！',
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, baseUrl: '/page/',hotNews: results.hotNewss.hotNewss});
     } else {

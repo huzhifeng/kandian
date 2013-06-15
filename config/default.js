@@ -2,13 +2,13 @@
 module.exports = {
   Config: {
     timezone: 'Asia/Shanghai',
-    siteName: '看点',
+    siteName: '看点网',
     cookieSecret: '#$%nnja5720',
     salt: '#$%%^^^',
     port: 1000,
     interval: 1000 * 60 * 10,
     staticMaxAge: 3600000 * 24 * 1,
-    limit: 15,
+    limit: 10,
     hotQty: 4,
     maxRssItems: 50,
     neteaseTags: { //把apk改成zip, 解压进入/assets/default_columns.txt, 这个文件里面包含了全部栏目
@@ -41,6 +41,7 @@ module.exports = {
       '热辣评': '683',
       '变态辣椒':'677',
       '狐揭秘': 'sohu_hjm',
+      '搜查科':'sohu_sck',
       '开心一刻': 'sohu_kxyk',
       '数说IT': 'sohu_shit',
       '红人红事榜': 'sohu_hrhsb',
@@ -74,8 +75,7 @@ module.exports = {
       '特别策划': '4741',
       '求是': 'qs',
       '烽火组': 'fhz',
-      '今日谈': 'jrt',
-      '搜查科':'sck',*/
+      '今日谈': 'jrt',*/
     },
     sinaTags: {
       '今日网言': 'sina_jrwy',
