@@ -77,7 +77,7 @@ var getNewsDetail = function(entry) {
       }else {
         obj['link'] = util.format("http://3g.163.com/touch/article.html?docid=%s", docid); // http://3g.163.com/touch/article.html?docid=912V2VCS00963VRO
       }
-      obj['title'] = jObj['title'].trim().replace(/\s+/g, '');
+      obj['title'] = jObj['title'];//.trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['ptime'];
       obj['time'] = new Date(Date.parse(jObj['ptime']));
       obj['marked'] = jObj['body'].replace('<!--@@PRE-->', '【').replace('<!--@@PRE-->', '】<br/>');
@@ -168,7 +168,7 @@ var getPhotoDetail = function(entry) {
   request({uri: url, headers: headers}, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():error");
-      console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
+      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
       return;
     }
     //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail() util.inspect(body)="+util.inspect(body));
@@ -207,7 +207,7 @@ var getPhotoDetail = function(entry) {
       if(jObj['url']) {
         obj['link'] = jObj['url']; // http://sports.163.com/photoview/011U0005/99130.html#p=90Q9LN0D4FFF0005
       }
-      obj['title'] = entry['setname'].trim().replace(/\s+/g, '');
+      obj['title'] = entry['setname'];//.trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['createdate'];
       obj['time'] = obj['ptime'];
       obj['marked'] = jObj['body'];
@@ -328,106 +328,73 @@ var crawlerHeadLine = function () {
 };
 
 var crawlerPhotoFirstTime = 1; //Crawl more pages at the first time
-var crawlerPhoto = function () {
-  var MAX_PAGE_NUM = 1;
-  var page = 0;
-  var urls = [
-    "/list/0096/54GJ0096.json",
-    "/morelist/0096/54GJ0096/22074.json",
-    "/morelist/0096/54GJ0096/21927.json",
-    "/morelist/0096/54GJ0096/21703.json",
-    "/morelist/0096/54GJ0096/21553.json",
-    "/morelist/0096/54GJ0096/21374.json",
-    "/morelist/0096/54GJ0096/21109.json",
-    "/morelist/0096/54GJ0096/20885.json",
-    "/morelist/0096/54GJ0096/20587.json",
-    "/morelist/0096/54GJ0096/20301.json",
-    "/morelist/0096/54GJ0096/20101.json",
-    "/morelist/0096/54GJ0096/19834.json",
-    "/morelist/0096/54GJ0096/19635.json",
-    "/morelist/0096/54GJ0096/19479.json",
-    "/morelist/0096/54GJ0096/19354.json",
-    "/morelist/0096/54GJ0096/19167.json",
-    "/morelist/0096/54GJ0096/19005.json",
-    "/morelist/0096/54GJ0096/18684.json",
-    "/morelist/0096/54GJ0096/18551.json",
-    "/morelist/0096/54GJ0096/18414.json",
-    "/morelist/0096/54GJ0096/18209.json",
-    "/morelist/0096/54GJ0096/17976.json",
-    "/morelist/0096/54GJ0096/17725.json",
-    "/morelist/0096/54GJ0096/17531.json",
-    "/morelist/0096/54GJ0096/17346.json",
-    "/morelist/0096/54GJ0096/17099.json",
-    "/morelist/0096/54GJ0096/16920.json",
-    "/morelist/0096/54GJ0096/16667.json",
-    "/morelist/0096/54GJ0096/16447.json",
-    "/morelist/0096/54GJ0096/16190.json",
-    "/morelist/0096/54GJ0096/15949.json",
-    "/morelist/0096/54GJ0096/15580.json",
-    "/morelist/0096/54GJ0096/15259.json",
-    "/morelist/0096/54GJ0096/14718.json",
-    "/morelist/0096/54GJ0096/14179.json",
-    "/morelist/0096/54GJ0096/13920.json",
-    "/morelist/0096/54GJ0096/13649.json",
-    "/morelist/0096/54GJ0096/13644.json"
-  ];
-  var prefix = "http://c.3g.163.com/photo/api%s";
-
-  if(crawlerPhotoFirstTime) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): All");
-    MAX_PAGE_NUM = urls.length;
-    crawlerPhotoFirstTime = 0;
-  }
-
-  for(page=0; page<MAX_PAGE_NUM; page++) {
-    (function(page) {
-    var url = util.format(prefix, urls[page]);
-    request({uri: url, headers: headers}, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
+var crawlerPhotoPage = function(url) {
+  request({uri: url, headers: headers}, function (err, res, body) {
+    if(err || (!body)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():error");
+      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
+      return;
+    }else if(res.statusCode != 200) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():res.statusCode=" + res.statusCode);
+      setTimeout(function() {
+        crawlerPhotoPage(url);
+      }, 60000); // try again after 60 seconds
+      return;
+    }
+    var json = null;
+    try {
+      json = JSON.parse(body);
+    }
+    catch (e) {
+      json = null;
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():JSON.parse() catch error");
+      console.log(e);
+    }
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():JSON.parse() error");
+      return;
+    }
+    var newsList = json;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
       try {
-        json = JSON.parse(body);
+        newsEntry['tagName'] = "独家图集";
+        News.findOne(genFindCmd(site, newsEntry['setid']), function(err, result) {
+          if(err) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage(), News.findOne():error " + err);
+            return;
+          }
+          if (!result) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():title="+newsEntry['setname']);
+            startGetDetail.emit('startGetPhotoDetail', newsEntry);
+          }
+        }); // News.findOne
       }
       catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() catch error");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage(): catch error");
         console.log(e);
       }
-      if(!json) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() error");
-        return;
+    });//forEach
+    if(newsList.length == 10) {
+      if(crawlerPhotoFirstTime) {
+        var nexPage = util.format("http://c.3g.163.com/photo/api/morelist/0096/54GJ0096/%s.json", newsList[9]['setid']);
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage(): next page="+nexPage);
+        setTimeout(function() {
+          crawlerPhotoPage(nexPage);
+        }, 30000); // crawl next page after 30 seconds
       }
-      var newsList = json;
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():newsList empty in url " + url);
-        return;
-      }
-      newsList.forEach(function(newsEntry) {
-        try {
-          newsEntry['tagName'] = "独家图集";
-          News.findOne(genFindCmd(site, newsEntry['setid']), function(err, result) {
-            if(err) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(), News.findOne():error " + err);
-              return;
-            }
-            if (!result) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():title="+newsEntry['setname']);
-              startGetDetail.emit('startGetPhotoDetail', newsEntry);
-            }
-          }); // News.findOne
-        }
-        catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): catch error");
-          console.log(e);
-        }
-      });//forEach
-    });//request
-    })(page);
-  }//for
+    }else {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage(): last page");
+      crawlerPhotoFirstTime = 0;
+    }
+  });//request
+}
+var crawlerPhoto = function () {
+  var startPage = "http://c.3g.163.com/photo/api/list/0096/54GJ0096.json";
+  crawlerPhotoPage(startPage);
 };
 
 var crawlerTagFirstTime = {}; //Crawl more pages at the first time
