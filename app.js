@@ -35,6 +35,7 @@ app.engine('hbs', hbs.express3({
 }));
 app.set('view engine', 'hbs');
 app.set('views', __dirname + '/views');
+app.use(express.compress());
 app.use(express.favicon(path.join(__dirname, 'public/favicon.ico')));
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
