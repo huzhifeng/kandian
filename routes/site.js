@@ -28,8 +28,8 @@ var index = function (req, res, next) {
   };
 
   async.parallel({
-    newss: getNewss,
-    hotNewss: getHotNewss
+    newss: getNewss
+    //hotNewss: getHotNewss
   },
   function (err, results) {
     if (! err) {
@@ -37,8 +37,7 @@ var index = function (req, res, next) {
       res.render('site', {pageTitle: site2name(site),
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, site: site, active: site,
-        baseUrl: '/site/' + encodeURIComponent(site) + '/page/',
-        hotNews: results.hotNewss.hotNewss});
+        baseUrl: '/site/' + encodeURIComponent(site) + '/page/'/*,hotNews: results.hotNewss.hotNewss*/});
     } else {
       // console.log(err);
       next(new Error(err.message));

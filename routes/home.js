@@ -49,15 +49,15 @@ var index = function (req, res, next) {
   };
 
   async.parallel({
-    newss: getNewss,
-    hotNewss: getHotNewss
+    newss: getNewss
+    //hotNewss: getHotNewss
   },
   function (err, results) {
     if (! err) {
       // console.log(currentPage, pages);
       res.render('home', {pageTitle: '看点网---有看点，更精彩！',
         currentPage: results.newss.currentPage, pages: results.newss.pages,
-        news: results.newss.newss, baseUrl: '/page/',hotNews: results.hotNewss.hotNewss});
+        news: results.newss.newss, baseUrl: '/page/'/*,hotNews: results.hotNewss.hotNewss*/});
     } else {
       // console.log(err);
       next(new Error(err.message));
