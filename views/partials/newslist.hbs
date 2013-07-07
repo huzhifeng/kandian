@@ -9,7 +9,7 @@
             {{this.title}}
         </a></h3>
         <time>{{dateFormat this.time}}</time>
-         <span class="view-count"><strong>&nbsp;&nbsp;<a href="/tag/{{this.tags}}">{{this.tags}}</a>&nbsp;&nbsp;{{#if this.views}}{{this.views}}{{else}}2{{/if}}</strong> 人围观,</span> <span class="ds-thread-count" data-thread-key="{{docid}}"></span>
+         <span class="view-count"><strong>&nbsp;&nbsp;<a href="/tag/{{this.tags}}">{{this.tags}}</a>&nbsp;&nbsp;{{#if this.views}}{{this.views}}{{else}}2{{/if}}</strong> 人围观</span> <!--<span class="ds-thread-count" data-thread-key="{{docid}}"></span>-->
          <!--<span class="download">,<a title="下载txt" href="/d/{{docid}}.txt">下载({{#if download}}{{download}}{{else}}0{{/if}})</a></span>-->
         <a href="/news/{{docid}}" target="_blank"><p>{{{digest}}} ...</p></a>
     </li>

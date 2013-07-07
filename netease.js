@@ -209,7 +209,7 @@ var getPhotoDetail = function(entry) {
       }
       obj['title'] = entry['setname'];//.trim().replace(/\s+/g, '');
       obj['ptime'] = jObj['createdate'];
-      obj['time'] = obj['ptime'];
+      obj['time'] = new Date(Date.parse(jObj['ptime']));
       obj['marked'] = jObj['body'];
       obj['created'] = new Date();
       obj['views'] = 1;

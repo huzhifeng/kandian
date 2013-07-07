@@ -1,4 +1,3 @@
-
 module.exports = {
   Config: {
     timezone: 'Asia/Shanghai',
@@ -117,6 +116,8 @@ module.exports = {
       '观世变':'ifeng_gsb',
       '深度':'ifeng_sd',
       '军魂100分': 'ifeng_jhybf',
+      '话说':'ifeng_hs',
+      '一周人物':'ifeng_yzrw',
       /*'历史': '',
       '历史上的今天':'ifeng_lssdjt',
       '独家评': '',
