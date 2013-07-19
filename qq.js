@@ -76,11 +76,11 @@ var getNewsDetail = function(entry) {
           obj['body'] += item['value'];
         }
         else if(item['type'] == 2) { //pic
-          obj['body'] += genLazyLoadHtml('', item['value']);
+          obj['body'] += genLazyLoadHtml(entry['tagName'], item['value']);
           obj['img'][obj['img'].length] = item['value'];
         }
         else if(item['type'] == 3) { //video
-          obj['body'] += genLazyLoadHtml('', item['value']['img']);
+          obj['body'] += genLazyLoadHtml(entry['tagName'], item['value']['img']);
           obj['img'][obj['img'].length] = item['value']['img'];
         }
       });
@@ -178,7 +178,7 @@ var getTopicDetail = function(entry) {
       var img_keys = _.keys(attribute);
       img_keys.forEach(function(key){
         obj['img'][obj['img'].length] = attribute[key]['url'];
-        var imgHtml = genLazyLoadHtml("", attribute[key]['url']);
+        var imgHtml = genLazyLoadHtml(entry['tagName'], attribute[key]['url']);
         obj['body'] = obj['body'].replace("<!--" + key + "-->", imgHtml); // <!--IMG_4-->
       });
       obj['video'] = [];
@@ -460,7 +460,7 @@ var crawlerHeadLine = function () {
                   return;
                 }
                 if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
                   startGetDetail.emit('startGetNewsDetail', newsEntry);
                 }
               }); // News.findOne
@@ -494,7 +494,7 @@ var crawlerHeadLine = function () {
                       return;
                     }
                     if (!result) {
-                      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
                       startGetDetail.emit('startGetNewsDetail', newsEntry);
                     }
                   }); // News.findOne
@@ -522,7 +522,7 @@ var crawlerTopic = function () {
 
   if(crawlerTopicFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): All");
-    MAX_PAGE_NUM = 10;
+    MAX_PAGE_NUM = 3;//10;
     crawlerTopicFirstTime = 0;
   }
 
@@ -595,7 +595,7 @@ var crawlerTopic = function () {
                 return;
               }
               if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
                 startGetDetail.emit('startGetTopicDetail', newsEntry);
               }
             }); // News.findOne
@@ -625,7 +625,7 @@ var crawlerPhoto = function () {
 
   if(crawlerPhotoFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): All");
-    MAX_PAGE_NUM = 10;
+    MAX_PAGE_NUM = 3;//10;
     crawlerPhotoFirstTime = 0;
   }
 
@@ -699,7 +699,7 @@ var crawlerPhoto = function () {
                 return;
               }
               if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl title=[" + newsEntry['tagName'] + "]"+newsEntry['title']);
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
                 startGetDetail.emit('startGetPhotoDetail', newsEntry);
               }
             }); // News.findOne
@@ -716,6 +716,7 @@ var crawlerPhoto = function () {
 };
 
 var qqCrawler = function() {
+  console.log("hzfdbg file[" + __filename + "]" + " qqCrawler():Date="+new Date());
   crawlerHeadLine();
   crawlerTopic();
   crawlerPhoto();

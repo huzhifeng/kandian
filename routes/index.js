@@ -1,7 +1,7 @@
-
 var home = require('./home');
 var node = require('./node');
 var site = require('./site');
+var category = require('./category');
 var search = require('./search');
 var rss = require('./rss');
 var download = require('./download');
@@ -31,6 +31,8 @@ exports = module.exports = function(app, checkAuth) {
   app.get('/tag/:tag/page/:page', node.index);
   app.get('/site/:site', site.index);
   app.get('/site/:site/page/:page', site.index);
+  app.get('/category/:category', category.index);
+  app.get('/category/:category/page/:page', category.index);
 
 
   // admin

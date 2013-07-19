@@ -262,7 +262,7 @@ var crawlerHeadLine = function () {
   var page = 0;
   if(crawlerHeadLineFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 20;
+    MAX_PAGE_NUM = 5;//20;
     crawlerHeadLineFirstTime = 0;
   }
   for(page=0; page<MAX_PAGE_NUM; page++) {
@@ -309,7 +309,7 @@ var crawlerHeadLine = function () {
                   return;
                 }
                 if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['docid']);
                   startGetDetail.emit('startGetNewsDetail', newsEntry);
                 }
               }); // News.findOne
@@ -368,7 +368,7 @@ var crawlerPhotoPage = function(url) {
             return;
           }
           if (!result) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():title="+newsEntry['setname']);
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():["+newsEntry['tagName']+"]"+newsEntry['setname']+",docid="+newsEntry['setid']);
             startGetDetail.emit('startGetPhotoDetail', newsEntry);
           }
         }); // News.findOne
@@ -405,7 +405,7 @@ var crawlerTag = function (tag, id) {
   var page = 0;
   if(!crawlerTagFirstTime[tag]) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(): All, tag="+tag);
-    MAX_PAGE_NUM = 20;
+    MAX_PAGE_NUM = 2;//20;
     crawlerTagFirstTime[tag] = 1;
   }
   for(page=0; page<MAX_PAGE_NUM; page++) {
@@ -443,7 +443,7 @@ var crawlerTag = function (tag, id) {
             return;
           }
           if (!result) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():title="+newsEntry['title']);
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['docid']);
             startGetDetail.emit('startGetNewsDetail', newsEntry);
           }
         }); // News.findOne
@@ -462,6 +462,7 @@ var crawlerTags = function () {
 }
 
 var neteaseCrawler = function() {
+  console.log("hzfdbg file[" + __filename + "]" + " neteaseCrawler():Date="+new Date());
   crawlerTags();
   crawlerHeadLine();
   crawlerPhoto();

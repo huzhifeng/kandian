@@ -113,7 +113,7 @@ var crawlerHeadLine = function () {
   var page = 1;
   if(crawlerHeadLineFirstTime) {
     console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 50;
+    MAX_PAGE_NUM = 10;//50;
     crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -163,9 +163,9 @@ var crawlerHeadLine = function () {
             }
             try {
               if ((item['body']['title'].indexOf(tags[k]) !== -1) || (item['body']['source'].indexOf(tags[k]) !== -1)) {
-                //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item['body']['title']="+item['body']['title']+item['body']['editTime']);
                 //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():item="+util.inspect(item));
                 item['tagName'] = tags[k];
+                //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+item['tagName']+"]"+item['body']['title']+",docid="+item['meta']['documentId']);
                 startGetDetail.emit('startGetNewsDetail', item);
                 /*News.findOne(genFindCmd(site, item['meta']['documentId']), function(err, result) {
                  if(err) {
@@ -196,6 +196,7 @@ var crawlerHeadLine = function () {
 };
 
 var ifengCrawler = function() {
+  console.log("hzfdbg file[" + __filename + "]" + " ifengCrawler():Date="+new Date());
   crawlerHeadLine();
 }
 

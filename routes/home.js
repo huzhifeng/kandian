@@ -22,10 +22,17 @@ var index = function (req, res, next) {
     var cmd = {
       "$or":
         [
-          {"site": {"$in": ["netease", "sohu"]}},
+          {
+            "site": {"$in": ["netease", "sohu", "sina"]},
+            "tags": {"$nin":["网易深度","网易女人","健康养生","真话","搜查科"]},
+          },
           {
             "site": "ifeng",
-            "tags": {"$in":["FUN来了","今日最大声","有报天天读","凤凰知道","史说新语","百部穿影"]},
+            "tags": {"$in":["FUN来了","今日最大声","有报天天读","凤凰知道","史说新语","史林拍案","百部穿影"]},
+          },
+          {
+            "site": "qq",
+            "tags": {"$in":["新闻哥","图话"]},
           }
         ]
     };//{"site":{"$nin":["qq"]}};
@@ -110,15 +117,15 @@ var viewNews = function (req, res, next) {
         });
 
         /////////////////
-        News.findLimit({time: {$gt: result.time}}, 1, {time: 1}, function (err5, results5) {
+        News.findLimit({"site":result.site, "tags":result.tags, time: {$gt: result.time}}, 1, {time: 1}, function (err5, results5) {
           if (! err5) {
-            News.findLimit({time: {$lt: result.time}}, 1, null, function (err6, results6) {
+            News.findLimit({"site":result.site, "tags":result.tags, time: {$lt: result.time}}, 1, null, function (err6, results6) {
               if (! err6) {
-                News.findLimit({time: {$lt: result.time}}, 4, null, function (err2, results2) {
+                News.findLimit({"site":result.site, "tags":result.tags, time: {$lt: result.time}}, 4, null, function (err2, results2) {
                 if (!err2) {
                   // console.log(results2);
                   if (results2.length < 1) {
-                    News.findLimit({time: {$gt: result.time}}, 4, null, function (err3, results3) {
+                    News.findLimit({"site":result.site, "tags":result.tags, time: {$gt: result.time}}, 4, null, function (err3, results3) {
                       if (!err3) {
                         res.render('view_news', {pageTitle: result.title, news: result,
                           relatedNews: results3, active: tt[result.tags[0]], prevNews: results5, nextNews: results6});
