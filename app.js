@@ -13,6 +13,7 @@ var helpers = require('./lib/helpers');
 var checkAuth = require('./lib/utils').checkAuth;
 var routes = require('./routes');
 var app = module.exports = express();
+var accessLogFile = require('fs').createWriteStream('accessLogFile.log', {flags: 'a'}); //use {flags: 'w'} to open in write mode
 
 /**
  * helpers
@@ -37,7 +38,7 @@ app.set('view engine', 'hbs');
 app.set('views', __dirname + '/views');
 app.use(express.compress());
 app.use(express.favicon(path.join(__dirname, 'public/favicon.ico')));
-app.use(express.logger('dev'));
+app.use(express.logger({format:'[:date] [:remote-addr] [:user-agent] [HTTP/:http-version] [:method] [:url] [:status] [:referrer] [:response-time ms]', stream: accessLogFile}));//default|short|tiny|dev, http://www.senchalabs.org/connect/middleware-logger.html
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.cookieParser(CONFIG.cookieSecret));

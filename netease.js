@@ -327,7 +327,7 @@ var crawlerHeadLine = function () {
   }//for
 };
 
-var crawlerPhotoFirstTime = 1; //Crawl more pages at the first time
+var crawlerPhotoFirstTime = 0; //Crawl more pages at the first time
 var crawlerPhotoPage = function(url) {
   request({uri: url, headers: headers}, function (err, res, body) {
     if(err || (!body)) {
