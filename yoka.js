@@ -102,7 +102,7 @@ var getNewsDetail = function(entry) {
       //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
       return;
     }
-    var obj = {};
+    var obj = entry;
     obj.docid = encodeDocID(site, entry.ID);
     obj.site = site;
     obj.cateid = entry.cateid;

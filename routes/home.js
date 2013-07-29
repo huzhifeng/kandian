@@ -7,6 +7,7 @@ var sinaTags = require('config').Config.sinaTags;
 var qqTags = require('config').Config.qqTags;
 var ifengTags = require('config').Config.ifengTags;
 var yokaTags = require('config').Config.yokaTags;
+var krTags = require('config').Config.krTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
 var decodeDocID = require('../lib/utils').decodeDocID;
@@ -17,6 +18,7 @@ tt = mergeDict(tt, sinaTags);
 tt = mergeDict(tt, qqTags);
 tt = mergeDict(tt, ifengTags);
 tt = mergeDict(tt, yokaTags);
+tt = mergeDict(tt, krTags);
 
 var index = function (req, res, next) {
   var getNewss = function (callback) {
@@ -39,6 +41,10 @@ var index = function (req, res, next) {
           {
             "site": "yoka",
             "tags": {"$in":["笑到抽筋","谁八卦啊你八卦"]},
+          },
+          {
+            "site": "36kr",
+            "tags": {"$in":["8点1氪","创业说","氪周刊","氪月报"]},
           },
         ]
     };//{"site":{"$nin":["qq"]}};

@@ -9,6 +9,7 @@ tt = mergeDict(tt,require('config').Config.sinaTags);
 tt = mergeDict(tt,require('config').Config.qqTags);
 tt = mergeDict(tt,require('config').Config.ifengTags);
 tt = mergeDict(tt,require('config').Config.yokaTags);
+tt = mergeDict(tt,require('config').Config.krTags);
 
 var index = function (req, res, next) {
 
