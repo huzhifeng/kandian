@@ -175,7 +175,7 @@ var crawlerCategory = function (entry) {
     (function(page) {
     var url = "http://mobservices3.yoka.com/service.ashx";
     var postData = {'pageindex':page,'pagesize':entry.pagesize,'cateid':entry.cateid};
-    request({uri: url, method: "POST", headers: headers, form: postData, proxy: "http://127.0.0.1:7788"}, function (err, res, body) {
+    request({uri: url, method: "POST", headers: headers, form: postData/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
         console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+entry.pagesize+"&cateid="+entry.cateid);/*console.log(util.inspect(res));*/console.log(body);
