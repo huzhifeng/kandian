@@ -1,4 +1,4 @@
-var async = require('async');
+﻿var async = require('async');
 var News = require('../models/news');
 var crawlerAll = require('../netease').crawlerAll;
 var neteaseTags = require('config').Config.neteaseTags;
@@ -108,7 +108,7 @@ var viewNews = function (req, res, next) {
   var cmd = {"docid": req.params.docid};
   var decode_id = decodeDocID(req.params.docid);
   if(decode_id == req.params.docid) {
-    cmd = {"docid": {"$in": [req.params.docid, encodeDocID("netease", req.params.docid), encodeDocID("sohu", req.params.docid), encodeDocID("sina", req.params.docid), encodeDocID("qq", req.params.docid), encodeDocID("ifeng", req.params.docid)]}};
+    cmd = {"docid": {"$in": [req.params.docid, encodeDocID("netease", req.params.docid), encodeDocID("sohu", req.params.docid), encodeDocID("sina", req.params.docid), encodeDocID("qq", req.params.docid), encodeDocID("ifeng", req.params.docid), encodeDocID("yoka", req.params.docid), encodeDocID("36kr", req.params.docid)]}};
   }else {
     cmd = {"docid": {"$in": [req.params.docid, decode_id]}};
   }

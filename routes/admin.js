@@ -1,4 +1,4 @@
-
+﻿
 var User = require('../models/user');
 var News = require('../models/news');
 var md5 = require('../lib/utils').md5;

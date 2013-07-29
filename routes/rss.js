@@ -1,4 +1,4 @@
-// Refer to https://github.com/dylang/node-rss
+﻿// Refer to https://github.com/dylang/node-rss
 var util = require('util');
 var RSS = require('rss');
 

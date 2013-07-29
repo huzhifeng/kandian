@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
 process.env.TZ = require('config').Config.timezone;
 var http = require('http');
@@ -9,6 +9,8 @@ var sohuCrawler = require('./sohu').sohuCrawler;
 var sinaCrawler = require('./sina').sinaCrawler;
 var qqCrawler = require('./qq').qqCrawler;
 var ifengCrawler = require('./ifeng').ifengCrawler;
+var yokaCrawler = require('./yoka').yokaCrawler;
+var krCrawler = require('./kr').krCrawler;
 
 http.createServer(app).listen(app.get('port'), function(){
   setInterval(neteaseCrawler, interval);
@@ -16,5 +18,7 @@ http.createServer(app).listen(app.get('port'), function(){
   setInterval(sinaCrawler, interval);
   setInterval(qqCrawler, interval);
   setInterval(ifengCrawler, interval);
+  yokaCrawler();
+  krCrawler();
   console.log("Express Start server.js at http://127.0.0.1:" + app.get('port') + "  " + new Date());
 });

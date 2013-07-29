@@ -1,4 +1,4 @@
-kandian
+﻿kandian
 ======
 KanDian is a Node.js program that crawl hot news from NetEase/SoHu/ifeng.
 

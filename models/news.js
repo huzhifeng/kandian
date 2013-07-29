@@ -1,4 +1,4 @@
-var db = require('../db').db;
+﻿var db = require('../db').db;
 var limit = require('config').Config.limit;
 var news = db.collection('news');
 var needInitIndex = 1;

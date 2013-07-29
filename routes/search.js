@@ -1,4 +1,4 @@
-var News = require('../models/news');
+﻿var News = require('../models/news');
 
 var index = function (req, res, next) {
   var page = parseInt(Number(req.query.page) || 1, 10);

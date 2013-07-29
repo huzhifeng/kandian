@@ -1,4 +1,4 @@
-var mongojs = require('mongojs');
+﻿var mongojs = require('mongojs');
 
 var generateMongoUrl = function(){
   obj = {};

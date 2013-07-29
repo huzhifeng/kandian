@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
   Config: {
     timezone: 'Asia/Shanghai',
     siteName: '看点网',

@@ -1,4 +1,4 @@
-var util = require('util');
+﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");

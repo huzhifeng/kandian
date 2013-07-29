@@ -1,4 +1,4 @@
-var util = require('util');
+ï»¿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");
@@ -9,6 +9,7 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
+
 var headers = {
   'Host': 'mobservices3.yoka.com',
   'hv': '3.0.5',
@@ -26,7 +27,31 @@ var headers = {
   'hc': '700',
   //'Accept-Encoding': 'gzip' //Do not enable gzip
 };
+
 var site = "yoka";
+
+var categorys = [
+  {cateid:1, first:1, name:"beauty", pagesize:21, maxpage:100},
+  {cateid:2, first:1, name:"fashion", pagesize:21, maxpage:100},
+  {cateid:3, first:1, name:"life", pagesize:21, maxpage:100},
+  {cateid:4, first:1, name:"unknown", pagesize:21, maxpage:5},
+  {cateid:5, first:1, name:"unknown", pagesize:21, maxpage:100},
+  {cateid:6, first:1, name:"star", pagesize:21, maxpage:100},
+  {cateid:7, first:1, name:"unknown", pagesize:21, maxpage:100},
+  {cateid:8, first:1, name:"unknown", pagesize:21, maxpage:13},
+  {cateid:9, first:1, name:"luxury", pagesize:21, maxpage:100},
+  {cateid:10, first:1, name:"unknown", pagesize:21, maxpage:5},
+  {cateid:11, first:1, name:"unknown", pagesize:21, maxpage:0},
+  {cateid:12, first:1, name:"focus", pagesize:21, maxpage:100},
+  {cateid:13, first:1, name:"man", pagesize:21, maxpage:100},
+  {cateid:14, first:1, name:"unknown", pagesize:21, maxpage:9},
+  {cateid:15, first:1, name:"unknown", pagesize:21, maxpage:1},
+  {cateid:16, first:1, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:17, first:1, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:18, first:1, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:19, first:1, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:20, first:1, name:"unknown", pagesize:21, maxpage:7},
+];
 
 function genBodyHtmlAndImg(obj) {
   var body = "";
@@ -92,7 +117,7 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
 
 var getNewsDetail = function(entry) {
   var bodyimg = genBodyHtmlAndImg(entry);
-  
+
   News.findOne(genYokaFindCmd(entry), function(err, result) {
     if(err) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
@@ -105,20 +130,15 @@ var getNewsDetail = function(entry) {
     var obj = entry;
     obj.docid = encodeDocID(site, entry.ID);
     obj.site = site;
-    obj.cateid = entry.cateid;
-    obj.pageindex = entry.pageindex;
     obj.body = bodyimg.body;
     obj.img = bodyimg.img;
-    obj.video = [];
     obj.link = "";
     if(entry.Url) {
-      obj.link = entry.Url; // http://3g.yoka.com/m/id301255 
+      obj.link = entry.Url; // http://3g.yoka.com/m/id301255
     }else {
-      obj.link = "http://3g.yoka.com/m/id" + entry.ID; // http://3g.yoka.com/m/id301255 
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), link null");
+      obj.link = util.format("http://3g.yoka.com/m/id%s", entry.ID); // http://3g.yoka.com/m/id301255
     }
     obj.title = entry.Shorttitle;
-    obj.realtitle = entry.Title;
     obj.ptime = entry.Createtime;
     obj.time = new Date(Date.parse(entry.Createtime));
     obj.marked = obj.body;
@@ -126,14 +146,11 @@ var getNewsDetail = function(entry) {
     obj.views = 1;
     obj.tags = entry.tagName;
     obj.digest = genDigest(obj.body);
-
-    // cover
     obj.cover = entry.Image;
     if (!entry.Image && entry.focalImageUrl) {
       obj.cover = entry.focalImageUrl;
-      //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj.cover);
     }
-    if((obj.tags.indexOf("ÇáËÉÒ»¿Ì") !== -1) && (obj.img.length > 0)) {
+    if((entry.tagName.indexOf("ç¬‘åˆ°æŠ½ç­‹") !== -1)) {
       obj.cover = obj.img[0];
     }
 
@@ -145,18 +162,23 @@ var getNewsDetail = function(entry) {
   }); // News.findOne
 };
 
-var crawlerCategory = function (cateid, pagesize, maxpage) {
-  var MAX_PAGE_NUM = 1 + maxpage;
+var crawlerCategory = function (entry) {
+  var MAX_PAGE_NUM = 3;
   var page = 1;
+
+  if(entry.first == 1) {
+    entry.first = 0;
+    MAX_PAGE_NUM = 1 + entry.maxpage;
+  }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = "http://mobservices3.yoka.com/service.ashx";
-    var postData = {'pageindex':page,'pagesize':pagesize,'cateid':cateid};
-    request({uri: url, method: "POST", headers: headers, form: postData/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var postData = {'pageindex':page,'pagesize':entry.pagesize,'cateid':entry.cateid};
+    request({uri: url, method: "POST", headers: headers, form: postData, proxy: "http://127.0.0.1:7788"}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
-        console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+pagesize+"&cateid="+cateid);/*console.log(util.inspect(res));*/console.log(body);
+        console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+entry.pagesize+"&cateid="+entry.cateid);/*console.log(util.inspect(res));*/console.log(body);
         return;
       }
       var json = null;
@@ -184,16 +206,13 @@ var crawlerCategory = function (cateid, pagesize, maxpage) {
       newsList.forEach(function(newsEntry) {
         //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.Shorttitle);
         for(var i = 0; i < tags.length; i++) {
-          //if(yokaTags[tags[i]].indexOf("yoka_") === -1) {//crawlerTags will handle these tags, so skip them here
-          //  continue;
-          //}
           try {
             if ((newsEntry.Title.indexOf(tags[i]) !== -1) || (newsEntry.Shorttitle.indexOf(tags[i]) !== -1)) {
               //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.Shorttitle);
               newsEntry.tagName = tags[i];
-              newsEntry.cateid = cateid;
+              newsEntry.cateid = entry.cateid;
               newsEntry.pageindex = page;
-              
+
               News.findOne(genYokaFindCmd(newsEntry), function(err, result) {
                 if(err) {
                   console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
@@ -220,31 +239,12 @@ var crawlerCategory = function (cateid, pagesize, maxpage) {
 
 var yokaCrawler = function() {
   console.log("hzfdbg file[" + __filename + "]" + " yokaCrawler():Start time="+new Date());
-  var cateids = [
-    {cateid:1, name:"beauty", pagesize:21, maxpage:100},
-    {cateid:2, name:"fashion", pagesize:21, maxpage:100},
-    {cateid:3, name:"life", pagesize:21, maxpage:100},
-    {cateid:4, name:"unknown", pagesize:21, maxpage:5},
-    {cateid:5, name:"unknown", pagesize:21, maxpage:100},
-    {cateid:6, name:"star", pagesize:21, maxpage:100},
-    {cateid:7, name:"unknown", pagesize:21, maxpage:100},
-    {cateid:8, name:"unknown", pagesize:21, maxpage:13},
-    {cateid:9, name:"luxury", pagesize:21, maxpage:100},
-    {cateid:10, name:"unknown", pagesize:21, maxpage:5},
-    //{cateid:11, name:"unknown", pagesize:21, maxpage:0},
-    {cateid:12, name:"focus", pagesize:21, maxpage:100},
-    {cateid:13, name:"man", pagesize:21, maxpage:100},
-    {cateid:14, name:"unknown", pagesize:21, maxpage:9},
-    {cateid:15, name:"unknown", pagesize:21, maxpage:1},
-    {cateid:16, name:"unknown", pagesize:21, maxpage:3},
-    {cateid:17, name:"unknown", pagesize:21, maxpage:3},
-    {cateid:18, name:"unknown", pagesize:21, maxpage:3},
-    {cateid:19, name:"unknown", pagesize:21, maxpage:3},
-    {cateid:20, name:"unknown", pagesize:21, maxpage:7},
-  ];
-  cateids.forEach(function(entry) {
-    crawlerCategory(entry.cateid, entry.pagesize, entry.maxpage);
+
+  categorys.forEach(function(entry) {
+    crawlerCategory(entry);
   });//forEach
+
+  setInterval(yokaCrawler, 1000 * 60 * 30);
 }
 
 exports.yokaCrawler = yokaCrawler;

@@ -1,4 +1,4 @@
-var async = require('async');
+﻿var async = require('async');
 var News = require('../models/news');
 var tt = require('config').Config.neteaseTags;
 var hotQty = require('config').Config.hotQty;
