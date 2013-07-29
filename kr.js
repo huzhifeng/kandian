@@ -125,7 +125,7 @@ var crawlerCategory = function (entry) {
     //http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
     //http://apis.36kr.com/api/v1/topics/category/us-startups.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
     var url = util.format("http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d", entry.name, page, entry.pagesize);
-    request({uri: url, headers: headers, proxy: "http://127.0.0.1:7788"}, function (err, res, body) {
+    request({uri: url, headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -171,7 +171,7 @@ var crawlerCategory = function (entry) {
                   }else { // 有些较旧的文章摘要里没有body_html字段，需要访问详情获取
                     // http://apis.36kr.com/api/v1/topics/204615.json?token=734dca654f1689f727cc:32710
                     var detailUrl = util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id);
-                    request({uri: detailUrl, headers: headers, proxy: "http://127.0.0.1:7788"}, function (err, res, body) {
+                    request({uri: detailUrl, headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
                       if(err || (res.statusCode != 200) || (!body)) {
                         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl error");
                         console.log(err);console.log(detailUrl);/*console.log(util.inspect(res));*/console.log(body);
