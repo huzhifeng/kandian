@@ -218,7 +218,7 @@ var krCrawler = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setInterval(krCrawler, 1000 * 60 * 30);
+  setTimeout(krCrawler, 1000 * 60 * 30);
 }
 
 exports.krCrawler = krCrawler;

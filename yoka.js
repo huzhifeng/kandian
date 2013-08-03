@@ -244,7 +244,7 @@ var yokaCrawler = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setInterval(yokaCrawler, 1000 * 60 * 30);
+  setTimeout(yokaCrawler, 1000 * 60 * 30);
 }
 
 exports.yokaCrawler = yokaCrawler;
