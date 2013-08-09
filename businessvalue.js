@@ -142,6 +142,7 @@ var getNewsDetail = function(entry) {
       json = null;
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() catch error");
       console.log(e);
+      return;
     }
     if(!json) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
@@ -229,6 +230,7 @@ var crawlerCategory = function (entry) {
         json = null;
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error"+"?pageindex="+page+"&cateid="+entry.cateid);
         console.log(e);
+        return;
       }
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");

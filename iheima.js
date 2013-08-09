@@ -146,6 +146,7 @@ var crawlerCategory = function (entry) {
       json = null;
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error");
       console.log(e);
+      return;
     }
     if(!json) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
@@ -163,6 +164,7 @@ var crawlerCategory = function (entry) {
       }, 100);
     }else {
       entry.first = 0;
+      entry.offset = 0;
     }
     newsList.forEach(function(newsEntry) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);

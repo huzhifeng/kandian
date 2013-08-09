@@ -189,6 +189,7 @@ var crawlerCategory = function (entry) {
         json = null;
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error");
         console.log(e);
+        return;
       }
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
