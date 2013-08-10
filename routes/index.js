@@ -6,6 +6,7 @@ var search = require('./search');
 var rss = require('./rss');
 var download = require('./download');
 var admin = require('./admin');
+var rt_image = require('./rt_image');
 
 
 exports = module.exports = function(app, checkAuth) {
@@ -33,6 +34,9 @@ exports = module.exports = function(app, checkAuth) {
   app.get('/site/:site/page/:page', site.index);
   app.get('/category/:category', category.index);
   app.get('/category/:category/page/:page', category.index);
+  app.get('/image/', rt_image.index);
+  app.get('/image/page/:page', rt_image.index);
+  app.get('/image/:id', rt_image.viewImage);
 
 
   // admin

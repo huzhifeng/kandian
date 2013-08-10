@@ -1,0 +1,5 @@
+﻿{{#each images}}
+    <a href="/image/{{this.id}}" target="_blank">
+      {{this.alt}}<br><img class="lazy" src="/img/grey.gif" data-original="{{this.src}}" alt="{{this.alt}}">
+    </a><br>
+{{/each}}

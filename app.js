@@ -21,6 +21,7 @@ var accessLogFile = require('fs').createWriteStream('accessLogFile.log', {flags:
 hbs.registerHelper('dateFormat', helpers.dateFormat);
 hbs.registerHelper('timeFormat', helpers.timeFormat);
 hbs.registerHelper('miniImg', helpers.miniImg);
+hbs.registerHelper('imageEntry2Html', helpers.imageEntry2Html);
 hbs.registerHelper('urlEncode', helpers.urlEncode);
 hbs.registerHelper('tag2c', helpers.tag2c);
 hbs.registerHelper('tags2sitemap', helpers.tags2sitemap);
