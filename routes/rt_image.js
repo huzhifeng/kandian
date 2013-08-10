@@ -4,7 +4,10 @@ var image = require('../models/image');
 var index = function (req, res, next) {
   var getImages = function (callback) {
     var page = req.params.page || 1;
-    var query = {site:'xgmn'};
+    var query = {
+      site:{'$in': ['xgmn', 'mnbqg']},
+      tags: {"$in":['Beautyleg', '美空精选', '风俗娘', 'Sabra.net', '一日一美女', '香车美女', '性感美女', '农家妹妹', '日韩美女', '欧美风情', '古典美女', '果子MM']},
+    };
     image.page(query, page, function (err, currentPage, maxPage, result) {
       if (! err) {
         callback(null, {currentPage: currentPage, maxPage: maxPage, images: result});
@@ -30,7 +33,7 @@ var index = function (req, res, next) {
 };
 
 var viewImage = function (req, res, next) {
-  var query = {site:'xgmn', id: req.params.id};
+  var query = {site:{'$in': ['xgmn', 'mnbqg']}, id: req.params.id};
   image.findOne(query, function (err, result) {
     if (err) {
       console.log("hzfdbg file[" + __filename + "]" + " viewImage().findOne() err=" + err);

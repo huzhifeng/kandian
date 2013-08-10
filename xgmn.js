@@ -413,7 +413,7 @@ var crawlerCategory = function (entry) {
         return;
       }
       imageList.forEach(function(imageEntry) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), pictureInfo=" + imageEntry.pictureInfo);
+        //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), pictureInfo=" + imageEntry.pictureInfo);
         Image.findOne({'site':site, 'id':imageEntry.itemId}, function(err, result) {
           if(err) {
             console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.findOne():error " + err);
@@ -516,7 +516,6 @@ var initCatalogList = function() {
   //    var e = catalogList[i];
   //    categorys.push({id:e.catalogueId, name:e.catalogueName, icon:e.catalogueIcon, needCredit:e.needCredit, validTime:e.validTime, maxpage:e.maxpage, first:1, pagesize:15, maxpage:10});
   //  }
-  //  crawlerAllCategory();
   //});//request
 }
 
@@ -525,14 +524,14 @@ var crawlerAllCategory = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setTimeout(crawlerAllCategory, 1000 * 60 * 60 * 8);
+  setTimeout(crawlerAllCategory, 1000 * 60 * 60 * 8); // 8 hours
 }
 
-var baiduCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " baiduCrawler():Start time="+new Date());
+var xgmnCrawler = function() {
+  console.log("hzfdbg file[" + __filename + "]" + " xgmnCrawler():Start time="+new Date());
   initCatalogList();
-  crawlerAllCategory();
+  setTimeout(crawlerAllCategory, 1000 * 5); // delay 5 seconds
 }
 
-exports.baiduCrawler = baiduCrawler;
-baiduCrawler();
+exports.xgmnCrawler = xgmnCrawler;
+xgmnCrawler();
