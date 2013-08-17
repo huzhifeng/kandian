@@ -261,7 +261,7 @@ var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 3;
   var page = 0;
   if(crawlerHeadLineFirstTime) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
+    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 5;//20;
     crawlerHeadLineFirstTime = 0;
   }
@@ -404,7 +404,7 @@ var crawlerTag = function (tag, id) {
   var MAX_PAGE_NUM = 1;
   var page = 0;
   if(!crawlerTagFirstTime[tag]) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(): All, tag="+tag);
+    //console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(): All, tag="+tag);
     MAX_PAGE_NUM = 2;//20;
     crawlerTagFirstTime[tag] = 1;
   }

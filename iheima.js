@@ -167,7 +167,7 @@ var crawlerCategory = function (entry) {
       entry.offset = 0;
     }
     newsList.forEach(function(newsEntry) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
+      //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
       for(var i = 0; i < tags.length; i++) {
         try {
           if (newsEntry.title.indexOf(tags[i]) !== -1) {

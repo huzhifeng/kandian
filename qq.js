@@ -387,7 +387,7 @@ var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 63;
   var page = 63;
   if(crawlerHeadLineFirstTime) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
+    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     //MAX_PAGE_NUM = 20;
     crawlerHeadLineFirstTime = 0;
   }
@@ -481,8 +481,8 @@ var crawlerHeadLine = function () {
                   console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl JSON.parse() catch error");
                   console.log(e);
                 }
-                if((!json) || (json['ret'] != 0)) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl ret="+json['ret']);
+                if((!json) || (!json.ret) || (json.ret != 0)) {
+                  //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl ret="+json['ret']);
                   return;
                 }
                 var newsDetail = json;
@@ -521,7 +521,7 @@ var crawlerTopic = function () {
   var NEWS_NUM_PER_PAGE = 20;
 
   if(crawlerTopicFirstTime) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): All");
+    //console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): All");
     MAX_PAGE_NUM = 3;//10;
     crawlerTopicFirstTime = 0;
   }
@@ -624,7 +624,7 @@ var crawlerPhoto = function () {
   var NEWS_NUM_PER_PAGE = 20;
 
   if(crawlerPhotoFirstTime) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): All");
+    //console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): All");
     MAX_PAGE_NUM = 3;//10;
     crawlerPhotoFirstTime = 0;
   }

@@ -136,7 +136,7 @@ var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 3;
   var page = 1;
   if(crawlerHeadLineFirstTime) {
-    console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
+    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 3;//25;
     crawlerHeadLineFirstTime = 0;
   }
