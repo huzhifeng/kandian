@@ -9,9 +9,14 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genQqFindCmd = require('./lib/utils').genQqFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var jsdom = require("jsdom").jsdom;
+
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-    'User-Agent': '~...260(android)',
-    'Host': 'inews.qq.com'
+  'User-Agent': '~...260(android)',
+  'Host': 'inews.qq.com',
+  'Connection': 'Keep-Alive',
+  //'Accept-Encoding': 'gzip,deflate',
 };
 // http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013050300143202&store=63&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
 var detailLink = 'http://inews.qq.com/getQQNewsNormalHtmlContent?id=%s';
@@ -34,7 +39,11 @@ startGetDetail.on('startGetPhotoDetail', function (entry) {
 var getNewsDetail = function(entry) {
   var docid = util.format("%s",entry['id']);
   var url = util.format(detailLink, docid);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
         console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
@@ -137,7 +146,11 @@ var getTopicDetail = function(entry) {
   var topicDetailLink = "http://inews.qq.com/getQQNewsSimpleHtmlContent?id=%s";
   var docid = util.format("%s",entry['id']);
   var url = util.format(topicDetailLink, docid);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():error");
       console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
@@ -234,7 +247,11 @@ var getPhotoDetail = function(entry) {
   var photoDetailLink = "http://inews.qq.com/getQQNewsSimpleHtmlContent?id=%s&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0";
   var docid = util.format("%s",entry['id']);
   var url = util.format(photoDetailLink, docid);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():error");
       console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
@@ -394,8 +411,11 @@ var crawlerHeadLine = function () {
   for(page=63; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(headlineLink, page);
-    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():url="+url);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -422,7 +442,11 @@ var crawlerHeadLine = function () {
       var i = 0;
       ids.forEach(function(idsEntry) {
         var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=63&ids=%s", idsEntry['id']);
-        request({uri: summaryUrl, headers: headers}, function (err, res, body) {
+        var req = {uri: summaryUrl, method: "GET", headers: headers};
+        if(proxyEnable) {
+          req.proxy = proxyUrl;
+        }
+        request(req, function (err, res, body) {
           if(err || (res.statusCode != 200) || (!body)) {
             console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl error");
             console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
@@ -466,7 +490,11 @@ var crawlerHeadLine = function () {
               }); // News.findOne
             }else {
               var detailUrl = util.format(detailLink, newsEntry['id']);
-              request({uri: detailUrl, headers: headers}, function (err, res, body) {
+              var req = {uri: detailUrl, method: "GET", headers: headers};
+              if(proxyEnable) {
+                req.proxy = proxyUrl;
+              }
+              request(req, function (err, res, body) {
                 if(err || (res.statusCode != 200) || (!body)) {
                   console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl error");
                   console.log(err);console.log(detailUrl);console.log(util.inspect(res));console.log(body);
@@ -527,7 +555,11 @@ var crawlerTopic = function () {
   }
 
   var url = topicLink;
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -557,7 +589,11 @@ var crawlerTopic = function () {
     ids.forEach(function(idsEntry) {
       // http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=TPC2013061100203800
       var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s", idsEntry['id']);
-      request({uri: summaryUrl, headers: headers}, function (err, res, body) {
+      var req = {uri: summaryUrl, method: "GET", headers: headers};
+      if(proxyEnable) {
+        req.proxy = proxyUrl;
+      }
+      request(req, function (err, res, body) {
         if(err || (res.statusCode != 200) || (!body)) {
           console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl error");
           console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
@@ -631,7 +667,11 @@ var crawlerPhoto = function () {
 
   photoLinks.forEach(function(link) {
   var url = link;
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -661,7 +701,11 @@ var crawlerPhoto = function () {
     ids.forEach(function(idsEntry) {
       // http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=PIC2013061200601200&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0
       var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0", idsEntry['id']);
-      request({uri: summaryUrl, headers: headers}, function (err, res, body) {
+      var req = {uri: summaryUrl, method: "GET", headers: headers};
+      if(proxyEnable) {
+        req.proxy = proxyUrl;
+      }
+      request(req, function (err, res, body) {
         if(err || (res.statusCode != 200) || (!body)) {
           console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl error");
           console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
@@ -720,10 +764,8 @@ var qqCrawler = function() {
   crawlerHeadLine();
   crawlerTopic();
   crawlerPhoto();
+  setTimeout(qqCrawler, 1000 * 60 * 60);
 }
 
-exports.crawlerHeadLine = crawlerHeadLine;
-exports.crawlerTopic = crawlerTopic;
-exports.crawlerPhoto = crawlerPhoto;
 exports.qqCrawler = qqCrawler;
 qqCrawler();

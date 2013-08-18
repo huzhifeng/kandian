@@ -10,9 +10,19 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
+
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1',
-    'Host': 'api.k.sohu.com'
+  'Content-Encoding': 'UTF-8',
+  'Content-Type': 'text/plain',
+  //'Accept-Encoding': 'gzip,deflate',
+  //'Accept': '*/*',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1',
+  //'Authorization': 'SZ7224055938192',
+  //'SCOOKIE': '357bcc08def6394f137c5c3ae4d71ffe55a73d197033e5ba3f75c403266180108387629c5c78a86e3134c12c5b7a286c7f539a3393e84b80987eea4a97fb151884a6bb77077ede9d56e0e68fcc05d487e2d9ff53bda32e86b8298b2a9887b039316b4299e0d8bb60ce654f7763ac4190dadbb75ee90c28a78c82db303f3f02c4b1dcec72bd17e75c37eb4ab86046894dbae45fbbe72bddb6331353661b6484c85a883a8498c370eec23f5113d5c549335b9c76c536b7b750ab62c6a392ee48e8',
+  'Host': 'api.k.sohu.com',
+  'Connection': 'Keep-Alive',
 };
 var site = "sohu";
 
@@ -46,7 +56,11 @@ var getNewsDetail = function(entry) {
   var detailLink = 'http://api.k.sohu.com/api/news/article.go?newsId=%s';
   var docid = util.format("%s",entry['newsId']);
   var url = util.format(detailLink, docid);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
         console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
@@ -190,7 +204,11 @@ var getPhotoDetail = function(entry) {
   // http://api.k.sohu.com/api/photos/gallery.go?gid=78233
   var docid = util.format("%s",entry['gid']);
   var url = util.format("http://api.k.sohu.com/api/photos/gallery.go?gid=%s&from=tag&fromId=%s&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", docid, entry['tagId']);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():error");
       console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
@@ -276,7 +294,11 @@ var crawlerHeadLine = function () {
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(headlineLink, page);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -349,7 +371,11 @@ var crawlerPhoto = function (tag, id) {
     }else {
       url = util.format("http://api.k.sohu.com/api/photos/list.go?&tagId=%s&rt=json&pageNo=%d&pageSize=10&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", id, page);
     }
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -421,7 +447,11 @@ var crawlerTag = function (tag, id) {
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(tagLink, id, page);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -464,11 +494,11 @@ var crawlerTag = function (tag, id) {
 };
 
 var crawlerTags = function () {
-    tags.forEach(function(tagName) {
-      if(sohuTags[tagName].indexOf("sohu_") === -1) {
-        crawlerTag(tagName,sohuTags[tagName]);
-      }
-    });
+  tags.forEach(function(tagName) {
+    if(sohuTags[tagName].indexOf("sohu_") === -1) {
+      crawlerTag(tagName,sohuTags[tagName]);
+    }
+  });
 }
 
 var sohuCrawler = function() {
@@ -476,10 +506,8 @@ var sohuCrawler = function() {
   crawlerTags();
   crawlerHeadLine();
   crawlerPhotos();
+  setTimeout(sohuCrawler, 1000 * 60 * 60);
 }
 
-exports.crawlerHeadLine = crawlerHeadLine;
-exports.crawlerTags = crawlerTags;
-exports.crawlerPhotos = crawlerPhotos;
 exports.sohuCrawler = sohuCrawler;
 sohuCrawler();

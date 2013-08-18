@@ -9,9 +9,13 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var jsdom = require("jsdom").jsdom;
+
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-    'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.0.4; sdk Build/MR1)',
-    'Host': 'api.3g.ifeng.com'
+  'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.0.4; sdk Build/MR1)',
+  'Host': 'api.3g.ifeng.com',
+  'Connection': 'Keep-Alive',
 };
 var site = "ifeng";
 // http://api.iapps.ifeng.com/news/detail.json?aid=29584735
@@ -119,7 +123,11 @@ var crawlerHeadLine = function () {
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(headlineLink, page);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -198,8 +206,8 @@ var crawlerHeadLine = function () {
 var ifengCrawler = function() {
   console.log("hzfdbg file[" + __filename + "]" + " ifengCrawler():Date="+new Date());
   crawlerHeadLine();
+  setTimeout(ifengCrawler, 1000 * 60 * 60);
 }
 
-exports.crawlerHeadLine = crawlerHeadLine;
 exports.ifengCrawler = ifengCrawler;
 ifengCrawler();

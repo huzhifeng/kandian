@@ -2,7 +2,6 @@
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");
-//var cheerio = require('cheerio');
 var neteaseTags = require('config').Config.neteaseTags;
 var tags = _.keys(neteaseTags);
 var News = require('./models/news');
@@ -10,9 +9,14 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var jsdom = require("jsdom").jsdom;
+
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': 'NTES Android',
-  'Host': 'c.3g.163.com'
+  'Connection': 'Keep-Alive',
+  'Host': 'c.3g.163.com',//c.m.163.com
+  //'Accept-Encoding': 'gzip',
 };
 var site = "netease";
 
@@ -31,7 +35,11 @@ var getNewsDetail = function(entry) {
   var detailLink = 'http://c.3g.163.com/nc/article/%s/full.html';
   var docid = util.format("%s",entry['docid']);
   var url = util.format(detailLink, docid);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
         console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
@@ -165,7 +173,11 @@ function pickImg(obj) {
 var getPhotoDetail = function(entry) {
   var docid = util.format("%s",entry['setid']);
   var url = util.format("http://c.3g.163.com/photo/api/set/0096/%s.json",entry['setid']);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -244,14 +256,6 @@ var getPhotoDetail = function(entry) {
   });// request
 };
 
-var crawlerOne = function (docid, tag) {
-  var entry = {};
-
-  entry['docid'] = docid;
-  entry['tagName'] = tag;
-  getNewsDetail(entry);
-};
-
 var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
   // http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html
@@ -268,7 +272,11 @@ var crawlerHeadLine = function () {
   for(page=0; page<MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(headlineLink2, page*20);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -329,7 +337,11 @@ var crawlerHeadLine = function () {
 
 var crawlerPhotoFirstTime = 0; //Crawl more pages at the first time
 var crawlerPhotoPage = function(url) {
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoPage():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -411,7 +423,11 @@ var crawlerTag = function (tag, id) {
   for(page=0; page<MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(tagLink, id, page*20);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -454,11 +470,11 @@ var crawlerTag = function (tag, id) {
 };
 
 var crawlerTags = function () {
-    tags.forEach(function(tagName) {
-      if(neteaseTags[tagName].indexOf("netease_") === -1) {
-        crawlerTag(tagName,neteaseTags[tagName]);
-      }
-    });
+  tags.forEach(function(tagName) {
+    if(neteaseTags[tagName].indexOf("netease_") === -1) {
+      crawlerTag(tagName,neteaseTags[tagName]);
+    }
+  });
 }
 
 var neteaseCrawler = function() {
@@ -466,11 +482,8 @@ var neteaseCrawler = function() {
   crawlerTags();
   crawlerHeadLine();
   crawlerPhoto();
+  setTimeout(neteaseCrawler, 1000 * 60 * 60);
 }
 
-exports.crawlerHeadLine = crawlerHeadLine;
-exports.crawlerTags = crawlerTags;
-exports.crawlerPhoto = crawlerPhoto;
-exports.crawlerOne = crawlerOne;
 exports.neteaseCrawler = neteaseCrawler;
 neteaseCrawler();

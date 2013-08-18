@@ -11,6 +11,8 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   //'Accept-Encoding': 'gzip, deflate',//Do not enable gzip
@@ -132,7 +134,11 @@ var crawlerCategory = function (entry) {
   //http://zhiyue.cutt.com/api/clip/items?clipId=100238521&full=1&offset=0&note=1
   //http://zhiyue.cutt.com/api/clip/items?clipId=100238521&full=1&offset=3896353985&note=1
   var url = util.format("http://zhiyue.cutt.com/api/clip/items?clipId=%s&full=1&offset=%s&note=1", entry.clipId, entry.offset);
-  request({uri: url, method: "GET", headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);

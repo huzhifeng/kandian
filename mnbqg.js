@@ -3,6 +3,8 @@ var request = require('request');
 var xml2json = require('xml2json');
 var Image = require('./models/image');
 var site = "mnbqg";
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   'User-Agent': '6.1.0',
@@ -26,7 +28,11 @@ var crawlerCategory = function (entry) {
     //http://newxml3.b0.upaiyun.com/3/1_1.xml
     //http://newxml3.b0.upaiyun.com/3/1_2.xml
     var url = util.format('http://newxml3.b0.upaiyun.com/3/%d_%d.xml', entry.id, page);
-    request({uri: url, method: "GET", headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory().request():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -92,7 +98,11 @@ var crawlerCategory = function (entry) {
 
 var initCatalogList = function() {
   var url = 'http://newxml3.b0.upaiyun.com/3/tab.xml';
-  request({uri: url, method: "GET", headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);

@@ -10,6 +10,8 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   //'Content-Length': '190',//Set Content-Length automaticly
@@ -128,7 +130,11 @@ var getNewsDetail = function(entry) {
     pd.MsgID = "digestDetails";
   }
   var url = 'http://api.businessvalue.com.cn/index.php';
-  request({uri: url, method: "POST", headers: headers, form: pd/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+  var req = {uri: url, method: "POST", headers: headers, form: pd};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -201,7 +207,7 @@ var crawlerCategory = function (entry) {
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 1 + entry.maxpage;
+    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -216,7 +222,11 @@ var crawlerCategory = function (entry) {
     if(30 == entry.cateid) {
       pd.MsgID = "getDigestByCategory";
     }
-    request({uri: url, method: "POST", headers: headers, form: pd/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var req = {uri: url, method: "POST", headers: headers, form: pd};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
         console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+entry.pagesize+"&cateid="+entry.cateid);/*console.log(util.inspect(res));*/console.log(body);
@@ -280,7 +290,7 @@ var businessvalueCrawler = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setTimeout(businessvalueCrawler, 1000 * 60 * 30);
+  setTimeout(businessvalueCrawler, 1000 * 60 * 60);
 }
 
 exports.businessvalueCrawler = businessvalueCrawler;

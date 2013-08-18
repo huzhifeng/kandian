@@ -10,6 +10,8 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   'mAuthorKey': '',
@@ -77,7 +79,11 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
 var getNewsDetail = function(entry) {
   // http://android.m.huxiu.com/article/17962/1
   var url = util.format('http://android.m.huxiu.com/article/%s/1', entry.aid);
-  request({uri: url, method: "GET", headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -147,14 +153,18 @@ var crawlerCategory = function (entry) {
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 1 + entry.maxpage;
+    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     // http://android.m.huxiu.com/portal/1/1
     var url = util.format("http://android.m.huxiu.com/portal/%d/%d", entry.cateid, page);
-    request({uri: url, method: "GET", headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -227,7 +237,7 @@ var huxiuCrawler = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setTimeout(huxiuCrawler, 1000 * 60 * 30);
+  setTimeout(huxiuCrawler, 1000 * 60 * 60);
 }
 
 exports.huxiuCrawler = huxiuCrawler;

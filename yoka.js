@@ -9,6 +9,8 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   'Host': 'mobservices3.yoka.com',
@@ -168,14 +170,18 @@ var crawlerCategory = function (entry) {
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 1 + entry.maxpage;
+    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = "http://mobservices3.yoka.com/service.ashx";
-    var postData = {'pageindex':page,'pagesize':entry.pagesize,'cateid':entry.cateid};
-    request({uri: url, method: "POST", headers: headers, form: postData/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var pd = {'pageindex':page,'pagesize':entry.pagesize,'cateid':entry.cateid};
+    var req = {uri: url, method: "POST", headers: headers, form: pd};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
         console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+entry.pagesize+"&cateid="+entry.cateid);/*console.log(util.inspect(res));*/console.log(body);
@@ -245,7 +251,7 @@ var yokaCrawler = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setTimeout(yokaCrawler, 1000 * 60 * 30);
+  setTimeout(yokaCrawler, 1000 * 60 * 60);
 }
 
 exports.yokaCrawler = yokaCrawler;

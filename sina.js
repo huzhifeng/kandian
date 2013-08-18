@@ -10,10 +10,13 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
+
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-  'User-Agent': 'sdk__sinanews__3.1.0__android__os4.0.4',
-  //'Host': 'api.sina.cn',// Don't set host because it will cause HTTP request failed
-  'Referer': 'http://api.sina.cn'
+  'User-Agent': 'MI_2__sinanews__3.4.0__android__os4.1.1',
+  'Host': 'api.sina.cn',
+  'Connection': 'Keep-Alive',
 };
 var site = "sina";
 
@@ -49,7 +52,11 @@ var getNewsDetail = function(entry) {
   var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
   var docid = util.format("%s",entry['id']);
   var url = util.format(detailLink, docid);
-  request({uri: url, headers: headers}, function (err, res, body) {
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
     if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -143,7 +150,11 @@ var crawlerHeadLine = function () {
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(headlineLink, page);
-    request({uri: url, headers: headers}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -203,8 +214,8 @@ var crawlerHeadLine = function () {
 var sinaCrawler = function() {
   console.log("hzfdbg file[" + __filename + "]" + " sinaCrawler():Date="+new Date());
   crawlerHeadLine();
+  setTimeout(sinaCrawler, 1000 * 60 * 60 * 2);
 }
 
-exports.crawlerHeadLine = crawlerHeadLine;
 exports.sinaCrawler = sinaCrawler;
 sinaCrawler();

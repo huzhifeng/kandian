@@ -10,6 +10,8 @@ var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   'Host': 'apis.36kr.com',
@@ -117,7 +119,7 @@ var crawlerCategory = function (entry) {
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 1 + entry.maxpage;
+    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -125,7 +127,11 @@ var crawlerCategory = function (entry) {
     //http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
     //http://apis.36kr.com/api/v1/topics/category/us-startups.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
     var url = util.format("http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d", entry.name, page, entry.pagesize);
-    request({uri: url, headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -172,7 +178,11 @@ var crawlerCategory = function (entry) {
                   }else { // 有些较旧的文章摘要里没有body_html字段，需要访问详情获取
                     // http://apis.36kr.com/api/v1/topics/204615.json?token=734dca654f1689f727cc:32710
                     var detailUrl = util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id);
-                    request({uri: detailUrl, headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+                    var req = {uri: detailUrl, method: "GET", headers: headers};
+                    if(proxyEnable) {
+                      req.proxy = proxyUrl;
+                    }
+                    request(req, function (err, res, body) {
                       if(err || (res.statusCode != 200) || (!body)) {
                         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl error");
                         console.log(err);console.log(detailUrl);/*console.log(util.inspect(res));*/console.log(body);
@@ -220,7 +230,7 @@ var krCrawler = function() {
     crawlerCategory(entry);
   });//forEach
 
-  setTimeout(krCrawler, 1000 * 60 * 30);
+  setTimeout(krCrawler, 1000 * 60 * 60);
 }
 
 exports.krCrawler = krCrawler;

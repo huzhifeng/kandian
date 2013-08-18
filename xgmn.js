@@ -4,6 +4,8 @@ var request = require('request');
 //var http = require('http-get');
 var Image = require('./models/image');
 var site = "xgmn";
+var proxyEnable = 0;
+var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
   'Host': 'beautyimage.xicp.net',
@@ -386,8 +388,11 @@ var crawlerCategory = function (entry) {
     //http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/GetCataloguePictures.php?catalogueId=28&currentPage=1&pageSize=15
     //http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/GetCataloguePictures.php?catalogueId=28&currentPage=2&pageSize=15
     var url = util.format('http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/GetCataloguePictures.php?catalogueId=%d&currentPage=%d&pageSize=%d', entry.id, page, entry.pagesize);
-    //console.log(url);
-    request({uri: url, method: "GET", headers: headers/*, proxy: "http://127.0.0.1:7788"*/}, function (err, res, body) {
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
       if(err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory().request():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
@@ -485,7 +490,11 @@ var initCatalogList = function() {
     })
   });*/
   //var url = 'http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/Catalogue.php';
-  //request({uri: url, method: "GET", headers: headers, proxy: "http://127.0.0.1:7788"}, function (err, res, body) {
+  //var req = {uri: url, method: "GET", headers: headers};
+  //if(proxyEnable) {
+  //  req.proxy = proxyUrl;
+  //}
+  //request(req, function (err, res, body) {
   //  if(err || (res.statusCode != 200) || (!body)) {
   //    console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():error");
   //    console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
