@@ -1,8 +1,9 @@
 ﻿var image = require('../db').db.collection('image');
-var limit = 30;
+var limit = 10;
 var needInitIndex = 1;
 
 var createEnsureIndex = function(sort) {
+  console.log("hzfdbg file[" + __filename + "]" + " createEnsureIndex()");
   image.ensureIndex(sort, function(err, result) {
     if(err) {
       console.log("hzfdbg file[" + __filename + "]" + " createEnsureIndex().ensureIndex() err=" + err);
@@ -25,7 +26,7 @@ exports.insert = function (obj, callback) {
 
 exports.page = function (query, page, callback) {
   if(needInitIndex) {
-    createEnsureIndex({time:-1});
+    createEnsureIndex({time:1});
     needInitIndex = 0;
   }
   image.count (query, function(err, count) {
@@ -47,9 +48,9 @@ exports.page = function (query, page, callback) {
     currentPage = currentPage > maxPage ? maxPage : currentPage;
 
     var skipNum = (currentPage - 1) * limit;
-    var fields = {"id":1, "src":1, "alt":1, "num":1, "page":1, "tags":1};
+    var fields = {"imgid":1, "id":1, "src":1, "alt":1, "num":1, "time":1, "tags":1};
 
-    image.find(query, fields).sort({page:1}).skip(skipNum).limit(limit).toArray(function (err, result) {
+    image.find(query, fields).sort({time:1}).skip(skipNum).limit(limit).toArray(function (err, result) {
       if (!err) {
         callback(err, currentPage, maxPage, result);
       } else {

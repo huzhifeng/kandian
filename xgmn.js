@@ -3,6 +3,7 @@ var request = require('request');
 //var fs = require('fs');
 //var http = require('http-get');
 var Image = require('./models/image');
+var encodeDocID = require('./lib/utils').encodeDocID;
 var site = "xgmn";
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -430,6 +431,7 @@ var crawlerCategory = function (entry) {
           }
           var obj = imageEntry;
           obj.id = imageEntry.itemId;
+          obj.imgid = encodeDocID(site, obj.id);
           obj.alt = imageEntry.pictureInfo;
           obj.originalImgs = imageEntry.originImageArray.split('|');//http://beautyimage.xicp.net/web/data/beautyimage/UploadImages/cataloguePicture/0245b6b4175a042dfa39cd7a77b362c9.jpg
           obj.thumbnailImgs = imageEntry.thumbImage.split('|');//http://beautyimage.xicp.net/web/data/beautyimage/UploadImages/cataloguePicture/_thumb_0245b6b4175a042dfa39cd7a77b362c9.jpg

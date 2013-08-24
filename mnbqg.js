@@ -2,6 +2,7 @@
 var request = require('request');
 var xml2json = require('xml2json');
 var Image = require('./models/image');
+var encodeDocID = require('./lib/utils').encodeDocID;
 var site = "mnbqg";
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -61,6 +62,7 @@ var crawlerCategory = function (entry) {
           }
           var obj = imageEntry;
           obj.id = util.format("%s", imageEntry.id);
+          obj.imgid = encodeDocID(site, obj.id);
           obj.alt = imageEntry.i;
           obj.thumbnailImgs = [];
           obj.middleImgs = [];
