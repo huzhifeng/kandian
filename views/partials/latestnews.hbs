@@ -1,0 +1,50 @@
+﻿<div class="row-fluid">
+  {{#each latestQingSongNews}}
+  <div class="span3">
+    <a href="/news/{{this.docid}}" title="{{this.title}}">
+      <h4>{{this.title}}</h4>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
+      <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
+      {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
+    </a>
+  </div>
+  {{/each}}
+  <div class="span3">
+    <a href="/tag/轻松一刻"><h4>更多轻松...</h4></a>
+  </div>
+</div>
+<hr>
+
+<div class="row-fluid">
+  {{#each latestTuCaoNews}}
+  <div class="span3">
+    <a href="/news/{{this.docid}}" title="{{this.title}}">
+      <h4>{{this.title}}</h4>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
+      <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
+      {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
+    </a>
+  </div>
+  {{/each}}
+  <div class="span3">
+    <a href="/tag/神吐槽"><h4>更多吐槽...</h4></a>
+  </div>
+</div>
+<hr>
+
+<div class="row-fluid">
+  {{#each latestFunNews}}
+  <div class="span3">
+    <a href="/news/{{this.docid}}" title="{{this.title}}">
+      <h4>{{this.title}}</h4>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
+      <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
+      {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
+    </a>
+  </div>
+  {{/each}}
+  <div class="span3">
+    <a href="/tag/FUN来了"><h4>更多FUN...</h4></a>
+  </div>
+</div>
+<hr>

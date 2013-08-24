@@ -28,11 +28,11 @@ var index = function (req, res, next) {
         [
           {
             "site": {"$in": ["netease", "sohu", "sina"]},
-            "tags": {"$nin":["网易深度","网易女人","健康养生","真话","搜查科"]},
+            "tags": {"$nin":["网易深度","网易女人","健康养生","真话","搜查科","轻松一刻","神吐槽"]},
           },
           {
             "site": "ifeng",
-            "tags": {"$in":["FUN来了","今日最大声","有报天天读","凤凰知道","史说新语","史林拍案","百部穿影"]},
+            "tags": {"$in":["今日最大声","有报天天读","凤凰知道","史说新语","史林拍案","百部穿影"]},
           },
           {
             "site": "qq",
@@ -67,16 +67,53 @@ var index = function (req, res, next) {
     });
   };
 
+  var getLatestQingSongNews = function (callback) {
+    News.findLimit({tags:'轻松一刻'}, 3, {time: -1}, function (err, result) {
+      if (! err) {
+        callback(null, {latestQingSong: result});
+      } else {
+        callback(err);
+      }
+    });
+  };
+
+  var getLatestTuCaoNews = function (callback) {
+    News.findLimit({tags:'神吐槽'}, 3, {time: -1}, function (err, result) {
+      if (! err) {
+        callback(null, {latestTuCao: result});
+      } else {
+        callback(err);
+      }
+    });
+  };
+
+  var getLatestFunNews = function (callback) {
+    News.findLimit({tags:'FUN来了'}, 3, {time: -1}, function (err, result) {
+      if (! err) {
+        callback(null, {latestFun: result});
+      } else {
+        callback(err);
+      }
+    });
+  };
+
   async.parallel({
-    newss: getNewss
-    //hotNewss: getHotNewss
+    newss: getNewss,
+    //hotNewss: getHotNewss,
+    getLatestQingSong: getLatestQingSongNews,
+    getLatestTuCao: getLatestTuCaoNews,
+    getLatestFun: getLatestFunNews,
   },
   function (err, results) {
     if (! err) {
       // console.log(currentPage, pages);
       res.render('home', {pageTitle: '看点网---有看点，更精彩！',
         currentPage: results.newss.currentPage, pages: results.newss.pages,
-        news: results.newss.newss, baseUrl: '/page/'/*,hotNews: results.hotNewss.hotNewss*/});
+        news: results.newss.newss, baseUrl: '/page/'/*,hotNews: results.hotNewss.hotNewss*/,
+        latestQingSongNews: results.getLatestQingSong.latestQingSong,
+        latestTuCaoNews: results.getLatestTuCao.latestTuCao,
+        latestFunNews: results.getLatestFun.latestFun,
+      });
     } else {
       // console.log(err);
       next(new Error(err.message));
