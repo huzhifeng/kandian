@@ -432,6 +432,7 @@ var crawlerCategory = function (entry) {
           var obj = imageEntry;
           obj.id = imageEntry.itemId;
           obj.imgid = encodeDocID(site, obj.id);
+          obj.random = Math.random();
           obj.alt = imageEntry.pictureInfo;
           obj.originalImgs = imageEntry.originImageArray.split('|');//http://beautyimage.xicp.net/web/data/beautyimage/UploadImages/cataloguePicture/0245b6b4175a042dfa39cd7a77b362c9.jpg
           obj.thumbnailImgs = imageEntry.thumbImage.split('|');//http://beautyimage.xicp.net/web/data/beautyimage/UploadImages/cataloguePicture/_thumb_0245b6b4175a042dfa39cd7a77b362c9.jpg

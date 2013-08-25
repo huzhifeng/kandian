@@ -63,6 +63,7 @@ var crawlerCategory = function (entry) {
           var obj = imageEntry;
           obj.id = util.format("%s", imageEntry.id);
           obj.imgid = encodeDocID(site, obj.id);
+          obj.random = Math.random();
           obj.alt = imageEntry.i;
           obj.thumbnailImgs = [];
           obj.middleImgs = [];

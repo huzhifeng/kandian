@@ -1,5 +1,6 @@
 ﻿var async = require('async');
 var News = require('../models/news');
+var Image = require('../models/image');
 var crawlerAll = require('../netease').crawlerAll;
 var neteaseTags = require('config').Config.neteaseTags;
 var sohuTags = require('config').Config.sohuTags;
@@ -97,12 +98,29 @@ var index = function (req, res, next) {
     });
   };
 
+  var getRandomImages = function (callback) {
+    var rand = Math.random();
+    var query = {
+      site:{'$in': ['xgmn', 'mnbqg']},
+      tags: {"$in":['一日一美女', '美空精选', '香车美女', '农家妹妹', '日韩美女', '古典美女', '果子MM']},
+      random:{"$gte":rand},
+    };
+    Image.findLimit(query, 5, function (err, result) {
+      if (! err) {
+        callback(null, {randomImages: result});
+      } else {
+        callback(err);
+      }
+    });
+  };
+
   async.parallel({
     newss: getNewss,
     //hotNewss: getHotNewss,
     getLatestQingSong: getLatestQingSongNews,
     getLatestTuCao: getLatestTuCaoNews,
     getLatestFun: getLatestFunNews,
+    getRandomImages: getRandomImages,
   },
   function (err, results) {
     if (! err) {
@@ -113,6 +131,7 @@ var index = function (req, res, next) {
         latestQingSongNews: results.getLatestQingSong.latestQingSong,
         latestTuCaoNews: results.getLatestTuCao.latestTuCao,
         latestFunNews: results.getLatestFun.latestFun,
+        randomImages: results.getRandomImages.randomImages,
       });
     } else {
       // console.log(err);

@@ -18,6 +18,12 @@ exports.findOne = function (query, callback) {
   });
 };
 
+exports.findLimit = function (query, limit, callback) {
+  image.find(query).limit(limit).toArray(function (err, result) {
+    callback(err, result);
+  });
+};
+
 exports.insert = function (obj, callback) {
   image.insert(obj, function (err, result) {
     callback(err, null);

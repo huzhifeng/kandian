@@ -1,7 +1,7 @@
 ﻿<div class="row-fluid">
   {{#each latestQingSongNews}}
   <div class="span3">
-    <a href="/news/{{this.docid}}" title="{{this.title}}">
+    <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h4>{{this.title}}</h4>
       <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
       <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
@@ -18,7 +18,7 @@
 <div class="row-fluid">
   {{#each latestTuCaoNews}}
   <div class="span3">
-    <a href="/news/{{this.docid}}" title="{{this.title}}">
+    <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h4>{{this.title}}</h4>
       <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
       <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
@@ -35,7 +35,7 @@
 <div class="row-fluid">
   {{#each latestFunNews}}
   <div class="span3">
-    <a href="/news/{{this.docid}}" title="{{this.title}}">
+    <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h4>{{this.title}}</h4>
       <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
       <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
@@ -45,6 +45,21 @@
   {{/each}}
   <div class="span3">
     <a href="/tag/FUN来了"><h4>更多FUN...</h4></a>
+  </div>
+</div>
+<hr>
+
+<div class="row-fluid">
+  {{#each randomImages}}
+  <div class="span2">
+    <a href="/image/{{this.imgid}}" title="{{this.alt}}" target="_blank">
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.src '200x150'}}" alt="{{this.alt}}">
+      <noscript><img src="{{miniImg this.src '200x150'}}" alt="{{this.alt}}"></noscript>
+    </a>
+  </div>
+  {{/each}}
+  <div class="span2">
+    <a href="/image/"><h4>更多美女...</h4></a>
   </div>
 </div>
 <hr>
