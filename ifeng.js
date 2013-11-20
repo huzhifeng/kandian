@@ -42,7 +42,7 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
 var getNewsDetail = function(entry) {
   var docid = entry['meta']['documentId'];
   var jObj = entry;
-  var obj = {};
+  var obj = entry;
   News.findOne(genFindCmd(site, docid), function(err, result) {
     if(err) {
       console.log("hzfdbg file[" + __filename + "]" + " getDeatil(), News.findOne():error " + err);

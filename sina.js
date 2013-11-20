@@ -65,7 +65,7 @@ var getNewsDetail = function(entry) {
     //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail() util.inspect(body)="+util.inspect(body));
     var json = xml2json.toJson(body,{object:true, sanitize:false});
     var jObj = json['rss']["channel"]["item"];
-    var obj = {};
+    var obj = entry;
 
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {

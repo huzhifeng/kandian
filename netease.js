@@ -61,7 +61,7 @@ var getNewsDetail = function(entry) {
       return;
     }
     var jObj = json[docid];
-    var obj = {};
+    var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
@@ -199,7 +199,7 @@ var getPhotoDetail = function(entry) {
       return;
     }
     var jObj = json;
-    var obj = {};
+    var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
         console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():error " + err);
@@ -453,6 +453,9 @@ var crawlerTag = function (tag, id) {
       }
       newsList.forEach(function(newsEntry) {
         newsEntry['tagName'] = tag;
+        if(newsEntry.docid == '9815P05N00963VRO') { // 网易新闻客户端栏目迁移公告
+          return;
+        }
         News.findOne(genFindCmd(site, newsEntry['docid']), function(err, result) {
           if(err) {
             console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(), News.findOne():error " + err);

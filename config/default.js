@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   Config: {
     timezone: 'Asia/Shanghai',
     siteName: '看点网',
@@ -40,6 +40,7 @@
       '微历史': 'netease_wls',
       '新闻故事': 'netease_xwgs',
       '独家图集': 'netease_djtj',
+      '今日环球侃客': 'netease_jrhqkk',
     },
     sohuTags: {
       '先知道': '681',
@@ -130,6 +131,14 @@
       '史林拍案': 'ifeng_slpa',
       '话说':'ifeng_hs',
       '一周人物':'ifeng_yzrw',
+      '凤凰网评':'ifeng_fhwp',
+      '轻新闻':'ifeng_qxw',
+      '每日热词':'ifeng_mrrc',
+      '教科书之外':'ifeng_jkszw',
+      '探索者':'ifeng_tsz',
+      '独家评':'ifeng_djp',
+      '凰段子':'ifeng_hdz',
+      '科技能见度':'ifeng_kjnjd',
       /*'历史': '',
       '历史上的今天':'ifeng_lssdjt',
       '独家评': '',

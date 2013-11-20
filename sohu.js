@@ -73,7 +73,7 @@ var getNewsDetail = function(entry) {
       return;
     }
     var jObj = json['root'];
-    var obj = {};
+    var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
@@ -221,7 +221,7 @@ var getPhotoDetail = function(entry) {
       return;
     }
     var jObj = json['root'];
-    var obj = {};
+    var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
         console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():error " + err);

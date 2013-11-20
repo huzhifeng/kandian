@@ -64,7 +64,7 @@ var getNewsDetail = function(entry) {
       return;
     }
     var jObj = json;
-    var obj = {};
+    var obj = entry;
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
       if(err) {
@@ -171,7 +171,7 @@ var getTopicDetail = function(entry) {
       return;
     }
     var jObj = json;
-    var obj = {};
+    var obj = entry;
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
       if(err) {
@@ -272,7 +272,7 @@ var getPhotoDetail = function(entry) {
       return;
     }
     var jObj = json;
-    var obj = {};
+    var obj = entry;
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
       if(err) {
