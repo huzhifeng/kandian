@@ -7,7 +7,7 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var genDigest = require('./lib/utils').genDigest;
 var site = "baidu";
-var baiduNewsTags = ['背景'];
+var baiduNewsTags = ['背景', '意见', '早报', '毒舌秀'];
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
@@ -302,7 +302,7 @@ var baiduNewsCrawler = function() {
     crawlerNewsCategory(entry);
   });//forEach
 
-  setTimeout(baiduNewsCrawler, 1000 * 60 * 60);
+  setTimeout(baiduNewsCrawler, 6000 * 60 * 60);
 }
 
 var baiduCrawler = function() {
