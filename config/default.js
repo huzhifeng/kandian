@@ -58,6 +58,7 @@ module.exports = {
       '我来说两句':'915',
       '变态辣椒':'677',
       '狐揭秘': 'sohu_hjm',
+      '涨姿势': 'sohu_zzs',
       '搜查科':'sohu_sck',
       '开心一刻': 'sohu_kxyk',
       '数说IT': 'sohu_shit',

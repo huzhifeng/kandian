@@ -117,12 +117,13 @@ var getNewsDetail = function(entry) {
       // cover
       if(entry['listPic']) {
         obj['cover'] = entry['listPic'];
+      } else if(entry['bigPic']) {
+        obj['cover'] = entry['bigPic'];
       } else if(entry['listpic']) {
         obj['cover'] = entry['listpic'];
       } else if(obj['img'][0]) {
         obj['cover'] = obj['img'][0]['src'];
-      }
-      if (obj['img'][1]) {
+      } else if (obj['img'][1]) {
         obj['cover'] = obj['img'][1]['src'];
         //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj['cover']);
       }
@@ -279,7 +280,7 @@ var getPhotoDetail = function(entry) {
   });// request
 };
 
-var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
+var crawlerHeadLineFirstTime = 0; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
   // http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=1&showPic=1&rt=json
   // http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=1650&showPic=1&rt=json
