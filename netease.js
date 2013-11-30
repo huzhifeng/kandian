@@ -256,7 +256,7 @@ var getPhotoDetail = function(entry) {
   });// request
 };
 
-var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
+var crawlerHeadLineFirstTime = 0; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
   // http://c.3g.163.com/nc/article/headline/T1295501906343/0-20.html
   // http://c.3g.163.com/nc/article/headline/T1348647909107/400-20.html
@@ -412,6 +412,7 @@ var crawlerPhoto = function () {
 var crawlerTagFirstTime = {}; //Crawl more pages at the first time
 var crawlerTag = function (tag, id) {
   // http://c.3g.163.com/nc/article/list/T1350383429665/0-20.html
+  // http://c.m.163.com/nc/article/list/T1350383429665/0-20.html
   var tagLink = 'http://c.3g.163.com/nc/article/list/%s/%d-20.html';
   var MAX_PAGE_NUM = 1;
   var page = 0;
