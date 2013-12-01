@@ -8,7 +8,8 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genQqFindCmd = require('./lib/utils').genQqFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
-var jsdom = require("jsdom").jsdom;
+var data2Json = require('./lib/utils').data2Json;
+var genDigest = require('./lib/utils').genDigest;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -16,10 +17,7 @@ var headers = {
   'User-Agent': '~...260(android)',
   'Host': 'inews.qq.com',
   'Connection': 'Keep-Alive',
-  //'Accept-Encoding': 'gzip,deflate',
 };
-// http://inews.qq.com/getQQNewsNormalHtmlContent?id=NEW2013050300143202&store=63&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
-var detailLink = 'http://inews.qq.com/getQQNewsNormalHtmlContent?id=%s';
 var site = "qq";
 
 var startGetDetail = new EventEmitter();
@@ -28,8 +26,8 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
   getNewsDetail(entry);
 });
 
-startGetDetail.on('startGetTopicDetail', function (entry) {
-  getTopicDetail(entry);
+startGetDetail.on('startGetSubscribeNewsDetail', function (entry) {
+  getSubscribeNewsDetail(entry);
 });
 
 startGetDetail.on('startGetPhotoDetail', function (entry) {
@@ -37,30 +35,17 @@ startGetDetail.on('startGetPhotoDetail', function (entry) {
 });
 
 var getNewsDetail = function(entry) {
-  var docid = util.format("%s",entry['id']);
+  var detailLink = 'http://inews.qq.com/getQQNewsNormalHtmlContent?id=%s';
+  var docid = util.format("%s",entry.id);
   var url = util.format(detailLink, docid);
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
-        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
-        return;
-    }
-    //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail() util.inspect(body)="+util.inspect(body));
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() catch error");
-      console.log(e);
-    }
-    if((!json) || (json['ret'] != 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():ret="+json['ret']);
+    var json = data2Json(err, res, body);
+    if((!json) || (json.ret != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():ret="+json.ret);
       return;
     }
     var jObj = json;
@@ -75,61 +60,50 @@ var getNewsDetail = function(entry) {
         //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
         return;
       }
-      obj['docid'] = encodeDocID(site, docid);
-      obj['site'] = site;
-      //obj['jsonstr'] = body; // delete it to save db size
-      obj['body'] = '';
-      obj['img'] = [];
-      jObj['content'].forEach(function(item) {
-        if(item['type'] == 1) { //text
-          obj['body'] += item['value'];
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = '';
+      obj.img = [];
+      jObj.content.forEach(function(item) {
+        if(item.type == 1) { //text
+          obj.body += item.value;
         }
-        else if(item['type'] == 2) { //pic
-          obj['body'] += genLazyLoadHtml(entry['tagName'], item['value']);
-          obj['img'][obj['img'].length] = item['value'];
+        else if(item.type == 2) { //pic
+          obj.body += genLazyLoadHtml(entry.tagName, item.value);
+          obj.img[obj.img.length] = item.value;
         }
-        else if(item['type'] == 3) { //video
-          obj['body'] += genLazyLoadHtml(entry['tagName'], item['value']['img']);
-          obj['img'][obj['img'].length] = item['value']['img'];
+        else if(item.type == 3) { //video
+          obj.body += genLazyLoadHtml(entry.tagName, item.value.img);
+          obj.img[obj.img.length] = item.value.img;
         }
       });
-      obj['video'] = [];
-      obj['link'] = "";
-      if(entry['url']) {
-        obj['link'] = entry['url']; // http://view.inews.qq.com/a/NEW2013050300143202
-      }else if(entry['surl']) {
-        obj['link'] = entry['surl']; // http://view.inews.qq.com/a/NEW2013050300143202
-      }else if(jObj['url']) {
-        obj['link'] = jObj['url']; // http://view.inews.qq.com/a/NEW2013050300143202
-      }else if(jObj['surl']) {
-        obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/NEW2013050300143202
+      obj.video = [];
+      obj.link = "";
+      if(entry.url) {
+        obj.link = entry.url; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else if(entry.surl) {
+        obj.link = entry.surl; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else if(jObj.url) {
+        obj.link = jObj.url; // http://view.inews.qq.com/a/NEW2013050300143202
+      }else if(jObj.surl) {
+        obj.link = jObj.surl; // http://view.inews.qq.com/a/NEW2013050300143202
       }else {
-        obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
+        obj.link = util.format("http://view.inews.qq.com/a/%s", docid);
       }
-      obj['title'] = entry['title'];//.trim().replace(/\s+/g, '');
-      obj['ptime'] = entry['time'];
-      obj['time'] = new Date(entry['time']);
-      obj['marked'] = obj['body'];
-
-      obj['created'] = new Date();
-      obj['views'] = 1;
-      obj['tags'] = entry['tagName'];
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj['body'];
-      // digest
-      var maxDigest = 300;
-      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
-      obj['cover'] = entry['thumbnails'][0];
-      if (obj['img'][0]) {
-        obj['cover'] = obj['img'][0];
+      obj.title = entry.title;
+      obj.ptime = entry.time;
+      obj.time = new Date(entry.time);
+      obj.marked = obj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      if(!obj.digest) {
+        obj.digest = obj.body;
+      }
+      obj.cover = entry.thumbnails[0];
+      if (obj.img[0]) {
+        obj.cover = obj.img[0];
       }
 
       News.insert(obj, function (err, result) {
@@ -141,33 +115,19 @@ var getNewsDetail = function(entry) {
   });//request
 };
 
-var getTopicDetail = function(entry) {
-  // http://inews.qq.com/getQQNewsSimpleHtmlContent?id=TPC2013061100203800
-  var topicDetailLink = "http://inews.qq.com/getQQNewsSimpleHtmlContent?id=%s";
-  var docid = util.format("%s",entry['id']);
-  var url = util.format(topicDetailLink, docid);
+var getSubscribeNewsDetail = function(entry) {
+  // http://r.inews.qq.com/getSubNewsContent?id=20131129A000H600&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1
+  var subscribeNewsDetailLink = 'http://r.inews.qq.com/getSubNewsContent?id=%s&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1';
+  var docid = util.format("%s",entry.id);
+  var url = util.format(subscribeNewsDetailLink, docid);
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():error");
-      console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
-      return;
-    }
-    //console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail() util.inspect(body)="+util.inspect(body));
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():JSON.parse() catch error");
-      console.log(e);
-    }
-    if((!json) || (json['ret'] != 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail():ret="+json['ret']);
+    var json = data2Json(err, res, body);
+    if((!json) || (json.ret != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getSubscribeNewsDetail():ret="+json.ret);
       return;
     }
     var jObj = json;
@@ -175,67 +135,58 @@ var getTopicDetail = function(entry) {
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
       if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail(), News.findOne():error " + err);
+        console.log("hzfdbg file[" + __filename + "]" + " getSubscribeNewsDetail(), News.findOne():error " + err);
         return;
       }
       if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail(), News.findOne():exist ");
+        //console.log("hzfdbg file[" + __filename + "]" + " getSubscribeNewsDetail(), News.findOne():exist ");
         return;
       }
-      obj['docid'] = encodeDocID(site, docid);
-      obj['site'] = site;
-      //obj['jsonstr'] = body; // delete it to save db size
-      obj['body'] = jObj['intro'] + jObj['content']['text'];
-      obj['img'] = [];
-      var attribute = jObj['attribute'];
-      var img_keys = _.keys(attribute);
-      img_keys.forEach(function(key){
-        obj['img'][obj['img'].length] = attribute[key]['url'];
-        var imgHtml = genLazyLoadHtml(entry['tagName'], attribute[key]['url']);
-        obj['body'] = obj['body'].replace("<!--" + key + "-->", imgHtml); // <!--IMG_4-->
-      });
-      obj['video'] = [];
-      obj['link'] = "";
-      if(entry['url']) {
-        obj['link'] = entry['url']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else if(entry['surl']) {
-        obj['link'] = entry['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else if(jObj['url']) {
-        obj['link'] = jObj['url']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else if(jObj['surl']) {
-        obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else {
-        obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = jObj.content.text;
+      obj.img = [];
+      for(key in jObj.attribute) {
+        var html = genLazyLoadHtml(entry.title, jObj.attribute[key].url);
+        if(jObj.attribute[key].desc) {
+          html = html + jObj.attribute[key].desc + '<br/>';
+        }
+        obj.img[obj.img.length] = jObj.attribute[key].url;
+        obj.body = obj.body.replace(util.format('<!--%s-->', key), html);
       }
-      obj['title'] = entry['title'];//.trim().replace(/\s+/g, '');
-      obj['ptime'] = entry['time'];
-      obj['time'] = new Date(entry['time']);
-      obj['marked'] = obj['body'];
-
-      obj['created'] = new Date();
-      obj['views'] = 1;
-      obj['tags'] = entry['tagName'];
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj['body'];
-      // digest
-      var maxDigest = 300;
-      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
-      obj['cover'] = entry['thumbnails'][0];
-      if (obj['img'][0]) {
-        obj['cover'] = obj['img'][0];
+      obj.video = [];
+      obj.link = '';
+      if(entry.url) {
+        obj.link = entry.url;
+      }else {
+        obj.link = util.format("http://view.inews.qq.com/a/%s", entry.id);
+      }
+      obj.title = entry.title;
+      obj.ptime = entry.time;
+      obj.time = new Date(entry.time);
+      obj.marked = obj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      obj.cover = '';
+      if(entry.thumbnails_qqnews && entry.thumbnails_qqnews[0]) {
+        obj.cover = entry.thumbnails_qqnews[0];
+      }else if(entry.chlsicon) {
+        obj.cover = entry.chlsicon;
+      }else if(entry.chlicon) {
+        obj.cover = entry.chlicon;
+      }else if(jObj.card && jObj.card.icon) {
+        obj.cover = jObj.card.icon;
+      }else if(obj.img) {
+        obj.cover = obj.img[0];
+      }else {
+        obj.cover = '';
       }
 
       News.insert(obj, function (err, result) {
         if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getTopicDetail(), News.insert():error " + err);
+          console.log("hzfdbg file[" + __filename + "]" + " getSubscribeNewsDetail(), News.insert():error " + err);
         }
       });
     });//News.findOne
@@ -245,30 +196,16 @@ var getTopicDetail = function(entry) {
 var getPhotoDetail = function(entry) {
   // http://inews.qq.com/getQQNewsSimpleHtmlContent?id=PIC2013061200601000&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0
   var photoDetailLink = "http://inews.qq.com/getQQNewsSimpleHtmlContent?id=%s&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0";
-  var docid = util.format("%s",entry['id']);
+  var docid = util.format("%s",entry.id);
   var url = util.format(photoDetailLink, docid);
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():error");
-      console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
-      return;
-    }
-    //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail() util.inspect(body)="+util.inspect(body));
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():JSON.parse() catch error");
-      console.log(e);
-    }
-    if((!json) || (json['ret'] != 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():ret="+json['ret']);
+    var json = data2Json(err, res, body);
+    if((!json) || (json.ret != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():ret="+json.ret);
       return;
     }
     var jObj = json;
@@ -283,55 +220,41 @@ var getPhotoDetail = function(entry) {
         //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():exist ");
         return;
       }
-      obj['docid'] = encodeDocID(site, docid);
-      obj['site'] = site;
-      //obj['jsonstr'] = body; // delete it to save db size
-      obj['body'] = jObj['intro'] + jObj['content']['text'];
-      obj['img'] = [];
-      var attribute = jObj['attribute'];
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = jObj.intro + jObj.content.text;
+      obj.img = [];
+      var attribute = jObj.attribute;
       var img_keys = _.keys(attribute);
       img_keys.forEach(function(key){
-        obj['img'][obj['img'].length] = attribute[key]['url'];
-        var imgHtml = attribute[key]['desc'] + genLazyLoadHtml(attribute[key]['desc'], attribute[key]['url']);
-        obj['body'] = obj['body'].replace("<!--" + key + "-->", imgHtml); // <!--IMG_4-->
+        obj.img[obj.img.length] = attribute[key].url;
+        var imgHtml = attribute[key].desc + genLazyLoadHtml(attribute[key].desc, attribute[key].url);
+        obj.body = obj.body.replace("<!--" + key + "-->", imgHtml); // <!--IMG_4-->
       });
-      obj['video'] = [];
-      obj['link'] = "";
-      if(entry['url']) {
-        obj['link'] = entry['url']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else if(entry['surl']) {
-        obj['link'] = entry['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else if(jObj['url']) {
-        obj['link'] = jObj['url']; // http://view.inews.qq.com/a/TPC2013061100203800
-      }else if(jObj['surl']) {
-        obj['link'] = jObj['surl']; // http://view.inews.qq.com/a/TPC2013061100203800
+      obj.video = [];
+      obj.link = "";
+      if(entry.url) {
+        obj.link = entry.url; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(entry.surl) {
+        obj.link = entry.surl; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(jObj.url) {
+        obj.link = jObj.url; // http://view.inews.qq.com/a/TPC2013061100203800
+      }else if(jObj.surl) {
+        obj.link = jObj.surl; // http://view.inews.qq.com/a/TPC2013061100203800
       }else {
-        obj['link'] = util.format("http://view.inews.qq.com/a/%s", docid);
+        obj.link = util.format("http://view.inews.qq.com/a/%s", docid);
       }
-      obj['title'] = entry['title'];//.trim().replace(/\s+/g, '');
-      obj['ptime'] = entry['time'];
-      obj['time'] = new Date(entry['time']);
-      obj['marked'] = obj['body'];
-
-      obj['created'] = new Date();
-      obj['views'] = 1;
-      obj['tags'] = entry['tagName'];
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj['body'];
-      // digest
-      var maxDigest = 300;
-      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
-      obj['cover'] = entry['thumbnails'][0];
-      if (obj['img'][0]) {
-        obj['cover'] = obj['img'][0];
+      obj.title = entry.title;
+      obj.ptime = entry.time;
+      obj.time = new Date(entry.time);
+      obj.marked = obj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      obj.cover = entry.thumbnails[0];
+      if (obj.img[0]) {
+        obj.cover = obj.img[0];
       }
 
       News.insert(obj, function (err, result) {
@@ -346,25 +269,19 @@ var getPhotoDetail = function(entry) {
 var findTagInSummary = function(entry, tagType) {
   var i = 0, j = 0;
 
-  if(!entry) {
-    console.log("findTagInSummary() null obj");
-    console.log(util.inspect(entry));
-    return "";
-  }
-
   for(i=0; i<tags.length; i++) {
     if(qqTags[tags[i]].indexOf(tagType) === -1) {
       continue;
     }
-    if (entry['title'] && (entry['title'].indexOf(tags[i]) !== -1)) {
+    if (entry.title && (entry.title.indexOf(tags[i]) !== -1)) {
       return tags[i];
-    }else if (entry['source'] && (entry['source'].indexOf(tags[i]) !== -1)) {
+    }else if (entry.source && (entry.source.indexOf(tags[i]) !== -1)) {
       return tags[i];
-    }else if (entry['abstract'] && (entry['abstract'].indexOf(tags[i]) !== -1)) {
+    }else if (entry.abstract && (entry.abstract.indexOf(tags[i]) !== -1)) {
       return tags[i];
-    }else if(entry['tag']) {
-      for(j=0; j<entry['tag'].length; j++){
-        if((entry['tag'][j]) && (entry['tag'][j].indexOf(tags[i]) !== -1)) {
+    }else if(entry.tag) {
+      for(j=0; j<entry.tag.length; j++){
+        if((entry.tag[j]) && (entry.tag[j].indexOf(tags[i]) !== -1)) {
           return tags[i];
         }
       } // for j=0
@@ -374,271 +291,63 @@ var findTagInSummary = function(entry, tagType) {
   return "";
 }
 
-var findTagInDetail = function(entry) {
-  var i = 0, j = 0;
-
-  if((!entry) || (!entry['content']) || (!entry['content'].length)) {
-    console.log("findTagInDetail() null obj");
-    console.log(util.inspect(entry));
-    return "";
-  }
-
-  for(i=0; i<entry['content'].length; i++){
-    if((entry['content'][i]['type']) && (entry['content'][i]['type'] === 1)) { // text
-      for(j=0; j<tags.length; j++) {
-        if((entry['content'][i]['value']) && (entry['content'][i]['value'].indexOf(tags[j]) !== -1)) {
-          return tags[j];
-        }
-      } // for j=0
-    }
-  } // for i=0
-
-  return "";
-}
-
-var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
-  // http://inews.qq.com/getQQNewsIndexAndItems?store=63&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.6.0
-  // http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_2.7.0
-  var headlineLink = 'http://inews.qq.com/getQQNewsIndexAndItems?store=%d';
-  var MAX_PAGE_NUM = 63;
-  var page = 63;
-  if(crawlerHeadLineFirstTime) {
-    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    //MAX_PAGE_NUM = 20;
-    crawlerHeadLineFirstTime = 0;
-  }
-  for(page=63; page<=MAX_PAGE_NUM; page++) {
-    (function(page) {
-    var url = util.format(headlineLink, page);
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
-    }
-    request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
-        console.log(e);
-      }
-      if(!json) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
-        return;
-      }
-      if(json['ret'] != 0) {
-        console.log("zhutest file[" + __filename + "]" + " crawlerHeadLine():home page ret="+json['ret']);
-        return;
-      }
-      var ids = json["idlist"][0]["ids"];
-      var i = 0;
-      ids.forEach(function(idsEntry) {
-        var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=63&ids=%s", idsEntry['id']);
-        var req = {uri: summaryUrl, method: "GET", headers: headers};
-        if(proxyEnable) {
-          req.proxy = proxyUrl;
-        }
-        request(req, function (err, res, body) {
-          if(err || (res.statusCode != 200) || (!body)) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl error");
-            console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
-            return;
-          }
-          var summary_json = null;
-          try {
-            summary_json = JSON.parse(body);
-          }
-          catch (e) {
-            summary_json = null;
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() summary_json catch error");
-            console.log(e);
-          }
-          if(!summary_json) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() summary_json error");
-            return;
-          }
-          if(summary_json['ret'] != 0) {
-            console.log("zhutest file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ret="+summary_json['ret']);
-            return;
-          }
-          var newsList = summary_json["newslist"];
-          if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl newsList empty in url " + summaryUrl);
-            return;
-          }
-          var newsEntry =newsList[0];
-          try {
-            newsEntry['tagName'] = findTagInSummary(newsEntry, "qq_news");
-            if (newsEntry['tagName']) {
-              News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
-                if(err) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
-                  return;
-                }
-                if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                }
-              }); // News.findOne
-            }else {
-              var detailUrl = util.format(detailLink, newsEntry['id']);
-              var req = {uri: detailUrl, method: "GET", headers: headers};
-              if(proxyEnable) {
-                req.proxy = proxyUrl;
-              }
-              request(req, function (err, res, body) {
-                if(err || (res.statusCode != 200) || (!body)) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl error");
-                  console.log(err);console.log(detailUrl);console.log(util.inspect(res));console.log(body);
-                  return;
-                }
-                var json = null;
-                try {
-                  json = JSON.parse(body);
-                }
-                catch (e) {
-                  json = null;
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl JSON.parse() catch error");
-                  console.log(e);
-                }
-                if((!json) || (!json.ret) || (json.ret != 0)) {
-                  //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl ret="+json['ret']);
-                  return;
-                }
-                var newsDetail = json;
-                newsEntry['tagName'] = findTagInDetail(newsDetail, "qq_news");
-                if (newsEntry['tagName']) {
-                  News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
-                    if(err) {
-                      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl News.findOne():error " + err);
-                      return;
-                    }
-                    if (!result) {
-                      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): detailUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
-                      startGetDetail.emit('startGetNewsDetail', newsEntry);
-                    }
-                  }); // News.findOne
-                }
-              });
-            }
-          }
-          catch (e) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
-            console.log(e);
-          }
-        });
-      });
-    });//request url
-    })(page);
-  }//for
-};
+  // 要闻 http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_3.2.1
+  // 要闻Next http://r.inews.qq.com/getQQNewsListItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=NEW2013120100044901%2CNEW2013120100069303%2CNEW2013120100088800%2CNEW2013120100058703%2CNEW2013120100044800%2CNEW2013120100046501%2CNEW2013120100073602%2CNEW2013120100045700%2CNEW2013120100103704%2CNEW2013113000646602%2CNEW2013120100235601%2CNEW2013120100084100%2CNEW201311270116140Z%2CNEW2013120100059400%2CNEW2013113000661106%2CNEW2013120100035301%2CNEW2013120100043600%2CNEW2013120100026701%2CNEW2013120100032002%2CNEW2013120100043700&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_3.2.1
+  // 科技 http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_tech&appver=16_android_3.2.1
+  // 社会 http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_ssh&appver=16_android_3.2.1
+  // 娱乐 http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_ent&appver=16_android_3.2.1
+  // 军事 http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_mil&appver=16_android_3.2.1
+  var headlineLink = 'http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_news_top&appver=16_android_3.2.1';
 
-var crawlerTopicFirstTime = 1; //Crawl more pages at the first time
-var crawlerTopic = function () {
-  // http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_topic&appver=16_android_2.7.0
-  var topicLink = 'http://inews.qq.com/getQQNewsIndexAndItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_topic&appver=16_android_2.7.0';
-  var MAX_PAGE_NUM = 3;
-  var NEWS_NUM_PER_PAGE = 20;
-
-  if(crawlerTopicFirstTime) {
-    //console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): All");
-    MAX_PAGE_NUM = 3;//10;
-    crawlerTopicFirstTime = 0;
-  }
-
-  var url = topicLink;
+  var url = headlineLink;
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():error");
-      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-      return;
-    }
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() catch error");
-      console.log(e);
-    }
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() error");
-      return;
-    }
-    if(json['ret'] != 0) {
-      console.log("zhutest file[" + __filename + "]" + " crawlerTopic():home page ret="+json['ret']);
+    var json = data2Json(err, res, body);
+    if(!json || (json.ret != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
       return;
     }
     var ids = json["idlist"][0]["ids"];
-    if((MAX_PAGE_NUM * NEWS_NUM_PER_PAGE) < ids.length) {
-      ids = ids.slice(0,MAX_PAGE_NUM * NEWS_NUM_PER_PAGE)
-    }
+    var i = 0;
     ids.forEach(function(idsEntry) {
-      // http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=TPC2013061100203800
-      var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s", idsEntry['id']);
+      var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&ids=%s", idsEntry.id);
       var req = {uri: summaryUrl, method: "GET", headers: headers};
       if(proxyEnable) {
         req.proxy = proxyUrl;
       }
       request(req, function (err, res, body) {
-        if(err || (res.statusCode != 200) || (!body)) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl error");
-          console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
-          return;
-        }
-        var summary_json = null;
-        try {
-          summary_json = JSON.parse(body);
-        }
-        catch (e) {
-          summary_json = null;
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() summary_json catch error");
-          console.log(e);
-        }
-        if(!summary_json) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():JSON.parse() summary_json error");
-          return;
-        }
-        if(summary_json['ret'] != 0) {
-          console.log("zhutest file[" + __filename + "]" + " crawlerTopic():summaryUrl ret="+summary_json['ret']);
+        var summary_json = data2Json(err, res, body);
+        if(!summary_json || (summary_json.ret != 0)) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() summary_json error");
           return;
         }
         var newsList = summary_json["newslist"];
         if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl newsList empty in url " + summaryUrl);
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl newsList empty in url " + summaryUrl);
           return;
         }
         var newsEntry =newsList[0];
         try {
-          newsEntry['tagName'] = "今日话题";//findTagInSummary(newsEntry);
-          if (newsEntry['tagName']) {
+          newsEntry.tagName = findTagInSummary(newsEntry, "qq_news");
+          if (newsEntry.tagName) {
             News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
               if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(), News.findOne():error " + err);
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
                 return;
               }
               if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic():summaryUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
-                startGetDetail.emit('startGetTopicDetail', newsEntry);
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+                startGetDetail.emit('startGetNewsDetail', newsEntry);
               }
             }); // News.findOne
           }
         }
         catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTopic(): catch error");
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
           console.log(e);
         }
       });
@@ -672,26 +381,9 @@ var crawlerPhoto = function () {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
-      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-      return;
-    }
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() catch error");
-      console.log(e);
-    }
-    if(!json) {
+    var json = data2Json(err, res, body);
+    if(!json || (json.ret != 0)) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() error");
-      return;
-    }
-    if(json['ret'] != 0) {
-      console.log("zhutest file[" + __filename + "]" + " crawlerPhoto():home page ret="+json['ret']);
       return;
     }
     var ids = json["idlist"][0]["ids"];
@@ -700,32 +392,15 @@ var crawlerPhoto = function () {
     }
     ids.forEach(function(idsEntry) {
       // http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=PIC2013061200601200&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0
-      var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0", idsEntry['id']);
+      var summaryUrl = util.format("http://inews.qq.com/getQQNewsListItems?store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&screen_width=720&sceneid=00000&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&chlid=news_photo&appver=16_android_2.7.0", idsEntry.id);
       var req = {uri: summaryUrl, method: "GET", headers: headers};
       if(proxyEnable) {
         req.proxy = proxyUrl;
       }
       request(req, function (err, res, body) {
-        if(err || (res.statusCode != 200) || (!body)) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl error");
-          console.log(err);console.log(summaryUrl);console.log(util.inspect(res));console.log(body);
-          return;
-        }
-        var summary_json = null;
-        try {
-          summary_json = JSON.parse(body);
-        }
-        catch (e) {
-          summary_json = null;
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() summary_json catch error");
-          console.log(e);
-        }
-        if(!summary_json) {
+        var summary_json = data2Json(err, res, body);
+        if(!summary_json || (summary_json.ret != 0)) {
           console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() summary_json error");
-          return;
-        }
-        if(summary_json['ret'] != 0) {
-          console.log("zhutest file[" + __filename + "]" + " crawlerPhoto():summaryUrl ret="+summary_json['ret']);
           return;
         }
         var newsList = summary_json["newslist"];
@@ -735,15 +410,15 @@ var crawlerPhoto = function () {
         }
         var newsEntry =newsList[0];
         try {
-          newsEntry['tagName'] = findTagInSummary(newsEntry, "qq_photo");
-          if (newsEntry['tagName']) {
+          newsEntry.tagName = findTagInSummary(newsEntry, "qq_photo");
+          if (newsEntry.tagName) {
             News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
               if(err) {
                 console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(), News.findOne():error " + err);
                 return;
               }
               if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl ["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl ["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
                 startGetDetail.emit('startGetPhotoDetail', newsEntry);
               }
             }); // News.findOne
@@ -759,12 +434,136 @@ var crawlerPhoto = function () {
   }); // forEach
 };
 
+var mySubscribes = [
+  //{name:'贵圈', id:'32', tags:['贵圈'], all:1},
+  {name:'封面人物', id:'33', tags:['封面人物'], all:1},
+  {name:'娱乐底片', id:'34', tags:['娱乐底片', '底片']},
+  {name:'活着', id:'35', tags:['活着'], all:1},
+  {name:'中国人的一天', id:'37', tags:['中国人的一天'], all:1},
+  {name:'新闻百科', id:'39', tags:['新闻百科'], all:1},
+  {name:'今日话题', id:'41', tags:['今日话题'], all:1},
+  {name:'讲武堂', id:'47', tags:['讲武堂'], all:1},
+  {name:'存照', id:'49', tags:['存照'], all:1},
+  {name:'名家', id:'51', tags:['名家']},
+  {name:'图片报告', id:'53', tags:['图片报告'], all:1},
+  //{name:'财经眼', id:'54', tags:['财经眼'], all:1},
+  {name:'图话', id:'55', tags:['图话'], all:1},
+  {name:'新闻晚8点', id:'94', tags:['新闻晚8点'], all:1},
+  {name:'金错刀', id:'1032', tags:['每日一干', '独家干', '病毒一干', '干案例', '干调查', '周末一湿']},
+  {name:'新闻哥', id:'1033', tags:['新闻哥'], all:1},
+  {name:'娱乐钢牙哥', id:'1039', tags:['钢牙八卦', '钢牙漫画', '钢牙答题']},
+  {name:'喷嚏图卦', id:'1081', tags:['喷嚏图卦'], all:1},
+  {name:'虎扑体育网', id:'1182', tags:['虎扑健身', '虎扑翻译团']},
+  {name:'香港凤凰周刊', id:'1154', tags:['历史档', '奇闻录', '周刊速读']},
+  //{name:'', id:'', tags:['']},
+  {name:'夜夜谈', id:'1212', tags:['夜夜谈']},
+  {name:'微博搞笑', id:'1240', tags:['微博搞笑'], all:1},
+  {name:'冷兔', id:'1250', tags:['每日一冷']},
+  {name:'我们爱讲冷笑话', id:'1251', tags:['我们爱讲冷笑话'], all:1},
+  {name:'封面秀', id:'1310', tags:['封面秀'], all:1},
+  {name:'洋葱新闻', id:'1344', tags:['洋葱新闻'], all:1},
+  {name:'趣你的', id:'1354', tags:['趣你的'], all:1},
+  {name:'骂人宝典', id:'1388', tags:['骂人宝典'], all:1},
+  {name:'M老头', id:'1410', tags:['M老头'], all:1},
+  {name:'冷知识', id:'1478', tags:['冷知识']},
+  {name:'冷笑话精选', id:'1503', tags:['冷笑话精选'], all:1},
+  {name:'每周一品', id:'1708', tags:['每周一品'], all:1},
+];
+
+var crawlerSubscribe = function(entry) {
+  // 所有栏目列表 http://r.inews.qq.com/getCatList?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1&version=0
+  // 获取某一栏目文章ids http://r.inews.qq.com/getSubNewsIndex?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&format=json&apptype=android&chlid=1250&appver=16_android_3.2.1
+  // 获取指定ids文章 http://r.inews.qq.com/getSubNewsListItems?uid=22c4d53a-7d52-4f50-9185-90a77c7b80b0&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=20131107A000D700%2C20131106A000DE00%2C20131106A000DD00%2C20131105A000DS00%2C20131105A000DR00%2C20131104A000CW00%2C20131101A000DZ00%2C20131031A000BZ00%2C20131030A000BV00%2C20131029A000C600%2C20131028A0017800%2C20131025A0019S00%2C20131024A000CG00%2C20131023A000CM00%2C20131022A000I400%2C20131022A000I300%2C20131022A0007700%2C20131018A000EB00%2C20131017A0015800%2C20131016A000AX00&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1
+  // 获取某篇文章内容 http://r.inews.qq.com/getSubNewsContent?id=20131129A000H600&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1
+  var subscribeNewsIdsLink = 'http://r.inews.qq.com/getSubNewsIndex?qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&format=json&apptype=android&chlid=%s&appver=16_android_3.2.1';
+  var subscribeNewsListLink = 'http://r.inews.qq.com/getSubNewsListItems?uid=22c4d53a-7d52-4f50-9185-90a77c7b80b0&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1'
+
+  var url = '';
+  if(entry.ids) {
+    var ids = '';
+    var i = 0;
+    for(i=0; (i<20) && (i<entry.ids.length); i++) {
+      if(i > 0) {
+        ids = ids + ','
+      }
+      ids = ids + entry.ids[i].id;
+    }
+    url = util.format(subscribeNewsListLink, ids);
+    entry.ids = entry.ids.slice(i);
+  }else {
+    url = util.format(subscribeNewsIdsLink, entry.id);
+  }
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || (json.ret != 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+      return;
+    }
+    
+    if(entry.ids) {
+      setTimeout(function() {
+        crawlerSubscribe(entry);
+      }, 100);
+    }else if(json.ids) {
+      entry.ids = json.ids;
+      setTimeout(function() {
+        crawlerSubscribe(entry);
+      }, 100);
+    }
+    var newsList = json.newslist;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      //console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():title="+newsEntry.title);
+      var tags = entry.tags;
+      for(var i = 0; i < tags.length; i++) {
+        try {
+          if (newsEntry.title.indexOf(tags[i]) !== -1 || entry.all) {
+            //console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():title="+newsEntry.title);
+            newsEntry.tagName = tags[i];
+            newsEntry.subscribeName = entry.name;
+
+            News.findOne(genQqFindCmd(site,newsEntry), function(err, result) {
+              if(err) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(), News.findOne():error " + err);
+                return;
+              }
+              if (!result) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+                startGetDetail.emit('startGetSubscribeNewsDetail', newsEntry);
+              }
+            }); // News.findOne
+            break;
+          }
+        }
+        catch (e) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(): catch error");
+          console.log(e);
+          continue;
+        }
+      }//for
+    });//forEach
+  });//request
+}
+
+var crawlerAllSubscribe = function() {
+  mySubscribes.forEach(function(entry) {
+    crawlerSubscribe(entry);
+  });//forEach
+}
+
 var qqCrawler = function() {
   console.log("hzfdbg file[" + __filename + "]" + " qqCrawler():Date="+new Date());
   crawlerHeadLine();
-  crawlerTopic();
   crawlerPhoto();
-  setTimeout(qqCrawler, 1000 * 60 * 60);
+  crawlerAllSubscribe();
+  setTimeout(qqCrawler, 4000 * 60 * 60);
 }
 
 exports.qqCrawler = qqCrawler;
