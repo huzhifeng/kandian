@@ -102,6 +102,11 @@ module.exports = {
       '海外观察': 'sina_hwgc',
       '军情茶馆': 'sina_jqcg',
       '万花筒': 'sina_wht',
+      '今日神最右': 'sina_jrszy',
+      '午饭聊点啥': 'sina_wflds',
+      '午饭话题': 'sina_wfht',
+      '每日深度': 'sina_mrsd',
+      '毒舌美少女': 'sina_dsmsn',
     },
     qqTags: {
       '留声机': 'qq_news_lsj',
