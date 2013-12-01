@@ -8,6 +8,7 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -182,22 +183,8 @@ var crawlerCategory = function (entry) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
-        console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+entry.pagesize+"&cateid="+entry.cateid);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error");
-        console.log(e);
-        return;
-      }
-      if(!json) {
+      var json = data2Json(err, res, body);
+      if(!json || !json.State || !json.State.Code || !json.Contents || !json.Contents.Data) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
         return;
       }

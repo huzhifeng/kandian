@@ -8,7 +8,8 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
-var jsdom = require("jsdom").jsdom;
+var data2Json = require('./lib/utils').data2Json;
+var genDigest = require('./lib/utils').genDigest;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -37,22 +38,7 @@ var getNewsDetail = function(entry) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
-        console.log(err);console.log(url);console.log(util.inspect(res));console.log(body);
-        return;
-    }
-    //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail() util.inspect(body)="+util.inspect(body));
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() catch error");
-      console.log(e);
-      return;
-    }
+    var json = data2Json(err, res, body);
     if(!json) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
       return;
@@ -89,19 +75,7 @@ var getNewsDetail = function(entry) {
       obj.created = new Date();
       obj.views = 1;
       obj.tags = entry.tagName;
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj.body;
-      // digest
-      var maxDigest = 300;
-      obj.digest = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
+      obj.digest = genDigest(obj.body);
       if(entry.thumbnail) {
         obj.cover = entry.thumbnail;
       } else if(jObj.thumbnail) {
@@ -134,7 +108,7 @@ var crawlerHeadLine = function () {
   // http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
   // http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=56&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
   var headlineLink = 'http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-  var MAX_PAGE_NUM = 3;
+  var MAX_PAGE_NUM = 5;
   var page = 1;
   if(crawlerHeadLineFirstTime) {
     //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
@@ -149,21 +123,8 @@ var crawlerHeadLine = function () {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
-        console.log(e);
-      }
-      if(!json) {
+      var json = data2Json(err, res, body);
+      if(!json || !json[0] || !json[0].body || !json[0].body.item) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
         return;
       }

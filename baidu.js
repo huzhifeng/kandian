@@ -5,6 +5,7 @@ var Image = require('./models/image');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var site = "baidu";
 var baiduNewsTags = ['背景', '意见', '早报', '毒舌秀'];
@@ -71,21 +72,7 @@ var crawlerImageCategory = function (entry) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory():JSON.parse() catch error");
-        console.log(e);
-        return;
-      }
+      var json = data2Json(err, res, body);
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory():JSON.parse() error");
         return;
@@ -211,22 +198,8 @@ var crawlerNewsCategory = function (entry) {
     return;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():error");
-      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-      return;
-    }
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():JSON.parse() catch error");
-      console.log(e);
-      return;
-    }
-    if(!json) {
+    var json = data2Json(err, res, body);
+    if(!json || !json.data || !json.data.news) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():JSON.parse() error");
       return;
     }

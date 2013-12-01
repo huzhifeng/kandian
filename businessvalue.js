@@ -8,6 +8,7 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
 var proxyEnable = 0;
@@ -135,24 +136,9 @@ var getNewsDetail = function(entry) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-    }
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() catch error");
-      console.log(e);
-      return;
-    }
+    var json = data2Json(err, res, body);
     if(!json) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
-      console.log(util.inspect(json));
       return;
     }
 
@@ -188,7 +174,7 @@ var getNewsDetail = function(entry) {
       obj.tags = entry.tagName;
       obj.digest = genDigest(obj.body);
       obj.cover = obj.top_image;
-      if (!obj.top_image && obj.img[0]) {
+      if (!obj.top_image && obj.img && obj.img[0]) {
         obj.cover = obj.img[0];
       }
 
@@ -227,21 +213,7 @@ var crawlerCategory = function (entry) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
-        console.log(err);console.log(url+"?pageindex="+page+"&pagesize="+entry.pagesize+"&cateid="+entry.cateid);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error"+"?pageindex="+page+"&cateid="+entry.cateid);
-        console.log(e);
-        return;
-      }
+      var json = data2Json(err, res, body);
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
         return;

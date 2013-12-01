@@ -8,8 +8,8 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
-var xml2json = require('xml2json');
-var jsdom = require("jsdom").jsdom;
+var data2Json = require('./lib/utils').data2Json;
+var genDigest = require('./lib/utils').genDigest;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -20,27 +20,6 @@ var headers = {
 };
 var site = "sina";
 
-function pickImg(enclosure) {
-  var objs = enclosure;
-  var i = 0;
-  //console.log("zhutest file[" + __filename + "]" + " pickImg() util.inspect(objs)="+util.inspect(objs));
-  var img = [];
-  if(objs){
-    if(objs[0]) {
-      for(i=0; i<objs.length; i++) {
-        img[i] = objs[i];
-      }
-    }
-    else {
-      img[0] = objs;
-    }
-  }
-  for(i=0; i<img.length; i++) {
-    img[i]['url'] = img[i]['url'].replace(/auto\.jpg/, "original.jpg");
-  }
-  return img;
-}
-
 var startGetDetail = new EventEmitter();
 
 startGetDetail.on('startGetNewsDetail', function (entry) {
@@ -48,23 +27,21 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
 });
 
 var getNewsDetail = function(entry) {
-  // http://data.3g.sina.com.cn/api/t/art/index.php?id=124-8468729-news-cms
-  var detailLink = 'http://data.3g.sina.com.cn/api/t/art/index.php?id=%s';
-  var docid = util.format("%s",entry['id']);
+  // http://api.sina.cn/sinago/article.json?id=124-10568626-news-cms&postt=news_news_toutiao_36&wm=b207&from=6037095012&chwm=5062_0058&oldchwm=5062_0058&imei=&uid=27ad58fc698efcc1
+  var detailLink = 'http://api.sina.cn/sinago/article.json?id=%s';
+  var docid = util.format("%s",entry.id);
   var url = util.format(detailLink, docid);
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
+    var json = data2Json(err, res, body);
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() error");
+      return;
     }
-    //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail() util.inspect(body)="+util.inspect(body));
-    var json = xml2json.toJson(body,{object:true, sanitize:false});
-    var jObj = json['rss']["channel"]["item"];
+    var jObj = json.data;
     var obj = entry;
 
     News.findOne(genFindCmd(site, docid), function(err, result) {
@@ -76,55 +53,42 @@ var getNewsDetail = function(entry) {
         //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
         return;
       }
-      obj['docid'] = encodeDocID(site, docid);
-      obj['site'] = site;
-      //obj['jsonstr'] = body; // delete it to save db size
-      obj['body'] = jObj['description'];
-      obj['img'] = pickImg(jObj['enclosure']);
-      obj['video'] = [];
-      obj['link'] = "";
-      if(jObj['link']) {
-        obj['link'] = jObj['link']; // http://news.sina.cn/?sa=t124d8940595v2357
-      }else if(jObj['guid']) {
-        obj['link'] = jObj['guid']; // http://news.sina.cn/?sa=t124d8940595v2357
-      }else if(entry['link']) {
-        obj['link'] = entry['link']; // http://news.sina.cn/?sa=d8940595t124v71
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = jObj.content;
+      obj.img = [];
+      if(jObj.pics) {
+        var i = 0;
+        var html = '';
+        for(i=0; i<jObj.pics.length; i++) {
+          jObj.pics[i].pic = jObj.pics[i].pic.replace(/auto\.jpg/, "original.jpg");
+          html = genLazyLoadHtml(jObj.pics[i].alt, jObj.pics[i].pic) + jObj.pics[i].alt + '<br/>';
+          obj.body = obj.body.replace(util.format("<!--{IMG_%d}-->", i+1), html);
+          obj.img[obj.img.length] = jObj.pics[i].pic;
+        }        
+      }
+      obj.video = [];
+      obj.link = "";
+      if(jObj.link) {
+        obj.link = jObj.link; // http://news.sina.cn/?sa=t124d8940595v2357
+      }else if(entry.link) {
+        obj.link = entry.link; // http://news.sina.cn/?sa=d8940595t124v71
       }else {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), link null");
       }
-      obj['title'] = entry['title'].trim().replace(/\s+/g, '');// + "-" + entry['intro'].trim().replace(/\s+/g, '');
-      obj['ptime'] = jObj['pubDate'];
-      obj['time'] = new Date(Date.parse(jObj['pubDate']));
-      obj['marked'] = obj['body'];
-
-      obj['created'] = new Date();
-      obj['views'] = 1;
-      obj['tags'] = entry['tagName'];
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj['body'];
-      // digest
-      var maxDigest = 300;
-      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
-      obj['cover'] = entry['pic'];
-      if (!entry['pic'] && obj['img'][0]) {
-        obj['cover'] = obj['img'][0]['url'];
-        //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj['cover']);
+      obj.title = entry.title;
+      obj.ptime = jObj.pubDate;
+      obj.time = new Date(parseInt(obj.ptime) * 1000);
+      obj.marked = obj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      obj.cover = entry.pic;
+      if (!entry.pic && obj.img[0]) {
+        obj.cover = obj.img[0].url;
+        //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj.cover);
       }
-
-      // img lazyloading
-      for(i=0; i<obj['img'].length; i++) {
-        var imgHtml = genLazyLoadHtml(obj['img'][i]['alt'], obj['img'][i]['url']);
-        obj['marked'] = obj['marked'].replace(/<br\/><br\/>/, imgHtml);
-        //console.log("hzfdbg file[" + __filename + "]" + " imgHtml="+imgHtml);
-      };
 
       News.insert(obj, function (err, result) {
         if(err) {
@@ -144,7 +108,7 @@ var crawlerHeadLine = function () {
   var page = 1;
   if(crawlerHeadLineFirstTime) {
     //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 3;//25;
+    MAX_PAGE_NUM = 15;//25;
     crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -155,25 +119,12 @@ var crawlerHeadLine = function () {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
-        console.log(e);
-      }
-      if(!json) {
+      var json = data2Json(err, res, body);
+      if(!json || !json.data || !json.data.list) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
         return;
       }
-      var newsList = json["data"]["list"];
+      var newsList = json.data.list;
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
         return;
@@ -184,16 +135,16 @@ var crawlerHeadLine = function () {
             continue;
           }
           try {
-            if (newsEntry['title'].indexOf(tags[i]) !== -1) {
-              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry['title']);
-              newsEntry['tagName'] = tags[i];
-              News.findOne(genFindCmd(site, newsEntry['id']), function(err, result) {
+            if (newsEntry.title.indexOf(tags[i]) !== -1) {
+              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry.title);
+              newsEntry.tagName = tags[i];
+              News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
                 if(err) {
                   console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
                   return;
                 }
                 if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['id']);
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
                   startGetDetail.emit('startGetNewsDetail', newsEntry);
                 }
               }); // News.findOne

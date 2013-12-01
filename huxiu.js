@@ -8,6 +8,7 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
 var proxyEnable = 0;
@@ -30,9 +31,9 @@ var headers = {
 var site = "huxiu";
 
 var categorys = [
-  {cateid:1, first:1, label:"看点", name:"/portal/1/", pagesize:20, maxpage:276},
-  {cateid:6, first:1, label:"读点", name:"/portal/6/", pagesize:20, maxpage:18},
-  {cateid:4, first:1, label:"观点", name:"/portal/4/", pagesize:20, maxpage:164},
+  {cateid:1, first:0, label:"看点", name:"/portal/1/", pagesize:20, maxpage:276},
+  {cateid:6, first:0, label:"读点", name:"/portal/6/", pagesize:20, maxpage:18},
+  {cateid:4, first:0, label:"观点", name:"/portal/4/", pagesize:20, maxpage:164},
 ];
 
 function genBodyHtmlAndImg(obj) {
@@ -84,22 +85,8 @@ var getNewsDetail = function(entry) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-    }
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() catch error");
-      console.log(e);
-      return;
-    }
-    if((!json) || (json.result != 0)) {
+    var json = data2Json(err, res, body);
+    if((!json) || (json.result && json.result != 0)) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():ret="+json.result);
       return;
     }
@@ -148,12 +135,12 @@ var getNewsDetail = function(entry) {
 };
 
 var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = 2;
+  var MAX_PAGE_NUM = 5;
   var page = 1;
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
+    MAX_PAGE_NUM = 1 + entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -165,27 +152,9 @@ var crawlerCategory = function (entry) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error");
-        console.log(e);
-        return;
-      }
-      if(!json) {
+      var json = data2Json(err, res, body);
+      if(!json || (json.result && json.result != 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
-        return;
-      }
-      if(json.result != 0) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():result="+json.result+",url="+url);
         return;
       }
       var newsList = json.content;

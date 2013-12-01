@@ -8,6 +8,8 @@ var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
+var genDigest = require('./lib/utils').genDigest;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 
@@ -33,9 +35,9 @@ function pickImg(html) {
   if(objs) {
     for(i=0; i<objs.length; i++) {
       img[i] = {};
-      img[i]['src'] = objs[i].getAttribute('data-src');
-      img[i]['alt'] = objs[i].getAttribute('alt');
-      img[i]['data-src'] = objs[i].getAttribute("src");
+      img[i].src = objs[i].getAttribute('data-src');
+      img[i].alt = objs[i].getAttribute('alt');
+      img[i].originsrc = objs[i].getAttribute("src");
     }
   }
   return img;
@@ -54,7 +56,7 @@ startGetDetail.on('startGetPhotoDetail', function (entry) {
 var getNewsDetail = function(entry) {
   // http://api.k.sohu.com/api/news/article.go?newsId=7189277
   var detailLink = 'http://api.k.sohu.com/api/news/article.go?newsId=%s';
-  var docid = util.format("%s",entry['newsId']);
+  var docid = util.format("%s",entry.newsId);
   var url = util.format(detailLink, docid);
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
@@ -72,7 +74,7 @@ var getNewsDetail = function(entry) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
       return;
     }
-    var jObj = json['root'];
+    var jObj = json.root;
     var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
@@ -83,55 +85,42 @@ var getNewsDetail = function(entry) {
         //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
         return;
       }
-      obj['docid'] = encodeDocID(site, docid);
-      obj['site'] = site;
-      //obj['jsonstr'] = body; // delete it to save db size
-      obj['body'] = jObj['content'].replace(/90_90/gi,"602_1000");//小图片替换为大图片
-      obj['img'] = pickImg(obj['body']);
-      obj['video'] = [];
-      obj['link'] = "";
-      if(jObj['link']) {
-        obj['link'] = jObj['link']; // http://3g.k.sohu.com/t/n7189277
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = jObj.content.replace(/90_90/gi,"602_1000");//小图片替换为大图片
+      obj.img = pickImg(obj.body);
+      obj.video = [];
+      obj.link = "";
+      if(jObj.link) {
+        obj.link = jObj.link; // http://3g.k.sohu.com/t/n7189277
       }else {
-        obj['link'] = util.format("http://3g.k.sohu.com/t/n%s", docid); // http://3g.k.sohu.com/t/n7189277
+        obj.link = util.format("http://3g.k.sohu.com/t/n%s", docid); // http://3g.k.sohu.com/t/n7189277
       }
-      obj['title'] = entry['title'].trim().replace(/\s+/g, '');
-      obj['ptime'] = jObj['time'];
-      obj['time'] = new Date(Date.parse(jObj['time']));
-      obj['marked'] = obj['body'];
-      obj['created'] = new Date();
-      obj['views'] = 1;
-      obj['tags'] = entry['tagName'];
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj['body'];
-      // digest
-      var maxDigest = 300;
-      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
-      if(entry['listPic']) {
-        obj['cover'] = entry['listPic'];
-      } else if(entry['bigPic']) {
-        obj['cover'] = entry['bigPic'];
-      } else if(entry['listpic']) {
-        obj['cover'] = entry['listpic'];
-      } else if(obj['img'][0]) {
-        obj['cover'] = obj['img'][0]['src'];
-      } else if (obj['img'][1]) {
-        obj['cover'] = obj['img'][1]['src'];
-        //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj['cover']);
+      obj.title = entry.title.trim().replace(/\s+/g, '');
+      obj.ptime = jObj.time;
+      obj.time = new Date(Date.parse(jObj.time));
+      obj.marked = obj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      if(entry.listPic) {
+        obj.cover = entry.listPic;
+      } else if(entry.bigPic) {
+        obj.cover = entry.bigPic;
+      } else if(entry.listpic) {
+        obj.cover = entry.listpic;
+      } else if(obj.img[0]) {
+        obj.cover = obj.img[0].src;
+      } else if (obj.img[1]) {
+        obj.cover = obj.img[1].src;
+        //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj.cover);
       }
 
       // img lazyloading
-      for(i=0; i<obj['img'].length; i++) {
-        var imgHtml = genLazyLoadHtml(obj['img'][i]['alt'], obj['img'][i]['data-src']);
-        //obj['marked'] = obj['marked'].replace(/<img.*?\/>/gi, imgHtml);
+      for(i=0; i<obj.img.length; i++) {
+        var imgHtml = genLazyLoadHtml(obj.img[i].alt, obj.img[i].originsrc);
+        //obj.marked = obj.marked.replace(/<img.*?\/>/gi, imgHtml);
         //console.log("hzfdbg file[" + __filename + "]" + " imgHtml="+imgHtml);
       };
 
@@ -150,33 +139,33 @@ function genBodyHtml(obj) {
   var last_text = "";
   var i = 0;
 
-  if((!obj) || (!obj['gallery'])) {
+  if((!obj) || (!obj.gallery)) {
     console.log("hzfdbg file[" + __filename + "]" + " genBodyHtml():null");
     return "";
   }
 
-  body = obj['title'] + "<br>";
-  var list = obj['gallery']['photo'];
+  body = obj.title + "<br>";
+  var list = obj.gallery.photo;
   //console.log("hzfdbg file[" + __filename + "]" + " genBodyHtml() util.inspect(list)="+util.inspect(list));
 
   for(i=0; i<list.length; i++) {
-    if(list[i]['abstract'].length) {
-      text = list[i]['abstract'];
-    }else if(list[i]['ptitle'].length){
-      text = list[i]['ptitle'];
+    if(list[i].abstract.length) {
+      text = list[i].abstract;
+    }else if(list[i].ptitle.length){
+      text = list[i].ptitle;
     }else {
       text = "";
       console.log("hzfdbg file[" + __filename + "]" + " genBodyHtml():text null");
     }
 
-    if((0 == i) && (obj['title'] == text)) {
+    if((0 == i) && (obj.title == text)) {
       body += "";
     }else {
       body += (text == last_text)?"":text;
     }
 
     last_text = text;
-    body += genLazyLoadHtml(text, list[i]['pic']);
+    body += genLazyLoadHtml(text, list[i].pic);
   }
 
   return body;
@@ -186,15 +175,15 @@ function pickPhotos(obj) {
   var img = [];
   var i = 0;
 
-  if((!obj) || (!obj['gallery'])) {
+  if((!obj) || (!obj.gallery)) {
     console.log("hzfdbg file[" + __filename + "]" + " pickPhotos():null");
     return "";
   }
 
-  var list = obj['gallery']['photo'];;
+  var list = obj.gallery.photo;;
 
   for(i=0; i<list.length; i++) {
-    img[i] = list[i]['pic'];
+    img[i] = list[i].pic;
   }
 
   return img;
@@ -203,8 +192,8 @@ function pickPhotos(obj) {
 var getPhotoDetail = function(entry) {
   // http://api.k.sohu.com/api/photos/gallery.go?gid=78233&from=tag&fromId=455&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
   // http://api.k.sohu.com/api/photos/gallery.go?gid=78233
-  var docid = util.format("%s",entry['gid']);
-  var url = util.format("http://api.k.sohu.com/api/photos/gallery.go?gid=%s&from=tag&fromId=%s&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", docid, entry['tagId']);
+  var docid = util.format("%s",entry.gid);
+  var url = util.format("http://api.k.sohu.com/api/photos/gallery.go?gid=%s&from=tag&fromId=%s&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", docid, entry.tagId);
   var req = {uri: url, method: "GET", headers: headers};
   if(proxyEnable) {
     req.proxy = proxyUrl;
@@ -221,7 +210,7 @@ var getPhotoDetail = function(entry) {
       console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():json null");
       return;
     }
-    var jObj = json['root'];
+    var jObj = json.root;
     var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err) {
@@ -232,43 +221,30 @@ var getPhotoDetail = function(entry) {
         //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():exist ");
         return;
       }
-      obj['docid'] = encodeDocID(site, docid);
-      obj['site'] = site;
-      //obj['jsonstr'] = body; // delete it to save db size
-      obj['body'] = genBodyHtml(jObj);
-      obj['img'] = pickPhotos(jObj);
-      obj['video'] = [];
-      obj['link'] = "";
-      if(jObj['shareLink']) {
-        obj['link'] = jObj['shareLink']; // http://3g.k.sohu.com/t/p78321
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = genBodyHtml(jObj);
+      obj.img = pickPhotos(jObj);
+      obj.video = [];
+      obj.link = "";
+      if(jObj.shareLink) {
+        obj.link = jObj.shareLink; // http://3g.k.sohu.com/t/p78321
       }else {
-        obj['link'] = util.format("http://3g.k.sohu.com/t/p%s", docid); // http://3g.k.sohu.com/t/p78321
+        obj.link = util.format("http://3g.k.sohu.com/t/p%s", docid); // http://3g.k.sohu.com/t/p78321
       }
-      obj['title'] = entry['title'].trim().replace(/\s+/g, '');
-      obj['ptime'] = jObj['time'];
-      obj['time'] = new Date(Date.parse(jObj['time']));
-      obj['marked'] = obj['body'];
-      obj['created'] = new Date();
-      obj['views'] = 1;
-      obj['tags'] = entry['tagName'];
-
-      //remove all html tag,
-      //refer to <<How to remove HTML Tags from a string in Javascript>>
-      //http://geekswithblogs.net/aghausman/archive/2008/10/30/how-to-remove-html-tags-from-a-string-in-javascript.aspx
-      //and https://github.com/tmpvar/jsdom
-      var window = jsdom().createWindow();
-      var mydiv = window.document.createElement("div");
-      mydiv.innerHTML = obj['body'];
-      // digest
-      var maxDigest = 300;
-      obj['digest'] = mydiv.textContent.slice(0,maxDigest);
-
-      // cover
-      obj['cover'] = "";
-      if(entry['images'][0]) {
-        obj['cover'] = entry['images'][0];
-      } else if(obj['img'][0]) {
-        obj['cover'] = obj['img'][0];
+      obj.title = entry.title.trim().replace(/\s+/g, '');
+      obj.ptime = jObj.time;
+      obj.time = new Date(Date.parse(jObj.time));
+      obj.marked = obj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      obj.cover = "";
+      if(entry.images[0]) {
+        obj.cover = entry.images[0];
+      } else if(obj.img[0]) {
+        obj.cover = obj.img[0];
       }
 
       News.insert(obj, function (err, result) {
@@ -300,20 +276,7 @@ var crawlerHeadLine = function () {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() catch error");
-        console.log(e);
-      }
+      var json = data2Json(err, res, body);
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
         return;
@@ -329,15 +292,15 @@ var crawlerHeadLine = function () {
             continue;
           }
           try {
-            if (newsEntry['title'].indexOf(tags[i]) !== -1) {
-              newsEntry['tagName'] = tags[i];
-              News.findOne(genFindCmd(site, newsEntry['newsId']), function(err, result) {
+            if (newsEntry.title.indexOf(tags[i]) !== -1) {
+              newsEntry.tagName = tags[i];
+              News.findOne(genFindCmd(site, newsEntry.newsId), function(err, result) {
                 if(err) {
                   console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
                   return;
                 }
                 if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['newsId']);
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.newsId);
                   startGetDetail.emit('startGetNewsDetail', newsEntry);
                 }
               }); // News.findOne
@@ -377,20 +340,7 @@ var crawlerPhoto = function (tag, id) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() catch error");
-        console.log(e);
-      }
+      var json = data2Json(err, res, body);
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():JSON.parse() error");
         return;
@@ -402,15 +352,15 @@ var crawlerPhoto = function (tag, id) {
       }
       newsList.forEach(function(newsEntry) {
         try {
-          newsEntry['tagName'] = tag;
-          newsEntry['tagId'] = id;
-          News.findOne(genFindCmd(site, newsEntry['gid']), function(err, result) {
+          newsEntry.tagName = tag;
+          newsEntry.tagId = id;
+          News.findOne(genFindCmd(site, newsEntry.gid), function(err, result) {
             if(err) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(), News.findOne():error " + err);
               return;
             }
             if (!result) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['gid']);
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.gid);
               startGetDetail.emit('startGetPhotoDetail', newsEntry);
             }
           }); // News.findOne
@@ -453,38 +403,25 @@ var crawlerTag = function (tag, id) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():JSON.parse() catch error");
-        console.log(e);
-      }
+      var json = data2Json(err, res, body);
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():JSON.parse() error");
         return;
       }
-      var newsList = json['newsList'];
+      var newsList = json.newsList;
       if((!newsList) || (newsList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
-        newsEntry['tagName'] = tag;
-        News.findOne(genFindCmd(site, newsEntry['newsId']), function(err, result) {
+        newsEntry.tagName = tag;
+        News.findOne(genFindCmd(site, newsEntry.newsId), function(err, result) {
           if(err) {
             console.log("hzfdbg file[" + __filename + "]" + " crawlerTag(), News.findOne():error " + err);
             return;
           }
           if (!result) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():["+newsEntry['tagName']+"]"+newsEntry['title']+",docid="+newsEntry['newsId']);
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.newsId);
             startGetDetail.emit('startGetNewsDetail', newsEntry);
           }
         }); // News.findOne

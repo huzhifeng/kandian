@@ -4,6 +4,7 @@ var request = require('request');
 //var http = require('http-get');
 var Image = require('./models/image');
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
 var site = "xgmn";
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -394,21 +395,7 @@ var crawlerCategory = function (entry) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory().request():error");
-        console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-        return;
-      }
-      var json = null;
-      try {
-        json = JSON.parse(body);
-      }
-      catch (e) {
-        json = null;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error");
-        console.log(e);
-        return;
-      }
+      var json = data2Json(err, res, body);
       if(!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
         return;
@@ -498,21 +485,7 @@ var initCatalogList = function() {
   //  req.proxy = proxyUrl;
   //}
   //request(req, function (err, res, body) {
-  //  if(err || (res.statusCode != 200) || (!body)) {
-  //    console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():error");
-  //    console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-  //    return;
-  //  }
-  //  var json = null;
-  //  try {
-  //    json = JSON.parse(body);
-  //  }
-  //  catch (e) {
-  //    json = null;
-  //    console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():JSON.parse() catch error");
-  //    console.log(e);
-  //    return;
-  //  }
+  //  var json = data2Json(err, res, body);
   //  if(!json || (json.returnMsg != 'sucess')) {
   //    console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():JSON.parse() error");
   //    return;

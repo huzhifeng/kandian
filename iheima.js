@@ -2,13 +2,13 @@
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var _ = require("lodash");
-var jsdom = require("jsdom").jsdom;
 var iheimaTags = require('config').Config.iheimaTags;
 var tags = _.keys(iheimaTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
+var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
 var proxyEnable = 0;
@@ -139,21 +139,7 @@ var crawlerCategory = function (entry) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():error");
-      console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
-      return;
-    }
-    var json = null;
-    try {
-      json = JSON.parse(body);
-    }
-    catch (e) {
-      json = null;
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() catch error");
-      console.log(e);
-      return;
-    }
+    var json = data2Json(err, res, body);
     if(!json) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
       return;
