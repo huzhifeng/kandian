@@ -7,7 +7,6 @@ var mergeDict = require('../lib/utils').mergeDict;
 tt = mergeDict(tt,require('config').Config.sohuTags);
 tt = mergeDict(tt,require('config').Config.sinaTags);
 tt = mergeDict(tt,require('config').Config.qqTags);
-tt = mergeDict(tt,require('config').Config.ifengTags);
 tt = mergeDict(tt,require('config').Config.yokaTags);
 tt = mergeDict(tt,require('config').Config.krTags);
 

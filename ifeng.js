@@ -1,9 +1,6 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var _ = require("lodash");
-var ifengTags = require('config').Config.ifengTags;
-var tags = _.keys(ifengTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
@@ -19,6 +16,24 @@ var headers = {
   'Connection': 'Keep-Alive',
 };
 var site = 'ifeng';
+var ifengTags = [
+  '史说新语',
+  '百部穿影', // http://ent.ifeng.com/movie/special/baibuchuanying/
+  '影像志',
+  '凤凰热追踪',
+  '深度',
+  '真相80',
+  '凤凰网评',
+  '轻新闻',
+  '每日热词',
+  '教科书之外',
+  '独家评',
+  '科技能见度',
+  '凤凰八卦阵',
+  '洞见',
+  '独家图表',
+  '历史上的今天',
+];
 
 var startGetDetail = new EventEmitter();
 
@@ -39,7 +54,7 @@ var getNewsDetail = function(entry) {
   }
   request(req, function (err, res, body) {
     var json = data2Json(err, res, body);
-    if(!json) {
+    if(!json || !json.body || !json.body.text) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
       return;
     }
@@ -103,18 +118,13 @@ var getNewsDetail = function(entry) {
   });// request
 };
 
-var crawlerHeadLineFirstTime = 0; //Crawl more pages at the first time
 var crawlerHeadLine = function () {
   // http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
   // http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=56&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
   var headlineLink = 'http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
   var MAX_PAGE_NUM = 5;
   var page = 1;
-  if(crawlerHeadLineFirstTime) {
-    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 56;
-    crawlerHeadLineFirstTime = 0;
-  }
+
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     var url = util.format(headlineLink, page);
@@ -134,29 +144,23 @@ var crawlerHeadLine = function () {
         return;
       }
       newsList.forEach(function(newsEntry) {
-        for(var i = 0; i < tags.length; i++) {
-          if(ifengTags[tags[i]].indexOf("ifeng_") === -1) {//crawlerTags will handle these tags, so skip them here
-            continue;
-          }
-          try {
-            if (newsEntry.title.indexOf(tags[i]) !== -1) {
-              newsEntry.tagName = tags[i];
-              News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-                if(err) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
-                  return;
-                }
-                if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                }
-              }); // News.findOne
-            }
-          }
-          catch (e) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
-            console.log(e);
-            continue;
+        if(!newsEntry.title || !newsEntry.documentId) {
+          return;
+        }
+        for(var i = 0; i < ifengTags.length; i++) {
+          if(newsEntry.title.indexOf(ifengTags[i]) !== -1) {
+            newsEntry.tagName = ifengTags[i];
+            News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
+              if(err) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
+                return;
+              }
+              if (!result) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
+                startGetDetail.emit('startGetNewsDetail', newsEntry);
+              }
+            }); // News.findOne
+            break;
           }
         }//for
       });//forEach
@@ -165,9 +169,84 @@ var crawlerHeadLine = function () {
   }//for
 };
 
+// 凤凰独家栏目列表,目前共21个,分3页返回,为减少请求,可以指定pagesize为30一次返回
+// http://api.3g.ifeng.com/channel_list_android?channel=origin&pagesize=10&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+var channelListUrl = 'http://api.3g.ifeng.com/channel_list_android?channel=origin&pagesize=30&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
+// 某一栏目文章列表,默认每次返回20条记录,可以指定pageindex(如&pageindex=2)和pagesize(如&pagesize=40)自定义返回
+// http://api.3g.ifeng.com/origin_doc_list?id=16908&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+var docListUrl = '%s&pageindex=%d&pagesize=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
+// 某篇文章内容
+// http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_74837186&channel=push&chid=push&android=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+var docDetailUrl = 'http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_74837186&channel=push&chid=push&android=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
+
+var crawlerChannel = function (channelEntry) {
+  var url = util.format(docListUrl, channelEntry.id, channelEntry.pageindex, channelEntry.pagesize);
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  channelEntry.pageindex = channelEntry.pageindex + 1;
+  if(channelEntry.pageindex <= channelEntry.maxpage) {
+    setTimeout(function() {
+      crawlerChannel(channelEntry);
+    }, 100);
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || !json[0] || !json[0].body || !json[0].body.item) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():JSON.parse() error");
+      return;
+    }
+    var newsList = json[0].body.item;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      newsEntry.tagName = channelEntry.title;
+      News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
+        if(err) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel(), News.findOne():error " + err);
+          return;
+        }
+        if (!result) {
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
+          startGetDetail.emit('startGetNewsDetail', newsEntry);
+        }
+      }); // News.findOne
+    });//forEach
+  });//request
+};
+
+var initChannelList = function() {
+  var url = channelListUrl;
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || !json.body || !json.body.item) {
+      console.log("hzfdbg file[" + __filename + "]" + " initChannelList():JSON.parse() error");
+      return;
+    }
+    var channelList = json.body.item;
+    if((!channelList) || (!channelList.length) || (channelList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " initChannelList():channelList empty in url " + url);
+      return;
+    }
+    channelList.forEach(function(channelEntry) {
+      channelEntry.pageindex = 1;
+      channelEntry.pagesize = 20;
+      channelEntry.maxpage = 1;
+      crawlerChannel(channelEntry);
+    });//forEach
+  });//request
+}
 var ifengCrawler = function() {
   console.log("hzfdbg file[" + __filename + "]" + " ifengCrawler():Date="+new Date());
   crawlerHeadLine();
+  initChannelList();
   setTimeout(ifengCrawler, 1000 * 60 * 60);
 }
 
