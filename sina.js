@@ -108,7 +108,7 @@ var crawlerHeadLine = function () {
   var page = 1;
   if(crawlerHeadLineFirstTime) {
     //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
-    MAX_PAGE_NUM = 15;//25;
+    MAX_PAGE_NUM = 25;
     crawlerHeadLineFirstTime = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -135,7 +135,7 @@ var crawlerHeadLine = function () {
             continue;
           }
           try {
-            if (newsEntry.title.indexOf(tags[i]) !== -1) {
+            if (newsEntry.title.indexOf(tags[i]) !== -1 || (newsEntry.long_title && newsEntry.long_title.indexOf(tags[i]) !== -1)) {
               //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry.title);
               newsEntry.tagName = tags[i];
               News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
