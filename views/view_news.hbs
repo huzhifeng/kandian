@@ -1,5 +1,4 @@
-﻿
-<div class="news">
+﻿<div class="news">
   <div class="page-header">
     <h2>{{news.title}}</h2>
     <small>
@@ -10,12 +9,6 @@
             <!--,&nbsp;&nbsp;<a title="下载txt" href="/d/{{news.docid}}.txt">下载({{#if news.download}}{{news.download}}{{else}}0{{/if}})</a>-->
         </em>
     </small>
-    
-    {{#if session.user}}
-    &nbsp;&nbsp;<a href="/admin/news/{{news.docid}}/autoupdate"><i class="icon-refresh"></i>&nbsp;AutoUpdate</a>,
-    &nbsp;<a href="/admin/news/{{news.docid}}/edit"><i class="icon-edit"></i>&nbsp;Edit</a>,
-    &nbsp;&nbsp;<a href="javascript:void(0)" onClick="javascript:if (confirm('Are you sure to delete this news???')) {window.location.href='/admin/news/{{news.docid}}/del'};"><i class="icon-remove"></i>&nbsp;Delete</a>
-    {{/if}}
   </div>
 
   <div class="news-content content-{{tag2c news.tags.[0]}}">

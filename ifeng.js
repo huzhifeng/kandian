@@ -102,13 +102,6 @@ var getNewsDetail = function(entry) {
         console.log("hzfdbg file[" + __filename + "] could not fine a cover");
       }
 
-      // img lazyloading
-      for(i=0; i<obj.img.length; i++) {
-        //var imgHtml = genLazyLoadHtml(obj.title, obj.img[i].url);
-        //obj.marked = obj.marked.replace(/<img.*?\/>/gi, imgHtml);
-        //console.log("hzfdbg file[" + __filename + "]" + " imgHtml="+imgHtml);
-      };
-
       News.insert(obj, function (err, result) {
         if(err) {
           console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);

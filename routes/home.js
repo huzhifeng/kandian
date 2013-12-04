@@ -41,12 +41,8 @@ var index = function (req, res, next) {
             "site": "yoka",
             "tags": {"$in":["笑到抽筋","谁八卦啊你八卦"]},
           },
-          {
-            "site": "36kr",
-            "tags": {"$in":["8点1氪","创业说","氪周刊","氪月报"]},
-          },
         ]
-    };//{"site":{"$nin":["qq"]}};
+    };
     News.page(cmd, page, function (err, currentPage, pages, result) {
       if (! err) {
         callback(null, {currentPage: currentPage, pages: pages, newss: result});
@@ -122,17 +118,15 @@ var index = function (req, res, next) {
   },
   function (err, results) {
     if (! err) {
-      // console.log(currentPage, pages);
       res.render('home', {pageTitle: '看点网---有看点，更精彩！',
         currentPage: results.newss.currentPage, pages: results.newss.pages,
-        news: results.newss.newss, baseUrl: '/page/'/*,hotNews: results.hotNewss.hotNewss*/,
+        news: results.newss.newss, baseUrl: '/page/',
         latestQingSongNews: results.getLatestQingSong.latestQingSong,
         latestTuCaoNews: results.getLatestTuCao.latestTuCao,
         latestFunNews: results.getLatestFun.latestFun,
         randomImages: results.getRandomImages.randomImages,
       });
     } else {
-      // console.log(err);
       next(new Error(err.message));
     }
   });
@@ -147,18 +141,7 @@ var sitemap = function (req, res, next) {
   res.render('sitemap', {pageTitle: '站点地图'});
 };
 
-var wx = function (req, res, next) {
-  res.render('wx', {pageTitle: '17轻松微信公众平台', active: 'wx'});
-};
-
-var get163All = function (req, res, next) {
-  crawlerAll();
-  res.send('ok');
-};
-
 var viewNews = function (req, res, next) {
-  //console.log(req.params.docid);
-  ///////////////////////
   var cmd = {"docid": req.params.docid};
   var decode_id = decodeDocID(req.params.docid);
   if(decode_id == req.params.docid) {
@@ -168,7 +151,6 @@ var viewNews = function (req, res, next) {
   }
   News.findOne(cmd, function (err, result) {
     if (!err) {
-      // console.log(result);
       if (result) {
         if (result.views && result.views > 0) {
           result.views += 1;
@@ -177,26 +159,22 @@ var viewNews = function (req, res, next) {
         }
         News.update({docid: result.docid}, {views: result.views}, function (err4, result4) {
           if (err4) {
-            // console.log(err4);
             // next(new Error(err4.message));
           }
         });
 
-        /////////////////
         News.findLimit({"site":result.site, "tags":result.tags, time: {$gt: result.time}}, 1, {time: 1}, function (err5, results5) {
           if (! err5) {
             News.findLimit({"site":result.site, "tags":result.tags, time: {$lt: result.time}}, 1, null, function (err6, results6) {
               if (! err6) {
                 News.findLimit({"site":result.site, "tags":result.tags, time: {$lt: result.time}}, 4, null, function (err2, results2) {
                 if (!err2) {
-                  // console.log(results2);
                   if (results2.length < 1) {
                     News.findLimit({"site":result.site, "tags":result.tags, time: {$gt: result.time}}, 4, null, function (err3, results3) {
                       if (!err3) {
                         res.render('view_news', {pageTitle: result.title, news: result,
                           relatedNews: results3, active: tt[result.tags[0]], prevNews: results5, nextNews: results6});
                       } else {
-                        // console.log(err3);
                         next(new Error(err3.message));
                       }
                     });
@@ -206,7 +184,6 @@ var viewNews = function (req, res, next) {
                   }
 
                 } else {
-                  // console.log(err2);
                   next(new Error(err2.message));
                 }
               });
@@ -222,7 +199,6 @@ var viewNews = function (req, res, next) {
         next();
       }
     } else {
-      // console.log(err);
       next(new Error(err.message));
     }
   });
@@ -231,7 +207,4 @@ var viewNews = function (req, res, next) {
 exports.index = index;
 exports.about = about;
 exports.sitemap = sitemap;
-exports.wx = wx;
-
-exports.get163All = get163All;
 exports.viewNews = viewNews;

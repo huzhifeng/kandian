@@ -5,7 +5,6 @@ var site2name = require('../lib/utils').site2name;
 
 var index = function (req, res, next) {
   var site = req.params.site;
-  //console.log("zhutest site="+site);
 
   var getNewss = function (callback) {
     var page = req.params.page || 1;
@@ -33,13 +32,11 @@ var index = function (req, res, next) {
   },
   function (err, results) {
     if (! err) {
-      // console.log(currentPage, pages);
       res.render('site', {pageTitle: site2name(site),
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, site: site, active: site,
-        baseUrl: '/site/' + encodeURIComponent(site) + '/page/'/*,hotNews: results.hotNewss.hotNewss*/});
+        baseUrl: '/site/' + encodeURIComponent(site) + '/page/'});
     } else {
-      // console.log(err);
       next(new Error(err.message));
     }
   });

@@ -11,7 +11,6 @@ tt = mergeDict(tt,require('config').Config.yokaTags);
 tt = mergeDict(tt,require('config').Config.krTags);
 
 var index = function (req, res, next) {
-
   var tag = req.params.tag;
 
   var getNewss = function (callback) {
@@ -40,14 +39,12 @@ var index = function (req, res, next) {
   },
   function (err, results) {
     if (! err) {
-      // console.log(currentPage, pages);
       res.render('tag', {pageTitle: tag,
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, tag: tag, active: tt[tag],
         baseUrl: '/tag/' + encodeURIComponent(tag) + '/page/',
         hotNews: results.hotNewss.hotNewss});
     } else {
-      // console.log(err);
       next(new Error(err.message));
     }
   });

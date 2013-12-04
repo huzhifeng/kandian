@@ -1,7 +1,5 @@
 ﻿#!/usr/bin/env node
-/**
- * Module dependencies.
- */
+//Modules
 var CONFIG = require('config').Config;
 process.env.TZ = CONFIG.timezone;
 var http = require('http');
@@ -10,14 +8,10 @@ var express = require('express');
 var hbs = require('express-hbs');
 var flash = require('connect-flash');
 var helpers = require('./lib/helpers');
-var checkAuth = require('./lib/utils').checkAuth;
 var routes = require('./routes');
 var app = module.exports = express();
-//var accessLogFile = require('fs').createWriteStream('accessLogFile.log', {flags: 'a'}); //use {flags: 'w'} to open in write mode
 
-/**
- * helpers
- */
+//Helpers
 hbs.registerHelper('dateFormat', helpers.dateFormat);
 hbs.registerHelper('timeFormat', helpers.timeFormat);
 hbs.registerHelper('miniImg', helpers.miniImg);
@@ -28,9 +22,7 @@ hbs.registerHelper('tag2c', helpers.tag2c);
 hbs.registerHelper('tags2sitemap', helpers.tags2sitemap);
 hbs.registerHelper('pagination', helpers.pagination);
 
-/**
- * app config
- */
+//App config
 app.set('port', CONFIG.port);
 app.engine('hbs', hbs.express3({
   defaultLayout: __dirname + '/views/layout.hbs',
@@ -40,7 +32,6 @@ app.set('view engine', 'hbs');
 app.set('views', __dirname + '/views');
 app.use(express.compress());
 app.use(express.favicon(path.join(__dirname, 'public/favicon.ico')));
-//app.use(express.logger({format:'[:date] [:remote-addr] [:user-agent] [HTTP/:http-version] [:method] [:url] [:status] [:referrer] [:response-time ms]', stream: accessLogFile}));//default|short|tiny|dev, http://www.senchalabs.org/connect/middleware-logger.html
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.cookieParser(CONFIG.cookieSecret));
@@ -56,7 +47,6 @@ app.use(app.router);
 app.use(express.compress());
 app.use(express.static(path.join(__dirname, 'public'), {maxAge: CONFIG.staticMaxAge}));
 app.disable('x-powered-by');
-// all environments
 app.set('siteName', CONFIG.siteName);
 // 404
 app.use(function(req, res, next){
@@ -64,26 +54,21 @@ app.use(function(req, res, next){
   res.render('404');
 });
 
-// development only
+// For development
 if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-// production only
+// For production
 if ('production' == app.get('env')) {
   app.use(function(err, req, res, next){
-    // we may use properties of the error object
-    // here and next(err) appropriately, or if
-    // we possibly recovered from the error, simply next().
     res.status(err.status || 500);
     res.render('500');
   });
 }
 
-/**
- * routes
- */
-routes(app, checkAuth);
+// Routes
+routes(app);
 
 if (require.main === module) {
   http.createServer(app).listen(app.get('port'), function(){
