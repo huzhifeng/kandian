@@ -163,12 +163,6 @@ module.exports = {
       '36氪+': 'kr_sslkj',
       '36氪开放日': 'kr_sslkkfr',
     },
-    huxiuTags: {
-      '早报': 'huxiu_zb',
-      '今日嗅评': 'huxiu_jrxp',
-      '大话科技': 'huxiu_dhkj',
-      '移动观察': 'huxiu_ydgc',
-    },
     businessvalueTags: {
       '特别策划': 'ch',
       '价值文摘': 'jzwz',

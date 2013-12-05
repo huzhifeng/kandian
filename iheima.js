@@ -47,6 +47,11 @@ var categorys = [
   //{cateid:6, label:"国外精选", clipId:"100238826", pagesize:20, curpage:0, maxpage:2, offset:0},
 ];
 
+var startGetDetail = new EventEmitter();
+startGetDetail.on('startGetNewsDetail', function (entry) {
+  getNewsDetail(entry);
+});
+
 function genBodyHtmlAndImg(obj) {
   var body = "";
   var img = [];
@@ -89,12 +94,6 @@ function genBodyHtmlAndImg(obj) {
 
   return {"body":body, "img":img};
 }
-
-var startGetDetail = new EventEmitter();
-
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
-});
 
 var getNewsDetail = function(entry) {
   var bodyimg = genBodyHtmlAndImg(entry);
@@ -190,7 +189,7 @@ var crawlerCategory = function (entry) {
               startGetDetail.emit('startGetNewsDetail', newsEntry);
             }
           }); // News.findOne
-          }
+        } // if
       }//for
     });//forEach
   });//request

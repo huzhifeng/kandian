@@ -1,9 +1,6 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var _ = require("lodash");
-var huxiuTags = require('config').Config.huxiuTags;
-var tags = _.keys(huxiuTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
@@ -11,9 +8,10 @@ var encodeDocID = require('./lib/utils').encodeDocID;
 var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
-var proxyEnable = 0;
+var proxyEnable = 1;
 var proxyUrl = 'http://127.0.0.1:7788';
 
+var site = "huxiu";
 var headers = {
   'mAuthorKey': '',
   'x-uid': '',
@@ -27,14 +25,24 @@ var headers = {
   'Connection': 'Keep-Alive',
   'User-Agent': 'Apache-HttpClient/UNAVAILABLE (java 1.4)'
 };
-
-var site = "huxiu";
-
+var huxiuTags = [
+  '早报',
+  '今日嗅评',
+  '娱见',
+  '动见',
+  '大话科技',
+  '移动观察',
+];
 var categorys = [
   {cateid:1, first:0, label:"看点", name:"/portal/1/", pagesize:20, maxpage:276},
   {cateid:6, first:0, label:"读点", name:"/portal/6/", pagesize:20, maxpage:18},
   {cateid:4, first:0, label:"观点", name:"/portal/4/", pagesize:20, maxpage:164},
 ];
+
+var startGetDetail = new EventEmitter();
+startGetDetail.on('startGetNewsDetail', function (entry) {
+  getNewsDetail(entry);
+});
 
 function genBodyHtmlAndImg(obj) {
   var body = "";
@@ -50,7 +58,6 @@ function genBodyHtmlAndImg(obj) {
     return "";
   }
 
-  //console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg() util.inspect(obj.content)="+util.inspect(obj));
   if(obj.content.length) {
     text = obj.content;
     text = text.replace(reg, function(url){
@@ -59,23 +66,16 @@ function genBodyHtmlAndImg(obj) {
       url = e[0].getAttribute("src");
       img[j] = url;
       j += 1;
-      //console.log("url="+url);
       return genLazyLoadHtml(obj.title, url);
     });
     text = text.replace(regrn,function(match) {
       return "<br/>";
     });
-    body += text;//console.log("body="+body);
+    body += text;
   }
 
   return {"body":body, "img":img};
 }
-
-var startGetDetail = new EventEmitter();
-
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
-});
 
 var getNewsDetail = function(entry) {
   // http://android.m.huxiu.com/article/17962/1
@@ -86,7 +86,7 @@ var getNewsDetail = function(entry) {
   }
   request(req, function (err, res, body) {
     var json = data2Json(err, res, body);
-    if((!json) || (json.result && json.result != 0)) {
+    if(!json || !json.content || (json.result && json.result != 0)) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():ret="+json.result);
       return;
     }
@@ -97,7 +97,6 @@ var getNewsDetail = function(entry) {
         return;
       }
       if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
         return;
       }
       var obj = json.content;
@@ -135,7 +134,7 @@ var getNewsDetail = function(entry) {
 };
 
 var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = 5;
+  var MAX_PAGE_NUM = 3;
   var page = 1;
 
   if(entry.first == 1) {
@@ -153,45 +152,39 @@ var crawlerCategory = function (entry) {
     }
     request(req, function (err, res, body) {
       var json = data2Json(err, res, body);
-      if(!json || (json.result && json.result != 0)) {
+      if(!json || !json.content || (json.result && json.result != 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
         return;
       }
       var newsList = json.content;
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      if(!newsList || !newsList.length || (newsList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
-        //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
-        for(var i = 0; i < tags.length; i++) {
-          try {
-            if (newsEntry.title.indexOf(tags[i]) !== -1) {
-              //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
-              newsEntry.tagName = tags[i];
-              newsEntry.cateid = entry.cateid;
-              newsEntry.pageindex = page;
-              if("早报" == newsEntry.tagName) {
-                newsEntry.tagName = "虎嗅早报";
-              }
-
-              News.findOne(genFindCmd(site,newsEntry.aid), function(err, result) {
-                if(err) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
-                  return;
-                }
-                if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.aid);
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                }
-              }); // News.findOne
+        if(!newsEntry.title || !newsEntry.aid) {
+          return;
+        }
+        for(var i=0; i<huxiuTags.length; i++) {
+          if (newsEntry.title.indexOf(huxiuTags[i]) !== -1) {
+            newsEntry.tagName = huxiuTags[i];
+            newsEntry.cateid = entry.cateid;
+            newsEntry.pageindex = page;
+            if("早报" == newsEntry.tagName) {
+              newsEntry.tagName = "虎嗅早报";
             }
-          }
-          catch (e) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(): catch error");
-            console.log(e);
-            continue;
-          }
+
+            News.findOne(genFindCmd(site,newsEntry.aid), function(err, result) {
+              if(err) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
+                return;
+              }
+              if(!result) {
+                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.aid);
+                startGetDetail.emit('startGetNewsDetail', newsEntry);
+              }
+            }); // News.findOne
+          } // if
         }//for
       });//forEach
     });//request
@@ -200,13 +193,11 @@ var crawlerCategory = function (entry) {
 };
 
 var huxiuCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " huxiuCrawler():Start time="+new Date());
-
   categorys.forEach(function(entry) {
     crawlerCategory(entry);
-  });//forEach
+  });
 
-  setTimeout(huxiuCrawler, 1000 * 60 * 60);
+  setTimeout(huxiuCrawler, 4000 * 60 * 60);
 }
 
 exports.huxiuCrawler = huxiuCrawler;
