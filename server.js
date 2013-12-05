@@ -1,5 +1,4 @@
 ﻿#!/usr/bin/env node
-
 process.env.TZ = require('config').Config.timezone;
 var http = require('http');
 var app = require('./app');

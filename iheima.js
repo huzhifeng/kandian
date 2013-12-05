@@ -1,9 +1,6 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var _ = require("lodash");
-var iheimaTags = require('config').Config.iheimaTags;
-var tags = _.keys(iheimaTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
@@ -14,24 +11,40 @@ var timestamp2date = require('./lib/utils').timestamp2date;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
+var site = "iheima";
 var headers = {
-  //'Accept-Encoding': 'gzip, deflate',//Do not enable gzip
   'app': '43',
   'device': 'aries',
   'Host': 'zhiyue.cutt.com',
   'Connection': 'Keep-Alive',
   'User-Agent': 'app43 2.0 (Xiaomi,MI 2; Android 4.1.1)'
 };
-
-var site = "iheima";
-
+var iheimaTags = [
+  '每日一黑马',
+  '案例',
+  '每日黑马',
+  '挖黑马',
+  '侃产品',
+  '头条汇',
+  '小败局',
+  '独家分析',
+  '创业说',
+  '找灵感',
+  '产品家',
+  '挖黑马',
+  '商业模式',
+  'i黑马榜',
+  '融资趋势',
+  '大买家',
+  '黑马YY',
+];
 var categorys = [
-  {cateid:1, first:1, label:"抄本质", clipId:"100238521", pagesize:20, offset:0},
-  {cateid:2, first:1, label:"找灵感", clipId:"100238528", pagesize:20, offset:0},
-  {cateid:3, first:1, label:"挖黑马", clipId:"100238575", pagesize:20, offset:0},
-  {cateid:4, first:1, label:"项目诊断", clipId:"100238675", pagesize:20, offset:0},
-  {cateid:5, first:1, label:"评热点", clipId:"100185712", pagesize:20, offset:0},
-  {cateid:6, first:1, label:"国外精选", clipId:"100238826", pagesize:20, offset:0},
+  {cateid:1, label:"抄本质", clipId:"100238521", pagesize:20, curpage:0, maxpage:2, offset:0},
+  {cateid:2, label:"找灵感", clipId:"100238528", pagesize:20, curpage:0, maxpage:2, offset:0},
+  //{cateid:3, label:"挖黑马", clipId:"100238575", pagesize:20, curpage:0, maxpage:2, offset:0},
+  //{cateid:4, label:"项目诊断", clipId:"100238675", pagesize:20, curpage:0, maxpage:2, offset:0},
+  //{cateid:5, label:"评热点", clipId:"100185712", pagesize:20, curpage:0, maxpage:2, offset:0},
+  //{cateid:6, label:"国外精选", clipId:"100238826", pagesize:20, curpage:0, maxpage:2, offset:0},
 ];
 
 function genBodyHtmlAndImg(obj) {
@@ -60,7 +73,6 @@ function genBodyHtmlAndImg(obj) {
       url = url.replace("##zhiyueImageTag##","");
       url = util.format("http://img1.cutt.com/img/%s", url);
       img.push(url);
-      //console.log("url="+url);
       return genLazyLoadHtml(obj.title, url);
     });
     text = text.replace(regrn,function(match) {
@@ -72,7 +84,7 @@ function genBodyHtmlAndImg(obj) {
     text = text.replace(regn,function(match) {
       return "<br/>";
     });
-    body += text;//console.log("body="+body);
+    body += text;
   }
 
   return {"body":body, "img":img};
@@ -149,54 +161,47 @@ var crawlerCategory = function (entry) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():newsList empty in url " + url);
       return;
     }
-    if((-1 != json.next) && (entry.first)) {
+    entry.curpage += 1;
+    if((-1 == json.next) || (entry.curpage >= entry.maxpage)) {
+      entry.curpage = 0;
+      entry.offset = 0;
+    }else {
       entry.offset = json.next;
       setTimeout(function() {
         crawlerCategory(entry);
       }, 100);
-    }else {
-      entry.first = 0;
-      entry.offset = 0;
     }
     newsList.forEach(function(newsEntry) {
-      //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
-      for(var i = 0; i < tags.length; i++) {
-        try {
-          if (newsEntry.title.indexOf(tags[i]) !== -1) {
-            //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
-            newsEntry.tagName = tags[i];
-            newsEntry.cateid = entry.cateid;
+      if(!newsEntry.title || !newsEntry.id) {
+        return;
+      }
+      for(var i=0; i<iheimaTags.length; i++) {
+        if (newsEntry.title.indexOf(iheimaTags[i]) !== -1) {
+          newsEntry.tagName = iheimaTags[i];
+          newsEntry.cateid = entry.cateid;
 
-            News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
-                return;
-              }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-                startGetDetail.emit('startGetNewsDetail', newsEntry);
-              }
-            }); // News.findOne
+          News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
+            if(err) {
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
+              return;
+            }
+            if (!result) {
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+              startGetDetail.emit('startGetNewsDetail', newsEntry);
+            }
+          }); // News.findOne
           }
-        }
-        catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(): catch error");
-          console.log(e);
-          continue;
-        }
       }//for
     });//forEach
   });//request
 };
 
 var iheimaCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " iheimaCrawler():Start time="+new Date());
-
   categorys.forEach(function(entry) {
     crawlerCategory(entry);
-  });//forEach
+  });
 
-  setTimeout(iheimaCrawler, 1000 * 60 * 60);
+  setTimeout(iheimaCrawler, 8000 * 60 * 60);
 }
 
 exports.iheimaCrawler = iheimaCrawler;
