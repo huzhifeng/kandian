@@ -63,7 +63,6 @@ function genBodyHtmlAndImg(obj) {
 
   if((!obj) || (!obj.content)) {
     console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    console.log(util.inspect(obj));
     return "";
   }
 

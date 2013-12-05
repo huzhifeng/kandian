@@ -154,15 +154,6 @@ module.exports = {
       '排行榜': 'yoka_phb',
       '1日1话题': 'yoka_yryht',
     },
-    krTags: {
-      '8点1氪': 'kr_bdyk',
-      '创业说': 'kr_cys',
-      '氪周刊': 'kr_kzk',
-      '氪月报': 'kr_kyb',
-      '超人计划': 'kr_crjh',
-      '36氪+': 'kr_sslkj',
-      '36氪开放日': 'kr_sslkkfr',
-    },
     businessvalueTags: {
       '特别策划': 'ch',
       '价值文摘': 'jzwz',

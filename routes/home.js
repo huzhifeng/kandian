@@ -6,8 +6,6 @@ var neteaseTags = require('config').Config.neteaseTags;
 var sohuTags = require('config').Config.sohuTags;
 var sinaTags = require('config').Config.sinaTags;
 var qqTags = require('config').Config.qqTags;
-var yokaTags = require('config').Config.yokaTags;
-var krTags = require('config').Config.krTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
 var decodeDocID = require('../lib/utils').decodeDocID;
@@ -16,8 +14,6 @@ var encodeDocID = require('../lib/utils').encodeDocID;
 var tt = mergeDict(neteaseTags, sohuTags);
 tt = mergeDict(tt, sinaTags);
 tt = mergeDict(tt, qqTags);
-tt = mergeDict(tt, yokaTags);
-tt = mergeDict(tt, krTags);
 
 var index = function (req, res, next) {
   var getNewss = function (callback) {

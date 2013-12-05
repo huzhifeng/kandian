@@ -8,7 +8,7 @@ var encodeDocID = require('./lib/utils').encodeDocID;
 var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
 var timestamp2date = require('./lib/utils').timestamp2date;
-var proxyEnable = 1;
+var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
 var site = "huxiu";
@@ -54,7 +54,6 @@ function genBodyHtmlAndImg(obj) {
 
   if((!obj) || (!obj.content)) {
     console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    console.log(util.inspect(obj));
     return "";
   }
 
@@ -139,7 +138,7 @@ var crawlerCategory = function (entry) {
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 1 + entry.maxpage;
+    MAX_PAGE_NUM = entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
