@@ -61,12 +61,7 @@ var getNewsDetail = function(entry) {
     var jObj = json.body;
     var obj = entry;
     News.findOne(genFindCmd(site, docid), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
+      if(err || result) {
         return;
       }
       obj.docid = encodeDocID(site, docid);
@@ -144,14 +139,11 @@ var crawlerHeadLine = function () {
           if(newsEntry.title.indexOf(ifengTags[i]) !== -1) {
             newsEntry.tagName = ifengTags[i];
             News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
+              if(err || result) {
                 return;
               }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
-                startGetDetail.emit('startGetNewsDetail', newsEntry);
-              }
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
+              startGetDetail.emit('startGetNewsDetail', newsEntry);
             }); // News.findOne
             break;
           }
@@ -198,14 +190,11 @@ var crawlerChannel = function (channelEntry) {
     newsList.forEach(function(newsEntry) {
       newsEntry.tagName = channelEntry.title;
       News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel(), News.findOne():error " + err);
+        if(err || result) {
           return;
         }
-        if (!result) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
-          startGetDetail.emit('startGetNewsDetail', newsEntry);
-        }
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
+        startGetDetail.emit('startGetNewsDetail', newsEntry);
       }); // News.findOne
     });//forEach
   });//request
@@ -237,7 +226,6 @@ var initChannelList = function() {
   });//request
 }
 var ifengCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " ifengCrawler():Date="+new Date());
   crawlerHeadLine();
   initChannelList();
   setTimeout(ifengCrawler, 1000 * 60 * 60);

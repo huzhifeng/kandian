@@ -50,14 +50,8 @@ var crawlerCategory = function (entry) {
         return;
       }
       imageList.forEach(function(imageEntry) {
-        //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), i=" + imageEntry.i);
         Image.findOne({'site':site, 'id':imageEntry.id}, function(err, result) {
-          if(err) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.findOne():error " + err);
-            return;
-          }
-          if (result) {
-            //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.findOne():exist ");
+          if(err || result) {
             return;
           }
           var obj = imageEntry;

@@ -45,12 +45,7 @@ var getNewsDetail = function(entry) {
     var obj = entry;
 
     News.findOne(genFindCmd(site, docid), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
+      if(err || result) {
         return;
       }
       obj.docid = encodeDocID(site, docid);
@@ -87,7 +82,6 @@ var getNewsDetail = function(entry) {
       obj.cover = entry.pic;
       if (!entry.pic && obj.img[0]) {
         obj.cover = obj.img[0].url;
-        //console.log("hzfdbg file[" + __filename + "]" + " cover="+obj.cover);
       }
 
       News.insert(obj, function (err, result) {
@@ -107,7 +101,6 @@ var crawlerHeadLine = function () {
   var MAX_PAGE_NUM = 3;
   var page = 1;
   if(crawlerHeadLineFirstTime) {
-    //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): All");
     MAX_PAGE_NUM = 25;
     crawlerHeadLineFirstTime = 0;
   }
@@ -130,30 +123,20 @@ var crawlerHeadLine = function () {
         return;
       }
       newsList.forEach(function(newsEntry) {
+        if(!newsEntry.title || !newsEntry.id) {
+          return;
+        }
         for(var i = 0; i < tags.length; i++) {
-          if(sinaTags[tags[i]].indexOf("sina_") === -1) {//crawlerTags will handle these tags, so skip them here
-            continue;
-          }
-          try {
-            if (newsEntry.title.indexOf(tags[i]) !== -1 || (newsEntry.long_title && newsEntry.long_title.indexOf(tags[i]) !== -1)) {
-              //console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():title="+newsEntry.title);
-              newsEntry.tagName = tags[i];
-              News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
-                if(err) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
-                  return;
-                }
-                if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                }
-              }); // News.findOne
-            }
-          }
-          catch (e) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
-            console.log(e);
-            continue;
+          if (newsEntry.title.indexOf(tags[i]) !== -1 || (newsEntry.long_title && newsEntry.long_title.indexOf(tags[i]) !== -1)) {
+            newsEntry.tagName = tags[i];
+            News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
+              if(err || result) {
+                return;
+              }
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+              startGetDetail.emit('startGetNewsDetail', newsEntry);
+            }); // News.findOne
+            break;
           }
         }//for
       });//forEach

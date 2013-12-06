@@ -77,11 +77,7 @@ var getNewsDetail = function(entry) {
   var bodyimg = genBodyHtmlAndImg(entry);
 
   News.findOne(genFindCmd(site, entry.id), function(err, result) {
-    if(err) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-      return;
-    }
-    if (result) {
+    if(err || result) {
       return;
     }
     var obj = entry;
@@ -152,34 +148,32 @@ var crawlerCategory = function (entry) {
             newsEntry.pageindex = page;
 
             News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
+              if(err || result) {
                 return;
               }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-                if(newsEntry.body_html) {
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                }else { // 有些较旧的文章摘要里没有body_html字段，需要访问详情获取
-                  // http://apis.36kr.com/api/v1/topics/204615.json?token=734dca654f1689f727cc:32710
-                  var detailUrl = util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id);
-                  var req = {uri: detailUrl, method: "GET", headers: headers};
-                  if(proxyEnable) {
-                    req.proxy = proxyUrl;
-                  }
-                  request(req, function (err, res, body) {
-                    var entry = data2Json(err, res, body);
-                    if(!entry) {
-                      console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl JSON.parse() error");
-                      return;
-                    }
-                    console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl="+detailUrl);
-                    newsEntry.body_html = entry.body_html;
-                    startGetDetail.emit('startGetNewsDetail', newsEntry);
-                  });//request
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+              if(newsEntry.body_html) {
+                startGetDetail.emit('startGetNewsDetail', newsEntry);
+              }else { // 有些较旧的文章摘要里没有body_html字段，需要访问详情获取
+                // http://apis.36kr.com/api/v1/topics/204615.json?token=734dca654f1689f727cc:32710
+                var detailUrl = util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id);
+                var req = {uri: detailUrl, method: "GET", headers: headers};
+                if(proxyEnable) {
+                  req.proxy = proxyUrl;
                 }
+                request(req, function (err, res, body) {
+                  var entry = data2Json(err, res, body);
+                  if(!entry) {
+                    console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl JSON.parse() error");
+                    return;
+                  }
+                  console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl="+detailUrl);
+                  newsEntry.body_html = entry.body_html;
+                  startGetDetail.emit('startGetNewsDetail', newsEntry);
+                });//request
               }
             }); // News.findOne
+            break;
           } // if
         }//for
       });//forEach

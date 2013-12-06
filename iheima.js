@@ -98,12 +98,7 @@ var getNewsDetail = function(entry) {
   var bodyimg = genBodyHtmlAndImg(entry);
 
   News.findOne(genFindCmd(site, entry.id), function(err, result) {
-    if(err) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-      return;
-    }
-    if (result) {
-      //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
+    if(err || result) {
       return;
     }
     var obj = entry;
@@ -179,15 +174,13 @@ var crawlerCategory = function (entry) {
           newsEntry.cateid = entry.cateid;
 
           News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-            if(err) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
+            if(err || result) {
               return;
             }
-            if (!result) {
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-              startGetDetail.emit('startGetNewsDetail', newsEntry);
-            }
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+            startGetDetail.emit('startGetNewsDetail', newsEntry);
           }); // News.findOne
+          break;
         } // if
       }//for
     });//forEach

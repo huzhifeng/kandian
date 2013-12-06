@@ -52,12 +52,7 @@ var getNewsDetail = function(entry) {
     var obj = entry;
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
+      if(err || result) {
         return;
       }
       obj.docid = encodeDocID(site, docid);
@@ -134,12 +129,7 @@ var getSubscribeNewsDetail = function(entry) {
     var obj = entry;
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getSubscribeNewsDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getSubscribeNewsDetail(), News.findOne():exist ");
+      if(err || result) {
         return;
       }
       obj.docid = encodeDocID(site, docid);
@@ -212,12 +202,7 @@ var getPhotoDetail = function(entry) {
     var obj = entry;
 
     News.findOne(genQqFindCmd(site, entry), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.findOne():exist ");
+      if(err || result) {
         return;
       }
       obj.docid = encodeDocID(site, docid);
@@ -331,24 +316,15 @@ var crawlerHeadLine = function () {
           return;
         }
         var newsEntry =newsList[0];
-        try {
-          newsEntry.tagName = findTagInSummary(newsEntry, "qq_news");
-          if (newsEntry.tagName) {
-            News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(), News.findOne():error " + err);
-                return;
-              }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-                startGetDetail.emit('startGetNewsDetail', newsEntry);
-              }
-            }); // News.findOne
-          }
-        }
-        catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine(): catch error");
-          console.log(e);
+        newsEntry.tagName = findTagInSummary(newsEntry, "qq_news");
+        if (newsEntry.tagName) {
+          News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
+            if(err || result) {
+              return;
+            }
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():summaryUrl ["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+            startGetDetail.emit('startGetNewsDetail', newsEntry);
+          }); // News.findOne
         }
       });
     });
@@ -409,24 +385,15 @@ var crawlerPhoto = function () {
           return;
         }
         var newsEntry =newsList[0];
-        try {
-          newsEntry.tagName = findTagInSummary(newsEntry, "qq_photo");
-          if (newsEntry.tagName) {
-            News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(), News.findOne():error " + err);
-                return;
-              }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl ["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-                startGetDetail.emit('startGetPhotoDetail', newsEntry);
-              }
-            }); // News.findOne
-          }
-        }
-        catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto(): catch error");
-          console.log(e);
+        newsEntry.tagName = findTagInSummary(newsEntry, "qq_photo");
+        if (newsEntry.tagName) {
+          News.findOne(genQqFindCmd(site, newsEntry), function(err, result) {
+            if(err || result) {
+              return;
+            }
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():summaryUrl ["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+            startGetDetail.emit('startGetPhotoDetail', newsEntry);
+          }); // News.findOne
         }
       });
     });
@@ -520,32 +487,23 @@ var crawlerSubscribe = function(entry) {
       return;
     }
     newsList.forEach(function(newsEntry) {
-      //console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():title="+newsEntry.title);
+      if(!newsEntry.title || !newsEntry.id) {
+        return;
+      }
       var tags = entry.tags;
       for(var i = 0; i < tags.length; i++) {
-        try {
-          if (newsEntry.title.indexOf(tags[i]) !== -1 || entry.all) {
-            //console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():title="+newsEntry.title);
-            newsEntry.tagName = tags[i];
-            newsEntry.subscribeName = entry.name;
+        if (newsEntry.title.indexOf(tags[i]) !== -1 || entry.all) {
+          newsEntry.tagName = tags[i];
+          newsEntry.subscribeName = entry.name;
 
-            News.findOne(genQqFindCmd(site,newsEntry), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(), News.findOne():error " + err);
-                return;
-              }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-                startGetDetail.emit('startGetSubscribeNewsDetail', newsEntry);
-              }
-            }); // News.findOne
-            break;
-          }
-        }
-        catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(): catch error");
-          console.log(e);
-          continue;
+          News.findOne(genQqFindCmd(site,newsEntry), function(err, result) {
+            if(err || result) {
+              return;
+            }
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+            startGetDetail.emit('startGetSubscribeNewsDetail', newsEntry);
+          }); // News.findOne
+          break;
         }
       }//for
     });//forEach

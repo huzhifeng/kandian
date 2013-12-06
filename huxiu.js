@@ -91,11 +91,7 @@ var getNewsDetail = function(entry) {
     }
 
     News.findOne(genFindCmd(site, entry.aid), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
+      if(err || result) {
         return;
       }
       var obj = json.content;
@@ -174,15 +170,13 @@ var crawlerCategory = function (entry) {
             }
 
             News.findOne(genFindCmd(site,newsEntry.aid), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
+              if(err || result) {
                 return;
               }
-              if(!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.aid);
-                startGetDetail.emit('startGetNewsDetail', newsEntry);
-              }
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.aid);
+              startGetDetail.emit('startGetNewsDetail', newsEntry);
             }); // News.findOne
+            break;
           } // if
         }//for
       });//forEach

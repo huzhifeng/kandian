@@ -1,9 +1,6 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var _ = require("lodash");
-var yokaTags = require('config').Config.yokaTags;
-var tags = _.keys(yokaTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
@@ -26,12 +23,35 @@ var headers = {
   'Connection': 'keep-alive',
   'ham': 'wifi',
   'hu': 'AE293A0B-715E-44F8-8ABB-D56A7C0AAB1F',
-  //'Content-Length': '32',//Set Content-Length automaticly
   'hc': '700',
-  //'Accept-Encoding': 'gzip' //Do not enable gzip
 };
 
 var site = "yoka";
+var yokaTags = [
+  '星妆容红黑榜',
+  '笑到抽筋',
+  '每日新闻5头条',
+  '明星皆为微博狂',
+  '星大片',
+  '达人极品晒',
+  '谁八卦啊你八卦',
+  '穿衣奇葩货',
+  '十万个护肤冷知识',
+  '周六蹲点儿看街拍',
+  '麻辣男题',
+  '每日时髦不NG',
+  '一周穿衣红榜',
+  '女人必知',
+  '女人必备',
+  '情感攻略',
+  '健康课堂',
+  '两性趣谈',
+  '主妇反思',
+  '婆媳过招',
+  '情感秘笈',
+  '排行榜',
+  '1日1话题',
+];
 
 var categorys = [
   {cateid:1, first:1, name:"beauty", pagesize:21, maxpage:100},
@@ -56,6 +76,11 @@ var categorys = [
   {cateid:20, first:1, name:"unknown", pagesize:21, maxpage:7},
 ];
 
+var startGetDetail = new EventEmitter();
+startGetDetail.on('startGetNewsDetail', function (entry) {
+  getNewsDetail(entry);
+});
+
 function genBodyHtmlAndImg(obj) {
   var body = "";
   var img = [];
@@ -71,7 +96,6 @@ function genBodyHtmlAndImg(obj) {
 
   body = obj.Title + "<br/>";
   var list = obj.Pages;
-  //console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg() util.inspect(list)="+util.inspect(list));
 
   for(i=0; i<list.length; i++) {
     if(list[i].Content.length) {
@@ -97,7 +121,6 @@ function genBodyHtmlAndImg(obj) {
 }
 
 function genYokaFindCmd(entry) {
-  //var bodyimg = genBodyHtmlAndImg(entry);
   return {
     "$or":
       [
@@ -112,22 +135,11 @@ function genYokaFindCmd(entry) {
   };
 }
 
-var startGetDetail = new EventEmitter();
-
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
-});
-
 var getNewsDetail = function(entry) {
   var bodyimg = genBodyHtmlAndImg(entry);
 
   News.findOne(genYokaFindCmd(entry), function(err, result) {
-    if(err) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-      return;
-    }
-    if (result) {
-      //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
+    if(err || result) {
       return;
     }
     var obj = entry;
@@ -198,31 +210,23 @@ var crawlerCategory = function (entry) {
         return;
       }
       newsList.forEach(function(newsEntry) {
-        //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.Shorttitle);
-        for(var i = 0; i < tags.length; i++) {
-          try {
-            if ((newsEntry.Title.indexOf(tags[i]) !== -1) || (newsEntry.Shorttitle.indexOf(tags[i]) !== -1)) {
-              //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.Shorttitle);
-              newsEntry.tagName = tags[i];
-              newsEntry.cateid = entry.cateid;
-              newsEntry.pageindex = page;
+        if(!newsEntry.Title || !newsEntry.ID) {
+          return;
+        }
+        for(var i = 0; i < yokaTags.length; i++) {
+          if ((newsEntry.Title.indexOf(yokaTags[i]) !== -1) || (newsEntry.Shorttitle.indexOf(yokaTags[i]) !== -1)) {
+            newsEntry.tagName = yokaTags[i];
+            newsEntry.cateid = entry.cateid;
+            newsEntry.pageindex = page;
 
-              News.findOne(genYokaFindCmd(newsEntry), function(err, result) {
-                if(err) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
-                  return;
-                }
-                if (!result) {
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.Shorttitle+",docid="+newsEntry.ID);
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                }
-              }); // News.findOne
-            }
-          }
-          catch (e) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(): catch error");
-            console.log(e);
-            continue;
+            News.findOne(genYokaFindCmd(newsEntry), function(err, result) {
+              if(err || result) {
+                return;
+              }
+              console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.Shorttitle+",docid="+newsEntry.ID);
+              startGetDetail.emit('startGetNewsDetail', newsEntry);
+            }); // News.findOne
+            break;
           }
         }//for
       });//forEach
@@ -232,13 +236,11 @@ var crawlerCategory = function (entry) {
 };
 
 var yokaCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " yokaCrawler():Start time="+new Date());
-
   categorys.forEach(function(entry) {
     crawlerCategory(entry);
-  });//forEach
+  });
 
-  setTimeout(yokaCrawler, 1000 * 60 * 60);
+  setTimeout(yokaCrawler, 2000 * 60 * 60);
 }
 
 exports.yokaCrawler = yokaCrawler;

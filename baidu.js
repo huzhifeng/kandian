@@ -7,28 +7,27 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
-var site = "baidu";
-var baiduNewsTags = ['背景', '意见', '早报', '毒舌秀'];
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
 var imageHeaders = {
-  //'Accept-Encoding': 'gzip',
-  //'Accept-Encoding': 'gzip',
   'User-Agent': 'bdnews_android_phone',
-  //'Accept-Encoding': 'gzip',
   'Host': 'app.image.baidu.com',
   'Connection': 'Keep-Alive'
 };
-
 var newsHeaders = {
-  //'Accept-Encoding': 'gzip',
-  //'Accept-Encoding': 'gzip',
   'User-Agent': 'bdnews_android_phone',
-  //'Accept-Encoding': 'gzip',
   'Host': 'api.baiyue.baidu.com',
   'Connection': 'Keep-Alive'
 };
+
+var site = "baidu";
+var baiduNewsTags = [
+  '背景',
+  '意见',
+  '早报',
+  '毒舌秀',
+];
 
 //http://app.image.baidu.com/app?tag=1&startid=0&reqno=1&sesstime=20130806105154&netenv=wifi&reqtype=resource&appname=yuedu_News&func=list&channelid=1&width=0&height=0&version=1&erotic=1
 var imageCategorys = [
@@ -73,7 +72,7 @@ var crawlerImageCategory = function (entry) {
     }
     request(req, function (err, res, body) {
       var json = data2Json(err, res, body);
-      if(!json) {
+      if(!json || !json.data) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory():JSON.parse() error");
         return;
       }
@@ -84,12 +83,7 @@ var crawlerImageCategory = function (entry) {
       }
       imageList.forEach(function(imageEntry) {
         Image.findOne({'site':site, 'id':imageEntry.contsign}, function(err, result) {
-          if(err) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory(), Image.findOne():error " + err);
-            return;
-          }
-          if (result) {
-            //console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory(), Image.findOne():exist ");
+          if(err || result) {
             return;
           }
           var obj = imageEntry;
@@ -213,13 +207,11 @@ var crawlerNewsCategory = function (entry) {
       return;
     }
     if(entry.first && json.data.hasmore && json.data.st) {
-      //console.log('st='+json.data.st);
       entry.time = json.data.st;
       setTimeout(function() {
         crawlerNewsCategory(entry);
       }, 100);
     }else if(entry.first && json.data.ts) {
-      //console.log('ts='+json.data.ts);
       entry.time = json.data.ts;
       setTimeout(function() {
         crawlerNewsCategory(entry);
@@ -227,35 +219,23 @@ var crawlerNewsCategory = function (entry) {
     }else {
       entry.first = 0;
       entry.time = 0;
-      console.log('url='+url+',more='+json.data.hasmore+',st='+json.data.st);
     }
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.title) {
+      if(!newsEntry.title || !newsEntry.nid) {
         return;
       }
-      //console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():title="+newsEntry.title);
       for(var i = 0; i < baiduNewsTags.length; i++) {
-        try {
-          if (newsEntry.title.indexOf(baiduNewsTags[i]) !== -1) {
-            //console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():title="+newsEntry.title);
-            newsEntry.tagName = baiduNewsTags[i];
-    
-            News.findOne(genFindCmd(site,newsEntry.nid), function(err, result) {
-              if(err) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory(), News.findOne():error " + err);
-                return;
-              }
-              if (!result) {
-                console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.nid);
-                newsAdd(newsEntry);
-              }
-            }); // News.findOne
-          }
-        }
-        catch (e) {
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory(): catch error");
-          console.log(e);
-          continue;
+        if (newsEntry.title.indexOf(baiduNewsTags[i]) !== -1) {
+          newsEntry.tagName = baiduNewsTags[i];
+  
+          News.findOne(genFindCmd(site,newsEntry.nid), function(err, result) {
+            if(err || result) {
+              return;
+            }
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerNewsCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.nid);
+            newsAdd(newsEntry);
+          }); // News.findOne
+          break;
         }
       }//for
     });//forEach
@@ -265,22 +245,20 @@ var crawlerNewsCategory = function (entry) {
 var baiduImageCrawler = function() {
   imageCategorys.forEach(function(entry) {
     crawlerImageCategory(entry);
-  });//forEach
+  });
 
-  setTimeout(baiduImageCrawler, 1000 * 60 * 60 * 8);
+  setTimeout(baiduImageCrawler, 8000 * 60 * 60);
 }
 
 var baiduNewsCrawler = function() {
   newsCategorys.forEach(function(entry) {
     crawlerNewsCategory(entry);
-  });//forEach
+  });
 
   setTimeout(baiduNewsCrawler, 6000 * 60 * 60);
 }
 
 var baiduCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " baiduCrawler():Start time="+new Date());
-
   baiduNewsCrawler();
   //baiduImageCrawler();
 }

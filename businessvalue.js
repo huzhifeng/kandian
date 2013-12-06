@@ -1,9 +1,6 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var _ = require("lodash");
-var businessvalueTags = require('config').Config.businessvalueTags;
-var tags = _.keys(businessvalueTags);
 var News = require('./models/news');
 var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
 var genFindCmd = require('./lib/utils').genFindCmd;
@@ -15,7 +12,6 @@ var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
 var headers = {
-  //'Content-Length': '190',//Set Content-Length automaticly
   'Content-Type': 'application/x-www-form-urlencoded',
   'Host': 'api.businessvalue.com.cn',
   'Connection': 'Keep-Alive',
@@ -23,7 +19,6 @@ var headers = {
 };
 
 var site = "businessvalue";
-
 var categorys = [
   {cateid:4, first:1, label:"特别策划", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:17},
   {cateid:30, first:1, label:"价值文摘", bs_key:"7E32C1BE34196A11094DB3970BEFA0CD", pagesize:10, maxpage:6},
@@ -80,7 +75,6 @@ function genBodyHtmlAndImg(obj) {
   }
   body += "<h2>正文</h2>"
 
-  //console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg() util.inspect(obj.sections)="+util.inspect(obj.sections));
   var sections = obj.sections;
   for(var key in sections) {
     var section = sections[key];
@@ -143,12 +137,7 @@ var getNewsDetail = function(entry) {
     }
 
     News.findOne(genFindCmd(site, entry.entry_id), function(err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():error " + err);
-        return;
-      }
-      if (result) {
-        //console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.findOne():exist ");
+      if(err || result) {
         return;
       }
       var bodyimg = genBodyHtmlAndImg(json);
@@ -234,20 +223,16 @@ var crawlerCategory = function (entry) {
       }
       newsList = articles;
       newsList.forEach(function(newsEntry) {
-        //console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():title="+newsEntry.title);
         newsEntry.tagName = entry.label;
         newsEntry.cateid = entry.cateid;
         newsEntry.pageindex = page;
 
         News.findOne(genFindCmd(site, newsEntry.entry_id), function(err, result) {
-          if(err) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), News.findOne():error " + err);
+          if(err || result) {
             return;
           }
-          if (!result) {
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.entry_id);
-            startGetDetail.emit('startGetNewsDetail', newsEntry);
-          }
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.entry_id);
+          startGetDetail.emit('startGetNewsDetail', newsEntry);
         }); // News.findOne
       });//forEach
     });//request
@@ -256,13 +241,11 @@ var crawlerCategory = function (entry) {
 };
 
 var businessvalueCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " businessvalueCrawler():Start time="+new Date());
-
   categorys.forEach(function(entry) {
     crawlerCategory(entry);
-  });//forEach
+  });
 
-  setTimeout(businessvalueCrawler, 1000 * 60 * 60);
+  setTimeout(businessvalueCrawler, 4000 * 60 * 60);
 }
 
 exports.businessvalueCrawler = businessvalueCrawler;
