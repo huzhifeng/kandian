@@ -28,12 +28,12 @@ var krTags = [
 ];
 var categorys = [
   {cateid:1, first:0, label:"首页", name:"topics", pagesize:10, maxpage:1719},
-  {cateid:2, first:0, label:"国外创业公司", name:"topics/category/us-startups", pagesize:10, maxpage:114},
-  {cateid:3, first:0, label:"国内创业公司", name:"topics/category/cn-startups", pagesize:10, maxpage:56},
-  {cateid:4, first:0, label:"国外资讯", name:"topics/category/breaking", pagesize:10, maxpage:706},
-  {cateid:5, first:0, label:"国内资讯", name:"topics/category/cn-news", pagesize:10, maxpage:64},
-  {cateid:6, first:0, label:"生活方式", name:"topics/category/digest", pagesize:10, maxpage:82},
-  {cateid:7, first:0, label:"专栏文章", name:"topics/category/column", pagesize:10, maxpage:98},
+  //{cateid:2, first:0, label:"国外创业公司", name:"topics/category/us-startups", pagesize:10, maxpage:114},
+  //{cateid:3, first:0, label:"国内创业公司", name:"topics/category/cn-startups", pagesize:10, maxpage:56},
+  //{cateid:4, first:0, label:"国外资讯", name:"topics/category/breaking", pagesize:10, maxpage:706},
+  //{cateid:5, first:0, label:"国内资讯", name:"topics/category/cn-news", pagesize:10, maxpage:64},
+  //{cateid:6, first:0, label:"生活方式", name:"topics/category/digest", pagesize:10, maxpage:82},
+  //{cateid:7, first:0, label:"专栏文章", name:"topics/category/column", pagesize:10, maxpage:160},//该栏目没有body_html属性,可以通过util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id)得到
 ];
 
 var startGetDetail = new EventEmitter();
@@ -109,7 +109,7 @@ var getNewsDetail = function(entry) {
 };
 
 var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = 3;
+  var MAX_PAGE_NUM = 5;
   var page = 1;
 
   if(entry.first == 1) {
@@ -120,7 +120,7 @@ var crawlerCategory = function (entry) {
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
     //http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
-    //http://apis.36kr.com/api/v1/topics/category/us-startups.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
+    //http://apis.36kr.com/api/v1/topics/category/column.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
     var url = util.format("http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d", entry.name, page, entry.pagesize);
     var req = {uri: url, method: "GET", headers: headers};
     if(proxyEnable) {
@@ -138,10 +138,10 @@ var crawlerCategory = function (entry) {
         return;
       }
       newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.id) {
+        if(!newsEntry.title || !newsEntry.id || !newsEntry.body_html) {
           return;
         }
-        for(var i = 0; i < krTags.length; i++) {
+        for(var i=0; i<krTags.length; i++) {
           if (newsEntry.title.indexOf(krTags[i]) !== -1) {
             newsEntry.tagName = krTags[i];
             newsEntry.cateid = entry.cateid;
@@ -152,26 +152,7 @@ var crawlerCategory = function (entry) {
                 return;
               }
               console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-              if(newsEntry.body_html) {
-                startGetDetail.emit('startGetNewsDetail', newsEntry);
-              }else { // 有些较旧的文章摘要里没有body_html字段，需要访问详情获取
-                // http://apis.36kr.com/api/v1/topics/204615.json?token=734dca654f1689f727cc:32710
-                var detailUrl = util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id);
-                var req = {uri: detailUrl, method: "GET", headers: headers};
-                if(proxyEnable) {
-                  req.proxy = proxyUrl;
-                }
-                request(req, function (err, res, body) {
-                  var entry = data2Json(err, res, body);
-                  if(!entry) {
-                    console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl JSON.parse() error");
-                    return;
-                  }
-                  console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():detailUrl="+detailUrl);
-                  newsEntry.body_html = entry.body_html;
-                  startGetDetail.emit('startGetNewsDetail', newsEntry);
-                });//request
-              }
+              startGetDetail.emit('startGetNewsDetail', newsEntry);
             }); // News.findOne
             break;
           } // if
