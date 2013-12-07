@@ -110,7 +110,7 @@ var getNewsDetail = function(entry) {
 };
 
 var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = 5;
+  var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
   var page = 1;
 
   if(entry.first == 1) {

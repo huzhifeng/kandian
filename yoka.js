@@ -54,26 +54,26 @@ var yokaTags = [
 ];
 
 var categorys = [
-  {cateid:1, first:1, name:"beauty", pagesize:21, maxpage:100},
-  {cateid:2, first:1, name:"fashion", pagesize:21, maxpage:100},
-  {cateid:3, first:1, name:"life", pagesize:21, maxpage:100},
-  {cateid:4, first:1, name:"unknown", pagesize:21, maxpage:5},
-  {cateid:5, first:1, name:"unknown", pagesize:21, maxpage:100},
-  {cateid:6, first:1, name:"star", pagesize:21, maxpage:100},
-  {cateid:7, first:1, name:"unknown", pagesize:21, maxpage:100},
-  {cateid:8, first:1, name:"unknown", pagesize:21, maxpage:13},
-  {cateid:9, first:1, name:"luxury", pagesize:21, maxpage:100},
-  {cateid:10, first:1, name:"unknown", pagesize:21, maxpage:5},
-  {cateid:11, first:1, name:"unknown", pagesize:21, maxpage:0},
-  {cateid:12, first:1, name:"focus", pagesize:21, maxpage:100},
-  {cateid:13, first:1, name:"man", pagesize:21, maxpage:100},
-  {cateid:14, first:1, name:"unknown", pagesize:21, maxpage:9},
-  {cateid:15, first:1, name:"unknown", pagesize:21, maxpage:1},
-  {cateid:16, first:1, name:"unknown", pagesize:21, maxpage:3},
-  {cateid:17, first:1, name:"unknown", pagesize:21, maxpage:3},
-  {cateid:18, first:1, name:"unknown", pagesize:21, maxpage:3},
-  {cateid:19, first:1, name:"unknown", pagesize:21, maxpage:3},
-  {cateid:20, first:1, name:"unknown", pagesize:21, maxpage:7},
+  {cateid:1, first:0, name:"beauty", pagesize:21, maxpage:100},
+  {cateid:2, first:0, name:"fashion", pagesize:21, maxpage:100},
+  {cateid:3, first:0, name:"life", pagesize:21, maxpage:100},
+  {cateid:4, first:0, name:"unknown", pagesize:21, maxpage:5},
+  {cateid:5, first:0, name:"unknown", pagesize:21, maxpage:100},
+  {cateid:6, first:0, name:"star", pagesize:21, maxpage:100},
+  {cateid:7, first:0, name:"unknown", pagesize:21, maxpage:100},
+  {cateid:8, first:0, name:"unknown", pagesize:21, maxpage:13},
+  {cateid:9, first:0, name:"luxury", pagesize:21, maxpage:100},
+  {cateid:10, first:0, name:"unknown", pagesize:21, maxpage:5},
+  {cateid:11, first:0, name:"unknown", pagesize:21, maxpage:0},
+  {cateid:12, first:0, name:"focus", pagesize:21, maxpage:100},
+  {cateid:13, first:0, name:"man", pagesize:21, maxpage:100},
+  {cateid:14, first:0, name:"unknown", pagesize:21, maxpage:9},
+  {cateid:15, first:0, name:"unknown", pagesize:21, maxpage:1},
+  {cateid:16, first:0, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:17, first:0, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:18, first:0, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:19, first:0, name:"unknown", pagesize:21, maxpage:3},
+  {cateid:20, first:0, name:"unknown", pagesize:21, maxpage:7},
 ];
 
 var startGetDetail = new EventEmitter();
@@ -178,12 +178,12 @@ var getNewsDetail = function(entry) {
 };
 
 var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = 3;
+  var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
   var page = 1;
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
+    MAX_PAGE_NUM = entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -196,12 +196,8 @@ var crawlerCategory = function (entry) {
     }
     request(req, function (err, res, body) {
       var json = data2Json(err, res, body);
-      if(!json || !json.State || !json.State.Code || !json.Contents || !json.Contents.Data) {
+      if(!json || !json.State || (json.State.Code && json.State.Code != 0) || !json.Contents || !json.Contents.Data) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
-        return;
-      }
-      if(json.State.Code != 0) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():Msg="+json.State.Msg);
         return;
       }
       var newsList = json.Contents.Data;

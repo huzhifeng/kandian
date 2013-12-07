@@ -53,12 +53,12 @@ var newsCategorys = [
 ];
 
 var crawlerImageCategory = function (entry) {
-  var MAX_PAGE_NUM = 3;
+  var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
   var page = 1;
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 1 + entry.maxpage;
+    MAX_PAGE_NUM = entry.maxpage;
   }
   for(page=0; page<MAX_PAGE_NUM; page++) {
     (function(page) {
