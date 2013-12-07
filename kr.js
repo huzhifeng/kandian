@@ -25,6 +25,7 @@ var krTags = [
   '超人计划',
   '36氪+',
   '36氪开放日',
+  'WISE前奏',
 ];
 var categorys = [
   {cateid:1, first:0, label:"首页", name:"topics", pagesize:10, maxpage:1719},

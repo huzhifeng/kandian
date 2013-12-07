@@ -20,23 +20,24 @@ var headers = {
 
 var site = "businessvalue";
 var categorys = [
-  {cateid:4, first:1, label:"特别策划", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:17},
-  {cateid:30, first:1, label:"价值文摘", bs_key:"7E32C1BE34196A11094DB3970BEFA0CD", pagesize:10, maxpage:6},
-  {cateid:11, first:1, label:"先锋", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:11},
-  {cateid:8, first:1, label:"创新潮流", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:19},
-  {cateid:6, first:1, label:"资本动向", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:15},
-  {cateid:7, first:1, label:"企业变革", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:18},
-  {cateid:10, first:1, label:"焦点行业", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:18},
-  {cateid:9, first:1, label:"基本面", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:14},
-  {cateid:14, first:1, label:"新视野", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:28},
-  {cateid:3, first:1, label:"反潮流", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:2},
-  {cateid:5, first:1, label:"对话", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:6},
-  {cateid:12, first:1, label:"CSR竞争力", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:10},
-  {cateid:13, first:1, label:"关键时候", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:5},
-  {cateid:15, first:1, label:"商学院", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:15},
-  {cateid:16, first:1, label:"思想速读", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:10},
-  {cateid:17, first:1, label:"态度", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:20},
-  {cateid:24, first:1, label:"编者的话", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:5},
+  {cateid:0, first:0, label:"首页", bs_key:"AA97FAE9A19E2C73AEF0E54A8A70F07C", pagesize:10, maxpage:250, tags:['今日看点','硅谷观察','营销大爆炸']},
+  {cateid:4, first:0, label:"特别策划", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:17},
+  {cateid:30, first:0, label:"价值文摘", bs_key:"7E32C1BE34196A11094DB3970BEFA0CD", pagesize:10, maxpage:6},
+  {cateid:11, first:0, label:"先锋", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:11},
+  {cateid:8, first:0, label:"创新潮流", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:19},
+  {cateid:6, first:0, label:"资本动向", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:15},
+  {cateid:7, first:0, label:"企业变革", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:18},
+  {cateid:10, first:0, label:"焦点行业", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:18},
+  {cateid:9, first:0, label:"基本面", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:14},
+  {cateid:14, first:0, label:"新视野", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:28},
+  {cateid:3, first:0, label:"反潮流", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:2},
+  {cateid:5, first:0, label:"对话", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:6},
+  {cateid:12, first:0, label:"CSR竞争力", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:10},
+  {cateid:13, first:0, label:"关键时候", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:5},
+  {cateid:15, first:0, label:"商学院", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:15},
+  {cateid:16, first:0, label:"思想速读", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:10},
+  {cateid:17, first:0, label:"态度", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:20},
+  {cateid:24, first:0, label:"编者的话", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:5},
 ];
 
 function genBodyHtmlAndImg(obj) {
@@ -51,7 +52,6 @@ function genBodyHtmlAndImg(obj) {
 
   if((!obj) || (!obj.sections)) {
     console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    console.log(util.inspect(obj));
     return "";
   }
   if(obj.top_image) {
@@ -182,7 +182,7 @@ var crawlerCategory = function (entry) {
 
   if(entry.first == 1) {
     entry.first = 0;
-    MAX_PAGE_NUM = 5;//1 + entry.maxpage;
+    MAX_PAGE_NUM = entry.maxpage;
   }
 
   for(page=1; page<=MAX_PAGE_NUM; page++) {
@@ -195,7 +195,12 @@ var crawlerCategory = function (entry) {
       pd.offset = (page-1)*entry.pagesize + 1;
     }
     if(30 == entry.cateid) {
-      pd.MsgID = "getDigestByCategory";
+      pd.MsgID = 'getDigestByCategory';
+    }else if(0 == entry.cateid) {
+      pd.MsgID = 'articles';
+      pd.view_type = 'list';
+      pd.sort = 'time';
+      delete pd.cat_id;
     }
     var req = {uri: url, method: "POST", headers: headers, form: pd};
     if(proxyEnable) {
@@ -209,7 +214,6 @@ var crawlerCategory = function (entry) {
       }
       var news_num = (30 == entry.cateid)?json.digests_num:json.articles_num;
       if(parseInt(news_num) <= 0) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():news_num="+news_num);
         return;
       }
       var newsList = (30 == entry.cateid)?json.digests:json.articles;
@@ -223,9 +227,26 @@ var crawlerCategory = function (entry) {
       }
       newsList = articles;
       newsList.forEach(function(newsEntry) {
+        if(!newsEntry.title || !newsEntry.entry_id) {
+          return;
+        }
         newsEntry.tagName = entry.label;
         newsEntry.cateid = entry.cateid;
         newsEntry.pageindex = page;
+
+        if(entry.tags) {
+          var flag = 0;
+          for(var i=0; i<entry.tags.length; i++) {
+            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
+              flag = 1;
+              newsEntry.tagName = entry.tags[i];
+              break;
+            }
+          }
+          if(!flag) {
+            return;
+          }
+        }
 
         News.findOne(genFindCmd(site, newsEntry.entry_id), function(err, result) {
           if(err || result) {

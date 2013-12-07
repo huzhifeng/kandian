@@ -145,7 +145,7 @@ var crawlerCategory = function (entry) {
   }
   request(req, function (err, res, body) {
     var json = data2Json(err, res, body);
-    if(!json) {
+    if(!json || !json.articles) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
       return;
     }
