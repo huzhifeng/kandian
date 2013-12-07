@@ -110,7 +110,7 @@ var index = function (req, res, next) {
     getLatestQingSong: getLatestQingSongNews,
     getLatestTuCao: getLatestTuCaoNews,
     getLatestFun: getLatestFunNews,
-    getRandomImages: getRandomImages,
+    //getRandomImages: getRandomImages,
   },
   function (err, results) {
     if (! err) {
@@ -120,7 +120,7 @@ var index = function (req, res, next) {
         latestQingSongNews: results.getLatestQingSong.latestQingSong,
         latestTuCaoNews: results.getLatestTuCao.latestTuCao,
         latestFunNews: results.getLatestFun.latestFun,
-        randomImages: results.getRandomImages.randomImages,
+        //randomImages: results.getRandomImages.randomImages,
       });
     } else {
       next(new Error(err.message));
