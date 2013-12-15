@@ -68,7 +68,6 @@ var getNewsDetail = function(entry) {
       obj.site = site;
       obj.body = jObj.text.replace(/width=["']140["']/g, '');
       obj.img = jObj.img;
-      obj.video = [];
       if(jObj.wapurl) {
         obj.link = jObj.wapurl; // http://i.ifeng.com/news?aid=74868287
       }else if(jObj.wwwurl) {

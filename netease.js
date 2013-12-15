@@ -55,7 +55,6 @@ var getNewsDetail = function(entry) {
       obj.site = site;
       obj.body = jObj.body;
       obj.img = jObj.img;
-      obj.video = jObj.video;
       obj.link = "";
       if(entry.url_3w) {
         obj.link = entry.url_3w; // http://help.3g.163.com/13/0611/08/912V2VCS00963VRO.html
@@ -64,10 +63,10 @@ var getNewsDetail = function(entry) {
       }else {
         obj.link = util.format("http://3g.163.com/touch/article.html?docid=%s", docid); // http://3g.163.com/touch/article.html?docid=912V2VCS00963VRO
       }
-      obj.title = jObj.title;//.trim().replace(/\s+/g, '');
+      obj.title = jObj.title;
       obj.ptime = jObj.ptime;
       obj.time = new Date(Date.parse(jObj.ptime));
-      obj.marked = jObj.body.replace('<!--@@PRE-->', '【').replace('<!--@@PRE-->', '】<br/>');
+      obj.marked = jObj.body;
       obj.created = new Date();
       obj.views = 1;
       obj.tags = entry.tagName;
@@ -76,8 +75,6 @@ var getNewsDetail = function(entry) {
         obj.cover = entry.imgsrc;
       } else if (obj.img[0]) {
         obj.cover = obj.img[0].src;
-      } else if (obj.video[0]) {
-        obj.cover = obj.video[0].cover;
       }
 
       // img lazyloading
@@ -85,13 +82,17 @@ var getNewsDetail = function(entry) {
         var imgHtml = genLazyLoadHtml(img.alt, img.src);
         obj.marked = obj.marked.replace(img.ref, imgHtml);
       });
-
-      // video
-      obj.video.forEach(function (v) {
-        var vHtml = util.format('<a title="%s" href="%s" target="_blank"><img class="lazy" alt="%s" src="/img/grey.gif" data-original="%s" /><noscript><img alt="%s" src="%s" /></noscript></a>',
-          v.alt, v.url_mp4, v.alt, v.cover, v.alt, v.cover);
-        obj.marked = obj.marked.replace(v.ref, vHtml);
-      });
+      if(jObj.video) {
+        for(var i=0; i<jObj.video.length; i++) {
+          var v = jObj.video[i];
+          if(!v.alt || !v.cover || !v.url_m3u8 || !v.ref) {
+            continue;
+          }
+          var html = genLazyLoadHtml(v.alt, v.cover);
+          html += util.format('<br/><a href="%s" target="_blank">%s</a><br/>', v.url_m3u8, v.alt);
+          obj.marked = obj.marked.replace(v.ref, html);
+        }
+      }
 
       News.insert(obj, function (err, result) {
         if(err) {
@@ -160,7 +161,6 @@ var getPhotoDetail = function(entry) {
       obj.site = site;
       obj.body = genBodyHtml(jObj);
       obj.img = pickImg(jObj);
-      obj.video = [];
       obj.link = "";
       if(jObj.url) {
         obj.link = jObj.url; // http://sports.163.com/photoview/011U0005/99130.html#p=90Q9LN0D4FFF0005
