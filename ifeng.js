@@ -33,6 +33,7 @@ var ifengTags = [
   '洞见',
   '独家图表',
   '历史上的今天',
+  '情感夜话',
 ];
 
 var startGetDetail = new EventEmitter();

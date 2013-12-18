@@ -105,6 +105,7 @@ module.exports = {
       '今日神最右': 'sina_jrszy',
       '午饭话题': 'sina_wfht',
       '午饭聊点啥': 'sina_wflds',
+      '茶娱饭后': 'sina_cyfh',
       '每日深度': 'sina_mrsd',
       '毒舌美少女': 'sina_dsmsn',
     },
