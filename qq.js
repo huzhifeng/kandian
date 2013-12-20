@@ -480,6 +480,7 @@ var crawlerSubscribe = function(entry) {
       setTimeout(function() {
         crawlerSubscribe(entry);
       }, 100);
+      return;
     }
     var newsList = json.newslist;
     if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
