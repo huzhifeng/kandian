@@ -34,6 +34,7 @@ var ifengTags = [
   '独家图表',
   '历史上的今天',
   '情感夜话',
+  '健康365',
 ];
 
 var startGetDetail = new EventEmitter();
