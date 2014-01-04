@@ -7,6 +7,7 @@ var genFindCmd = require('./lib/utils').genFindCmd;
 var encodeDocID = require('./lib/utils').encodeDocID;
 var data2Json = require('./lib/utils').data2Json;
 var genDigest = require('./lib/utils').genDigest;
+var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -15,329 +16,7 @@ var headers = {
   'Connection': 'Keep-Alive',
   'Host': 'c.m.163.com',
 };
-var crawlFlag = 0; // 0: only one or few pages; 1: all pages
 var site = "netease";
-
-var startGetDetail = new EventEmitter();
-
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
-});
-
-startGetDetail.on('startGetPhotoDetail', function (entry) {
-  getPhotoDetail(entry);
-});
-
-var getNewsDetail = function(entry) {
-  // http://c.m.163.com/nc/article/8GOVEI0L00964JJM/full.html
-  var docid = util.format("%s",entry.docid);
-  var url = util.format('http://c.m.163.com/nc/article/%s/full.html', docid);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
-    req.proxy = proxyUrl;
-  }
-  request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json[docid]) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
-      return;
-    }
-    var jObj = json[docid];
-    var obj = entry;
-    News.findOne(genFindCmd(site, docid), function(err, result) {
-      if (err || result) {
-        return;
-      }
-      obj.docid = encodeDocID(site, docid);
-      obj.site = site;
-      obj.body = jObj.body;
-      obj.img = jObj.img;
-      obj.link = "";
-      if(entry.url_3w) {
-        obj.link = entry.url_3w; // http://help.3g.163.com/13/0611/08/912V2VCS00963VRO.html
-      }else if(entry.url) {
-        obj.link = entry.url; // http://3g.163.com/ntes/13/0611/08/912V2VCS00963VRO.html
-      }else {
-        obj.link = util.format("http://3g.163.com/touch/article.html?docid=%s", docid); // http://3g.163.com/touch/article.html?docid=912V2VCS00963VRO
-      }
-      obj.title = jObj.title;
-      obj.ptime = jObj.ptime;
-      obj.time = new Date(Date.parse(jObj.ptime));
-      obj.marked = jObj.body;
-      obj.created = new Date();
-      obj.views = 1;
-      obj.tags = entry.tagName;
-      obj.digest = genDigest(obj.body);
-      if(entry.imgsrc) {
-        obj.cover = entry.imgsrc;
-      } else if (obj.img[0]) {
-        obj.cover = obj.img[0].src;
-      }
-
-      // img lazyloading
-      obj.img.forEach(function (img) {
-        var imgHtml = genLazyLoadHtml(img.alt, img.src);
-        obj.marked = obj.marked.replace(img.ref, imgHtml);
-      });
-      if(jObj.video) {
-        for(var i=0; i<jObj.video.length; i++) {
-          var v = jObj.video[i];
-          if(!v.alt || !v.cover || !v.url_m3u8 || !v.ref) {
-            continue;
-          }
-          var html = genLazyLoadHtml(v.alt, v.cover);
-          html += util.format('<br/><a href="%s" target="_blank">%s</a><br/>', v.url_m3u8, v.alt);
-          obj.marked = obj.marked.replace(v.ref, html);
-        }
-      }
-
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-        }
-      }); // News.insert
-    }); // News.findOne
-  });// request
-};
-
-function genBodyHtml(obj) {
-  var body = "";
-  var i = 0;
-
-  if((!obj) || (!obj.photos)) {
-    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtml():null");
-    return "";
-  }
-
-  body = obj.desc + "<br>";
-
-  for(i=0; i<obj.photos.length; i++) {
-    body += obj.photos[i].note?obj.photos[i].note: obj.photos[i].imgtitle;
-    body += genLazyLoadHtml("", obj.photos[i].imgurl);
-  }
-
-  return body;
-}
-
-function pickImg(obj) {
-  var img = [];
-  var i = 0;
-
-  if((!obj) || (!obj.photos)) {
-    console.log("hzfdbg file[" + __filename + "]" + " pickImg():null");
-    return "";
-  }
-
-  for(i=0; i<obj.photos.length; i++) {
-    img[i] = obj.photos[i].imgurl;
-  }
-
-  return img;
-}
-
-var getPhotoDetail = function(entry) {
-  var docid = util.format("%s",entry.setid);
-  var url = util.format("http://c.m.163.com/photo/api/set/0096/%s.json",entry.setid);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
-    req.proxy = proxyUrl;
-  }
-  request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():json null");
-      return;
-    }
-    var jObj = json;
-    var obj = entry;
-    News.findOne(genFindCmd(site, docid), function(err, result) {
-      if (err || result) {
-        return;
-      }
-      obj.docid = encodeDocID(site, docid);
-      obj.site = site;
-      obj.body = genBodyHtml(jObj);
-      obj.img = pickImg(jObj);
-      obj.link = "";
-      if(jObj.url) {
-        obj.link = jObj.url; // http://sports.163.com/photoview/011U0005/99130.html#p=90Q9LN0D4FFF0005
-      }
-      obj.title = entry.setname ? entry.setname : entry.title;
-      obj.ptime = jObj.createdate;
-      obj.time = jObj.createdate;
-      obj.marked = jObj.body;
-      obj.created = new Date();
-      obj.views = 1;
-      obj.tags = entry.tagName;
-      obj.marked = obj.body;
-      obj.digest = genDigest(obj.body);
-      if(entry.clientcover) {
-        obj.cover = entry.clientcover;
-      } else if (entry.clientcover1){
-        obj.cover = entry.clientcover1;
-      }else if (obj.img[0]) {
-        obj.cover = obj.img[0];
-      }
-
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.insert():error " + err);
-        }
-      }); // News.insert
-    }); // News.findOne
-  });// request
-};
-
-var crawlerPhotoTag = function(entry) {
-  var req = {uri: entry.url, method: "GET", headers: headers};
-  if(proxyEnable) {
-    req.proxy = proxyUrl;
-  }
-  request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():JSON.parse() error");
-      return;
-    }
-    var newsList = json;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():newsList empty in url " + entry.url);
-      return;
-    }
-    newsList.forEach(function(newsEntry) {
-      if(!newsEntry.setid || !newsEntry.setname) {
-        return;
-      }
-      if(entry.tags.length) {
-        for(var i=0; i<entry.tags.length; i++) {
-          if(newsEntry.setname.indexOf(entry.tags[i]) !== -1) {
-            newsEntry.tagName = entry.tags[i];
-            break;
-          }
-        }
-      }else {
-        newsEntry.tagName = entry.tname;
-      }
-      if(!newsEntry.tagName) {
-        return;
-      }
-      News.findOne(genFindCmd(site, newsEntry.setid), function(err, result) {
-        if(err || result) {
-          return;
-        }
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():["+newsEntry.tagName+"]"+newsEntry.setname+",docid="+newsEntry.setid);
-        startGetDetail.emit('startGetPhotoDetail', newsEntry);
-      }); // News.findOne
-    });//forEach
-    if(newsList.length == 10) {
-      if(entry.crawlFlag) {
-        entry.url = util.format("http://c.m.163.com/photo/api/morelist/0096/%s/%s.json", entry.tid, newsList[9].setid);
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): next page="+entry.url);
-        setTimeout(function() {
-          crawlerPhotoTag(entry);
-        }, 10000); // crawl next page after 10 seconds
-      }
-    }else {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): last page");
-      entry.crawlFlag = 0;
-    }
-  });//request
-}
-
-var photoTags = [
-  // http://c.m.163.com/photo/api/list/0096/54GI0096.json
-  {tname:'热点', tid:'54GI0096', tags:['年度']},
-  {tname:'独家图集', tid:'54GJ0096', tags:[]},
-  //{tname:'明星', tid:'54GK0096', tags:[]},
-  //{tname:'体坛', tid:'54GM0096', tags:[]},
-  {tname:'精美', tid:'54GN0096', tags:['盘点', '一周外媒动物图片精选']},
-];
-
-var crawlerPhotoTags = function() {
-  photoTags.forEach(function(entry) {
-    entry.url = util.format('http://c.m.163.com/photo/api/list/0096/%s.json', entry.tid);
-    entry.crawlFlag = crawlFlag;
-    crawlerPhotoTag(entry);
-  });//forEach
-}
-
-var crawlerTag = function (entry) {
-  var MAX_PAGE_NUM = 1;
-  var page = 0;
-
-  if(entry.tid === 'T1348647909107') { // 头条
-    MAX_PAGE_NUM = 5;
-  }
-  if(entry.crawlFlag) {
-    MAX_PAGE_NUM = 10;
-    entry.crawlFlag = 0;
-  }
-  for(page=0; page<MAX_PAGE_NUM; page++) {
-    (function(page) {
-    // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
-    // http://c.m.163.com/nc/article/list/T1350383429665/0-20.html
-    var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, page*20);
-    if(entry.tid === 'T1348647909107') { // 头条
-      url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, page*20);
-    }
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
-    }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():JSON.parse() error");
-        return;
-      }
-      var newsList = json[entry.tid];
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():newsList empty in url " + url);
-        return;
-      }
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.docid || !newsEntry.title) {
-          return;
-        }
-        if(newsEntry.docid == '9815P05N00963VRO') { // 网易新闻客户端栏目迁移公告
-          return;
-        }
-        if(entry.tags.length) {
-          for(var i=0; i<entry.tags.length; i++) {
-            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
-              newsEntry.tagName = entry.tags[i];
-              break;
-            }
-          }
-        }else {
-          newsEntry.tagName = entry.tname;
-        }
-        if(!newsEntry.tagName) {
-          return;
-        }
-        News.findOne(genFindCmd(site, newsEntry.docid), function(err, result) {
-          if(err || result) {
-            return;
-          }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.docid);
-          if('T1387970173334' == entry.tid) { // 看客
-            if(newsEntry.photosetID){
-              var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
-              if(l && l.length == 2) {
-                newsEntry.setid = l[1]
-              }
-            }
-            startGetDetail.emit('startGetPhotoDetail', newsEntry);
-          }else {
-            startGetDetail.emit('startGetNewsDetail', newsEntry);
-          }
-        }); // News.findOne
-      });//forEach
-    });//request
-    })(page);
-  }//for
-};
-
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
 var neteaseSubscribes = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
@@ -355,7 +34,7 @@ var neteaseSubscribes = [
   {tname:'一周媒体速递', tid:'T1359605600543', tags:[]},
   {tname:'娱乐BigBang', tid:'T1359605557219', tags:[]},
   {tname:'独家解读', tid:'T1348654778699', tags:[]},
-  //{tname:'历史七日谈', tid:'T1359605505216', tags:[]}, // 2013-12-05 停止更新
+  {tname:'历史七日谈', tid:'T1359605505216', tags:[], stopped:1}, // 2013-12-05 停止更新
   {tname:'数读', tid:'T1348654813857', tags:[]},
   {tname:'一周人物', tid:'T1385105962170', tags:[]},
   {tname:'一周车坛囧事', tid:'T1382946585552', tags:[]},
@@ -478,18 +157,346 @@ var otherSubscribes = [
   //{tname:'每日钛度', tid:'T1366183190095', tags:[]}, // 2013-06-20 停止更新
   //{tname:'专业控', tid:'T1348654797196', tags:[]}, // 2013-05-16 停止更新
 ];
+var photoTags = [
+  // http://c.m.163.com/photo/api/list/0096/54GI0096.json
+  {tname:'热点', tid:'54GI0096', tags:['年度']},
+  {tname:'独家图集', tid:'54GJ0096', tags:[]},
+  //{tname:'明星', tid:'54GK0096', tags:[]},
+  //{tname:'体坛', tid:'54GM0096', tags:[]},
+  {tname:'精美', tid:'54GN0096', tags:['盘点', '一周外媒动物图片精选']},
+];
+
+var startGetDetail = new EventEmitter();
+
+startGetDetail.on('startGetNewsDetail', function (entry) {
+  getNewsDetail(entry);
+});
+
+startGetDetail.on('startGetPhotoDetail', function (entry) {
+  getPhotoDetail(entry);
+});
+
+var getNewsDetail = function(entry) {
+  // http://c.m.163.com/nc/article/8GOVEI0L00964JJM/full.html
+  var docid = util.format("%s",entry.docid);
+  var url = util.format('http://c.m.163.com/nc/article/%s/full.html', docid);
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || !json[docid]) {
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
+      return;
+    }
+    var jObj = json[docid];
+    var obj = entry;
+    News.findOne(genFindCmd(site, docid), function(err, result) {
+      if (err || result) {
+        return;
+      }
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = jObj.body;
+      obj.img = jObj.img;
+      obj.link = "";
+      if(entry.url_3w) {
+        obj.link = entry.url_3w; // http://help.3g.163.com/13/0611/08/912V2VCS00963VRO.html
+      }else if(entry.url) {
+        obj.link = entry.url; // http://3g.163.com/ntes/13/0611/08/912V2VCS00963VRO.html
+      }else {
+        obj.link = util.format("http://3g.163.com/touch/article.html?docid=%s", docid); // http://3g.163.com/touch/article.html?docid=912V2VCS00963VRO
+      }
+      obj.title = jObj.title;
+      obj.ptime = jObj.ptime; // 2014-01-04 09:47:48
+      obj.time = Date.parse(obj.ptime); // 1388800068000
+      obj.marked = jObj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.digest = genDigest(obj.body);
+      if(entry.imgsrc) {
+        obj.cover = entry.imgsrc;
+      } else if (obj.img[0]) {
+        obj.cover = obj.img[0].src;
+      }
+
+      // img lazyloading
+      obj.img.forEach(function (img) {
+        var imgHtml = genLazyLoadHtml(img.alt, img.src);
+        obj.marked = obj.marked.replace(img.ref, imgHtml);
+      });
+      if(jObj.video) {
+        for(var i=0; i<jObj.video.length; i++) {
+          var v = jObj.video[i];
+          if(!v.alt || !v.cover || !v.url_m3u8 || !v.ref) {
+            continue;
+          }
+          var html = genLazyLoadHtml(v.alt, v.cover);
+          html += util.format('<br/><a href="%s" target="_blank">%s</a><br/>', v.url_m3u8, v.alt);
+          obj.marked = obj.marked.replace(v.ref, html);
+        }
+      }
+
+      News.insert(obj, function (err, result) {
+        if(err) {
+          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
+        }
+      }); // News.insert
+    }); // News.findOne
+  });// request
+};
+
+function genBodyHtml(obj) {
+  var body = "";
+  var i = 0;
+
+  if((!obj) || (!obj.photos)) {
+    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtml():null");
+    return "";
+  }
+
+  body = obj.desc + "<br>";
+
+  for(i=0; i<obj.photos.length; i++) {
+    body += obj.photos[i].note?obj.photos[i].note: obj.photos[i].imgtitle;
+    body += genLazyLoadHtml("", obj.photos[i].imgurl);
+  }
+
+  return body;
+}
+
+function pickImg(obj) {
+  var img = [];
+  var i = 0;
+
+  if((!obj) || (!obj.photos)) {
+    console.log("hzfdbg file[" + __filename + "]" + " pickImg():null");
+    return "";
+  }
+
+  for(i=0; i<obj.photos.length; i++) {
+    img[i] = obj.photos[i].imgurl;
+  }
+
+  return img;
+}
+
+var getPhotoDetail = function(entry) {
+  var docid = util.format("%s",entry.setid);
+  var url = util.format("http://c.m.163.com/photo/api/set/0096/%s.json",entry.setid);
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():json null");
+      return;
+    }
+    var jObj = json;
+    var obj = entry;
+    News.findOne(genFindCmd(site, docid), function(err, result) {
+      if (err || result) {
+        return;
+      }
+      obj.docid = encodeDocID(site, docid);
+      obj.site = site;
+      obj.body = genBodyHtml(jObj);
+      obj.img = pickImg(jObj);
+      obj.link = "";
+      if(jObj.url) {
+        obj.link = jObj.url; // http://sports.163.com/photoview/011U0005/99130.html#p=90Q9LN0D4FFF0005
+      }
+      obj.title = entry.setname ? entry.setname : entry.title;
+      obj.ptime = jObj.createdate; // 2014-01-04 09:47:48
+      obj.time = Date.parse(obj.ptime); // 1388800068000
+      obj.marked = jObj.body;
+      obj.created = new Date();
+      obj.views = 1;
+      obj.tags = entry.tagName;
+      obj.marked = obj.body;
+      obj.digest = genDigest(obj.body);
+      if(entry.clientcover) {
+        obj.cover = entry.clientcover;
+      } else if (entry.clientcover1){
+        obj.cover = entry.clientcover1;
+      }else if (obj.img[0]) {
+        obj.cover = obj.img[0];
+      }
+
+      News.insert(obj, function (err, result) {
+        if(err) {
+          console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.insert():error " + err);
+        }
+      }); // News.insert
+    }); // News.findOne
+  });// request
+};
+
+var crawlerPhotoTag = function(entry) {
+  var req = {uri: entry.url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():JSON.parse() error");
+      return;
+    }
+    var newsList = json;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():newsList empty in url " + entry.url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if(!newsEntry.setid || !newsEntry.setname) {
+        return;
+      }
+      if(entry.tags.length) {
+        for(var i=0; i<entry.tags.length; i++) {
+          if(newsEntry.setname.indexOf(entry.tags[i]) !== -1) {
+            newsEntry.tagName = entry.tags[i];
+            break;
+          }
+        }
+      }else {
+        newsEntry.tagName = entry.tname;
+      }
+      if(!newsEntry.tagName) {
+        return;
+      }
+      News.findOne(genFindCmd(site, newsEntry.setid), function(err, result) {
+        if(err || result) {
+          return;
+        }
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():["+newsEntry.tagName+"]"+newsEntry.setname+",docid="+newsEntry.setid);
+        startGetDetail.emit('startGetPhotoDetail', newsEntry);
+      }); // News.findOne
+    });//forEach
+    if(newsList.length == 10) {
+      if(entry.crawlFlag) {
+        entry.url = util.format("http://c.m.163.com/photo/api/morelist/0096/%s/%s.json", entry.tid, newsList[9].setid);
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): next page="+entry.url);
+        setTimeout(function() {
+          crawlerPhotoTag(entry);
+        }, 10000); // crawl next page after 10 seconds
+      }
+    }else {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): last page");
+      entry.crawlFlag = 0;
+    }
+  });//request
+}
+
+var crawlerPhotoTags = function() {
+  photoTags.forEach(function(entry) {
+    entry.url = util.format('http://c.m.163.com/photo/api/list/0096/%s.json', entry.tid);
+    if(!crawlFlag && entry.stopped) {
+      return;
+    }
+    crawlerPhotoTag(entry);
+  });//forEach
+}
+
+var crawlerSubscribe = function (entry) {
+  var MAX_PAGE_NUM = 1;
+  var page = 0;
+
+  if(entry.tid === 'T1348647909107') { // 头条
+    MAX_PAGE_NUM = 5;
+  }
+  if(entry.crawlFlag) {
+    MAX_PAGE_NUM = 10;
+    entry.crawlFlag = 0;
+  }
+  for(page=0; page<MAX_PAGE_NUM; page++) {
+    (function(page) {
+    // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
+    // http://c.m.163.com/nc/article/list/T1350383429665/0-20.html
+    var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, page*20);
+    if(entry.tid === 'T1348647909107') { // 头条
+      url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, page*20);
+    }
+    var req = {uri: url, method: "GET", headers: headers};
+    if(proxyEnable) {
+      req.proxy = proxyUrl;
+    }
+    request(req, function (err, res, body) {
+      var json = data2Json(err, res, body);
+      if(!json) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+        return;
+      }
+      var newsList = json[entry.tid];
+      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+        return;
+      }
+      newsList.forEach(function(newsEntry) {
+        if(!newsEntry.docid || !newsEntry.title) {
+          return;
+        }
+        if(newsEntry.docid == '9815P05N00963VRO') { // 网易新闻客户端栏目迁移公告
+          return;
+        }
+        if(entry.tags.length) {
+          for(var i=0; i<entry.tags.length; i++) {
+            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
+              newsEntry.tagName = entry.tags[i];
+              break;
+            }
+          }
+        }else {
+          newsEntry.tagName = entry.tname;
+        }
+        if(!newsEntry.tagName) {
+          return;
+        }
+        News.findOne(genFindCmd(site, newsEntry.docid), function(err, result) {
+          if(err || result) {
+            return;
+          }
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.docid);
+          if('T1387970173334' == entry.tid) { // 看客
+            if(newsEntry.photosetID){
+              var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
+              if(l && l.length == 2) {
+                newsEntry.setid = l[1]
+              }
+            }
+            if(!newsEntry.setid) {
+              return;
+            }
+            startGetDetail.emit('startGetPhotoDetail', newsEntry);
+          }else {
+            startGetDetail.emit('startGetNewsDetail', newsEntry);
+          }
+        }); // News.findOne
+      });//forEach
+    });//request
+    })(page);
+  }//for
+};
 
 var crawlerNeteaseSubscribes = function() {
   neteaseSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-    crawlerTag(entry);
+    if(!crawlFlag && entry.stopped) {
+      return;
+    }
+    crawlerSubscribe(entry);
   });//forEach
 }
 
 var crawlerOtherSubscribes = function() {
   otherSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-    crawlerTag(entry);
+    if(!crawlFlag && entry.stopped) {
+      return;
+    }
+    crawlerSubscribe(entry);
   });//forEach
 }
 
@@ -497,8 +504,21 @@ var neteaseCrawler = function() {
   crawlerPhotoTags();
   crawlerNeteaseSubscribes();
   //crawlerOtherSubscribes();
-  setTimeout(neteaseCrawler, 1000 * 60 * 60);
+  setTimeout(neteaseCrawler, 2000 * 60 * 60);
+}
+
+var crawlerInit = function() {
+  neteaseSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  otherSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  photoTags.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
 }
 
 exports.neteaseCrawler = neteaseCrawler;
+crawlerInit();
 neteaseCrawler();

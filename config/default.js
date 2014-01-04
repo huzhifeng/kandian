@@ -10,6 +10,7 @@ module.exports = {
     limit: 15,
     hotQty: 4,
     maxRssItems: 50,
+    crawlFlag: 0, // 0: only one or few pages; 1: all pages
     sohuTags: {
       '先知道': '681',
       '神吐槽': '682',
