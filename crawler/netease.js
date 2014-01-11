@@ -1,12 +1,13 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var News = require('./models/news');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
+var News = require('../models/news');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genFindCmd = utils.genFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
 var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
 
 var proxyEnable = 0;
@@ -460,7 +461,6 @@ var crawlerSubscribe = function (entry) {
           if(err || result) {
             return;
           }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.docid);
           if('T1387970173334' == entry.tid) { // 看客
             if(newsEntry.photosetID){
               var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
@@ -473,6 +473,7 @@ var crawlerSubscribe = function (entry) {
             }
             startGetDetail.emit('startGetPhotoDetail', newsEntry);
           }else {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.docid);
             startGetDetail.emit('startGetNewsDetail', newsEntry);
           }
         }); // News.findOne
@@ -501,6 +502,7 @@ var crawlerOtherSubscribes = function() {
 }
 
 var neteaseCrawler = function() {
+  console.log('Start neteaseCrawler() at ' + new Date());
   crawlerPhotoTags();
   crawlerNeteaseSubscribes();
   //crawlerOtherSubscribes();
@@ -520,5 +522,6 @@ var crawlerInit = function() {
 }
 
 exports.neteaseCrawler = neteaseCrawler;
+exports.neteaseTags = neteaseSubscribes.concat(otherSubscribes, photoTags)
 crawlerInit();
 neteaseCrawler();

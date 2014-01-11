@@ -1,5 +1,5 @@
 ﻿var home = require('./home');
-var node = require('./node');
+var tag = require('./tag');
 var site = require('./site');
 var category = require('./category');
 var rss = require('./rss');
@@ -14,8 +14,8 @@ exports = module.exports = function(app) {
   app.get('/page/:page', home.index);
   app.get('/news', home.index);
   app.get('/news/:docid', home.viewNews);
-  app.get('/tag/:tag', node.index);
-  app.get('/tag/:tag/page/:page', node.index);
+  app.get('/tag/:tag', tag.index);
+  app.get('/tag/:tag/page/:page', tag.index);
   app.get('/site/:site', site.index);
   app.get('/site/:site/page/:page', site.index);
   app.get('/category/:category', category.index);

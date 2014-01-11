@@ -2,7 +2,8 @@
 var News = require('../models/news');
 var tt = require('config').Config.sinaTags;
 var hotQty = require('config').Config.hotQty;
-var mergeDict = require('../lib/utils').mergeDict;
+var utils = require('../lib/utils')
+var mergeDict = utils.mergeDict;
 
 tt = mergeDict(tt,require('config').Config.qqTags);
 

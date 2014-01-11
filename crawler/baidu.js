@@ -1,12 +1,13 @@
 ﻿var util = require('util');
 var request = require('request');
-var News = require('./models/news');
-var Image = require('./models/image');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
+var News = require('../models/news');
+var Image = require('../models/image');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genFindCmd = utils.genFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
@@ -227,7 +228,7 @@ var crawlerNewsCategory = function (entry) {
       for(var i = 0; i < baiduNewsTags.length; i++) {
         if (newsEntry.title.indexOf(baiduNewsTags[i]) !== -1) {
           newsEntry.tagName = baiduNewsTags[i];
-  
+
           News.findOne(genFindCmd(site,newsEntry.nid), function(err, result) {
             if(err || result) {
               return;
@@ -259,6 +260,7 @@ var baiduNewsCrawler = function() {
 }
 
 var baiduCrawler = function() {
+  console.log('Start baiduCrawler() at ' + new Date());
   baiduNewsCrawler();
   //baiduImageCrawler();
 }

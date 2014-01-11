@@ -3,8 +3,9 @@ var request = require('request');
 //var fs = require('fs');
 //var http = require('http-get');
 var Image = require('./models/image');
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
+var utils = require('../lib/utils')
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
 var site = "xgmn";
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -507,7 +508,7 @@ var crawlerAllCategory = function() {
 }
 
 var xgmnCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " xgmnCrawler():Start time="+new Date());
+  console.log('Start xgmnCrawler() at ' + new Date());
   initCatalogList();
   setTimeout(crawlerAllCategory, 1000 * 5); // delay 5 seconds
 }

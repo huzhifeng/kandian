@@ -4,12 +4,13 @@ var request = require('request');
 var _ = require("lodash");
 var qqTags = require('config').Config.qqTags;
 var tags = _.keys(qqTags);
-var News = require('./models/news');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genQqFindCmd = require('./lib/utils').genQqFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
+var News = require('../models/news');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genQqFindCmd = utils.genQqFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -470,7 +471,7 @@ var crawlerSubscribe = function(entry) {
       console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
       return;
     }
-    
+
     if(entry.ids) {
       setTimeout(function() {
         crawlerSubscribe(entry);
@@ -518,7 +519,7 @@ var crawlerAllSubscribe = function() {
 }
 
 var qqCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " qqCrawler():Date="+new Date());
+  console.log('Start qqCrawler() at ' + new Date());
   crawlerHeadLine();
   crawlerPhoto();
   crawlerAllSubscribe();

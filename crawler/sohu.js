@@ -1,12 +1,13 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var News = require('./models/news');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
+var News = require('../models/news');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genFindCmd = utils.genFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
@@ -481,6 +482,7 @@ var crawlerOtherSubscribes = function () {
 }
 
 var sohuCrawler = function() {
+  console.log('Start sohuCrawler() at ' + new Date());
   crawlerSohuSubscribes();
   //crawlerOtherSubscribes();
   crawlerPhotos();
@@ -500,5 +502,6 @@ var crawlerInit = function() {
 }
 
 exports.sohuCrawler = sohuCrawler;
+exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags)
 crawlerInit();
 sohuCrawler();

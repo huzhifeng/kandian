@@ -4,12 +4,13 @@ var request = require('request');
 var _ = require("lodash");
 var sinaTags = require('config').Config.sinaTags;
 var tags = _.keys(sinaTags);
-var News = require('./models/news');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
+var News = require('../models/news');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genFindCmd = utils.genFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -60,7 +61,7 @@ var getNewsDetail = function(entry) {
           html = genLazyLoadHtml(jObj.pics[i].alt, jObj.pics[i].pic) + jObj.pics[i].alt + '<br/>';
           obj.body = obj.body.replace(util.format("<!--{IMG_%d}-->", i+1), html);
           obj.img[obj.img.length] = jObj.pics[i].pic;
-        }        
+        }
       }
       obj.video = [];
       obj.link = "";
@@ -146,9 +147,9 @@ var crawlerHeadLine = function () {
 };
 
 var sinaCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " sinaCrawler():Date="+new Date());
+  console.log('Start sinaCrawler() at ' + new Date());
   crawlerHeadLine();
-  setTimeout(sinaCrawler, 1000 * 60 * 60 * 2);
+  setTimeout(sinaCrawler, 2000 * 60 * 60);
 }
 
 exports.sinaCrawler = sinaCrawler;

@@ -2,12 +2,13 @@
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var jsdom = require("jsdom").jsdom;
-var News = require('./models/news');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
+var News = require('../models/news');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genFindCmd = utils.genFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
@@ -165,6 +166,7 @@ var crawlerCategory = function (entry) {
 };
 
 var krCrawler = function() {
+  console.log('Start krCrawler() at ' + new Date());
   categorys.forEach(function(entry) {
     crawlerCategory(entry);
   });

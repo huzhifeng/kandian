@@ -2,7 +2,7 @@
   <div class="page-header">
     <h2>{{news.title}}</h2>
     <small>
-        <em>来源: {{news.site}},&nbsp;&nbsp;{{news.ptime}}, 
+        <em>来源: {{news.site}},&nbsp;&nbsp;{{news.ptime}},
             &nbsp;&nbsp;<a href="/tag/{{news.tags}}">{{news.tags}}</a>,
             &nbsp;&nbsp;{{#if news.views}}{{news.views}}{{else}}2{{/if}} 人围观,
             &nbsp;&nbsp;<a href="#comments"><span class="ds-thread-count" data-thread-key="{{news.docid}}"></span></a>
@@ -11,7 +11,7 @@
     </small>
   </div>
 
-  <div class="news-content content-{{tag2c news.tags.[0]}}">
+  <div class="news-content">
    {{{news.marked}}}
     <br />
     <p class="text-error">【免责声明：本文自互联网收集而来，方便大家阅读，版权归原创者所有，如果侵犯了你的权益，请通知我们，我们会及时删除侵权内容，谢谢！<a href="{{#if news.link}}{{news.link}}{{else}}#{{/if}}" target="_blank">原文链接</a>】</p>
@@ -65,7 +65,7 @@ document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static
     ds.type = 'text/javascript';ds.async = true;
     ds.src = 'http://static.duoshuo.com/embed.js';
     ds.charset = 'UTF-8';
-    (document.getElementsByTagName('head')[0] 
+    (document.getElementsByTagName('head')[0]
     || document.getElementsByTagName('body')[0]).appendChild(ds);
   })();
   </script>

@@ -1,8 +1,9 @@
 ﻿var util = require('util');
 var request = require('request');
 var xml2json = require('xml2json');
-var Image = require('./models/image');
-var encodeDocID = require('./lib/utils').encodeDocID;
+var Image = require('../models/image');
+var utils = require('../lib/utils')
+var encodeDocID = utils.encodeDocID;
 var site = "mnbqg";
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -135,7 +136,7 @@ var crawlerAllCategory = function() {
 }
 
 var mnbqgCrawler = function() {
-  console.log("hzfdbg file[" + __filename + "]" + " mnbqgCrawler():Start time="+new Date());
+  console.log('Start mnbqgCrawler() at ' + new Date());
   initCatalogList();
   setTimeout(crawlerAllCategory, 1000 * 5); // delay 5 seconds
 }

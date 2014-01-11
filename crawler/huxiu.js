@@ -1,13 +1,14 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var News = require('./models/news');
-var genLazyLoadHtml = require('./lib/utils').genLazyLoadHtml;
-var genFindCmd = require('./lib/utils').genFindCmd;
-var encodeDocID = require('./lib/utils').encodeDocID;
-var data2Json = require('./lib/utils').data2Json;
-var genDigest = require('./lib/utils').genDigest;
-var timestamp2date = require('./lib/utils').timestamp2date;
+var News = require('../models/news');
+var utils = require('../lib/utils')
+var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genFindCmd = utils.genFindCmd;
+var encodeDocID = utils.encodeDocID;
+var data2Json = utils.data2Json;
+var genDigest = utils.genDigest;
+var timestamp2date = utils.timestamp2date;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
@@ -186,6 +187,7 @@ var crawlerCategory = function (entry) {
 };
 
 var huxiuCrawler = function() {
+  console.log('Start huxiuCrawler() at ' + new Date());
   categorys.forEach(function(entry) {
     crawlerCategory(entry);
   });

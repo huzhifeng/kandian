@@ -1,7 +1,8 @@
 ﻿var async = require('async');
 var News = require('../models/news');
 var hotQty = require('config').Config.hotQty;
-var site2name = require('../lib/utils').site2name;
+var utils = require('../lib/utils')
+var site2name = utils.site2name;
 
 var index = function (req, res, next) {
   var site = req.params.site;
