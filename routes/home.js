@@ -2,16 +2,13 @@
 var News = require('../models/news');
 var Image = require('../models/image');
 var crawlerAll = require('../netease').crawlerAll;
-var sohuTags = require('config').Config.sohuTags;
 var sinaTags = require('config').Config.sinaTags;
 var qqTags = require('config').Config.qqTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
 var decodeDocID = require('../lib/utils').decodeDocID;
 var encodeDocID = require('../lib/utils').encodeDocID;
-
-var tt = mergeDict(sinaTags, sohuTags);
-tt = mergeDict(tt, qqTags);
+var tt = mergeDict(sinaTags, qqTags);
 
 var index = function (req, res, next) {
   var getNewss = function (callback) {

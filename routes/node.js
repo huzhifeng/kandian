@@ -1,10 +1,9 @@
 ﻿var async = require('async');
 var News = require('../models/news');
-var tt = require('config').Config.sohuTags;
+var tt = require('config').Config.sinaTags;
 var hotQty = require('config').Config.hotQty;
 var mergeDict = require('../lib/utils').mergeDict;
 
-tt = mergeDict(tt,require('config').Config.sinaTags);
 tt = mergeDict(tt,require('config').Config.qqTags);
 
 var index = function (req, res, next) {
