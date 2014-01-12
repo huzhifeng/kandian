@@ -8,6 +8,8 @@ var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
+var findTagName = utils.findTagName;
+var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -17,25 +19,58 @@ var headers = {
   'Connection': 'Keep-Alive',
 };
 var site = 'ifeng';
-var ifengTags = [
-  '史说新语',
-  '百部穿影', // http://ent.ifeng.com/movie/special/baibuchuanying/
-  '影像志',
-  '凤凰热追踪',
-  '深度',
-  '真相80',
-  '凤凰网评',
-  '轻新闻',
-  '每日热词',
-  '教科书之外',
-  '独家评',
-  '科技能见度',
-  '凤凰八卦阵',
-  '洞见',
-  '独家图表',
-  '历史上的今天',
-  '情感夜话',
-  '健康365',
+var ifengSubscribes = [
+  {
+    tname:'头条',
+    tid:'1',
+    tags:[
+      //'史说新语', // Refer to 史林拍案
+      '百部穿影', // 2013-12-05 停止更新 //http://ent.ifeng.com/movie/special/baibuchuanying/
+      '影像志',
+      '凤凰热追踪',
+      '深度',
+      '真相80',
+      '凤凰网评',
+      '轻新闻',
+      '每日热词',
+      '教科书之外',
+      '独家评',
+      '科技能见度',
+      '凤凰八卦阵',
+      '洞见',
+      '独家图表',
+      '历史上的今天',
+      '情感夜话',
+      '健康365',
+    ]
+  },
+  // 凤凰独家栏目列表,目前共20个,可以指定pagesize为50一次返回
+  // http://api.3g.ifeng.com/channel_list_android?channel=origin&pageindex=1&pagesize=50
+  // http://api.3g.ifeng.com/channel_list_android?channel=origin&pagesize=10&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+  // 某一栏目文章列表,默认每次返回20条记录,可以指定pageindex(如&pageindex=2)和pagesize(如&pagesize=40)自定义返回
+  // http://api.3g.ifeng.com/origin_doc_list?id=16908&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+  // 某篇文章内容
+  // http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_74837186&channel=push&chid=push&android=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+  {tname:'有报天天读', tid:'16908', tags:[]},
+  {tname:'FUN来了', tid:'16917', tags:[]},
+  {tname:'凤凰知道', tid:'17594', tags:[]},
+  {tname:'今日最大声', tid:'17593', tags:[]},
+  {tname:'军魂100分', tid:'18316', tags:[]},
+  {tname:'史林拍案', tid:'18505', tags:[]},
+  {tname:'一周人物', tid:'18026', tags:[]},
+  {tname:'话说', tid:'18017', tags:[]},
+  {tname:'财知道', tid:'19355', tags:[]},
+  {tname:'锵锵三人行', tid:'19357', tags:[]},
+  {tname:'防务短评', tid:'19593', tags:[]},
+  {tname:'独家体育评论', tid:'19352', tags:[]},
+  {tname:'专家谈', tid:'19350', tags:[], stopped:1}, // 2013-12-09 停止更新
+  {tname:'热追踪', tid:'19349', tags:[], stopped:1}, // 2013-12-16 停止更新
+  {tname:'精英范', tid:'19348', tags:[], stopped:1}, // 2013-11-11 停止更新
+  {tname:'年代访', tid:'19354', tags:[]},
+  {tname:'观世变', tid:'19353', tags:[]},
+  {tname:'自由谈', tid:'19346', tags:[]},
+  {tname:'大学问', tid:'19347', tags:[]},
+  {tname:'非常道', tid:'19356', tags:[]},
 ];
 
 var startGetDetail = new EventEmitter();
@@ -81,8 +116,8 @@ var getNewsDetail = function(entry) {
         obj.link = util.format("http://i.ifeng.com/news?aid=%s", docid); // http://i.ifeng.com/news?aid=74868287
       }
       obj.title = entry.title;
-      obj.ptime = jObj.editTime;
-      obj.time = new Date(obj.ptime);
+      obj.ptime = jObj.editTime; // 2014-01-12 13:30:00
+      obj.time = Date.parse(obj.ptime); // 1389504600000
       obj.marked = obj.body;
       obj.created = new Date();
       obj.views = 1;
@@ -108,16 +143,25 @@ var getNewsDetail = function(entry) {
   });// request
 };
 
-var crawlerHeadLine = function () {
-  // http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
-  // http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=56&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
+var crawlerSubscribe = function (entry) {
   var headlineLink = 'http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-  var MAX_PAGE_NUM = 5;
+  var docListUrl = 'http://api.3g.ifeng.com/origin_doc_list?id=%s&pageindex=%d&pagesize=20&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
+  var MAX_PAGE_NUM = 1;
   var page = 1;
 
+  if(entry.tid === '1') { // 头条
+    MAX_PAGE_NUM = 5;
+  }
+  if(entry.crawlFlag) {
+    MAX_PAGE_NUM = 10;
+    entry.crawlFlag = 0;
+  }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
-    var url = util.format(headlineLink, page);
+    var url = util.format(docListUrl, entry.tid, page);
+    if(entry.tid === '1') { // 头条
+      url = util.format(headlineLink, page);
+    }
     var req = {uri: url, method: "GET", headers: headers};
     if(proxyEnable) {
       req.proxy = proxyUrl;
@@ -125,114 +169,54 @@ var crawlerHeadLine = function () {
     request(req, function (err, res, body) {
       var json = data2Json(err, res, body);
       if(!json || !json[0] || !json[0].body || !json[0].body.item) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
         return;
       }
       var newsList = json[0].body.item;
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.documentId) {
+        newsEntry.tagName = findTagName(newsEntry.title, entry)
+        if(!newsEntry.tagName) {
           return;
         }
-        for(var i = 0; i < ifengTags.length; i++) {
-          if(newsEntry.title.indexOf(ifengTags[i]) !== -1) {
-            newsEntry.tagName = ifengTags[i];
-            News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-              if(err || result) {
-                return;
-              }
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
-              startGetDetail.emit('startGetNewsDetail', newsEntry);
-            }); // News.findOne
-            break;
+        News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
+          if(err || result) {
+            return;
           }
-        }//for
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
+          startGetDetail.emit('startGetNewsDetail', newsEntry);
+        }); // News.findOne
       });//forEach
     });//request
     })(page);
   }//for
 };
 
-// 凤凰独家栏目列表,目前共21个,分3页返回,为减少请求,可以指定pagesize为30一次返回
-// http://api.3g.ifeng.com/channel_list_android?channel=origin&pagesize=10&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
-var channelListUrl = 'http://api.3g.ifeng.com/channel_list_android?channel=origin&pagesize=30&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-// 某一栏目文章列表,默认每次返回20条记录,可以指定pageindex(如&pageindex=2)和pagesize(如&pagesize=40)自定义返回
-// http://api.3g.ifeng.com/origin_doc_list?id=16908&pageindex=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
-var docListUrl = '%s&pageindex=%d&pagesize=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-// 某篇文章内容
-// http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_74837186&channel=push&chid=push&android=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
-var docDetailUrl = 'http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_74837186&channel=push&chid=push&android=1&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-
-var crawlerChannel = function (channelEntry) {
-  var url = util.format(docListUrl, channelEntry.id, channelEntry.pageindex, channelEntry.pagesize);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
-    req.proxy = proxyUrl;
-  }
-  channelEntry.pageindex = channelEntry.pageindex + 1;
-  if(channelEntry.pageindex <= channelEntry.maxpage) {
-    setTimeout(function() {
-      crawlerChannel(channelEntry);
-    }, 100);
-  }
-  request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json[0] || !json[0].body || !json[0].body.item) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():JSON.parse() error");
+var crawlerIfengSubscribes = function() {
+  ifengSubscribes.forEach(function(entry) {
+    if(!crawlFlag && entry.stopped) {
       return;
     }
-    var newsList = json[0].body.item;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():newsList empty in url " + url);
-      return;
-    }
-    newsList.forEach(function(newsEntry) {
-      newsEntry.tagName = channelEntry.title;
-      News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-        if(err || result) {
-          return;
-        }
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerChannel():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
-      }); // News.findOne
-    });//forEach
-  });//request
-};
-
-var initChannelList = function() {
-  var url = channelListUrl;
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
-    req.proxy = proxyUrl;
-  }
-  request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json.body || !json.body.item) {
-      console.log("hzfdbg file[" + __filename + "]" + " initChannelList():JSON.parse() error");
-      return;
-    }
-    var channelList = json.body.item;
-    if((!channelList) || (!channelList.length) || (channelList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " initChannelList():channelList empty in url " + url);
-      return;
-    }
-    channelList.forEach(function(channelEntry) {
-      channelEntry.pageindex = 1;
-      channelEntry.pagesize = 20;
-      channelEntry.maxpage = 1;
-      crawlerChannel(channelEntry);
-    });//forEach
-  });//request
+    crawlerSubscribe(entry);
+  });//forEach
 }
+
 var ifengCrawler = function() {
   console.log('Start ifengCrawler() at ' + new Date());
-  crawlerHeadLine();
-  initChannelList();
-  setTimeout(ifengCrawler, 1000 * 60 * 60);
+  crawlerIfengSubscribes()
+  setTimeout(ifengCrawler, 2000 * 60 * 60);
+}
+
+var crawlerInit = function() {
+  ifengSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
 }
 
 exports.ifengCrawler = ifengCrawler;
+exports.ifengTags = ifengSubscribes;
+crawlerInit();
 ifengCrawler();

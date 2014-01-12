@@ -8,6 +8,7 @@ var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
+var findTagName = utils.findTagName;
 var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
 
 var proxyEnable = 0;
@@ -357,16 +358,7 @@ var crawlerPhotoTag = function(entry) {
       if(!newsEntry.setid || !newsEntry.setname) {
         return;
       }
-      if(entry.tags.length) {
-        for(var i=0; i<entry.tags.length; i++) {
-          if(newsEntry.setname.indexOf(entry.tags[i]) !== -1) {
-            newsEntry.tagName = entry.tags[i];
-            break;
-          }
-        }
-      }else {
-        newsEntry.tagName = entry.tname;
-      }
+      newsEntry.tagName = findTagName(newsEntry.setname, entry);
       if(!newsEntry.tagName) {
         return;
       }
@@ -444,16 +436,7 @@ var crawlerSubscribe = function (entry) {
         if(newsEntry.docid == '9815P05N00963VRO') { // 网易新闻客户端栏目迁移公告
           return;
         }
-        if(entry.tags.length) {
-          for(var i=0; i<entry.tags.length; i++) {
-            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
-              newsEntry.tagName = entry.tags[i];
-              break;
-            }
-          }
-        }else {
-          newsEntry.tagName = entry.tname;
-        }
+        newsEntry.tagName = findTagName(newsEntry.title, entry);
         if(!newsEntry.tagName) {
           return;
         }

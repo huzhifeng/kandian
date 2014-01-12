@@ -8,6 +8,7 @@ var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
+var findTagName = utils.findTagName;
 var xml2json = require('xml2json');
 var jsdom = require("jsdom").jsdom;
 var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
@@ -314,19 +315,17 @@ var crawlerHeadLine = function (entry) {
         if(!newsEntry.title || !newsEntry.newsId) {
           return;
         }
-        for(var i = 0; i < entry.tags.length; i++) {
-          if (newsEntry.title.indexOf(entry.tags[i]) !== -1) {
-            newsEntry.tagName = entry.tags[i];
-            News.findOne(genFindCmd(site, newsEntry.newsId), function(err, result) {
-              if(err || result) {
-                return;
-              }
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.newsId);
-              startGetDetail.emit('startGetNewsDetail', newsEntry);
-            }); // News.findOne
-            break;
+        newsEntry.tagName = findTagName(newsEntry.title, entry);
+        if(!newsEntry.tagName) {
+          return;
+        }
+        News.findOne(genFindCmd(site, newsEntry.newsId), function(err, result) {
+          if(err || result) {
+            return;
           }
-        }//for
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.newsId);
+          startGetDetail.emit('startGetNewsDetail', newsEntry);
+        }); // News.findOne
       });//forEach
     });//request
     })(page);
@@ -366,16 +365,7 @@ var crawlerPhoto = function (entry) {
         if(!newsEntry.gid || !newsEntry.title) {
           return;
         }
-        if(entry.tags.length) {
-          for(var i=0; i<entry.tags.length; i++) {
-            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
-              newsEntry.tagName = entry.tags[i];
-              break;
-            }
-          }
-        }else {
-          newsEntry.tagName = entry.tname;
-        }
+        newsEntry.tagName = findTagName(newsEntry.title, entry);
         if(!newsEntry.tagName) {
           return;
         }
@@ -433,16 +423,7 @@ var crawlerTag = function (entry) {
         if(!newsEntry.newsId || !newsEntry.title) {
           return;
         }
-        if(entry.tags.length) {
-          for(var i=0; i<entry.tags.length; i++) {
-            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
-              newsEntry.tagName = entry.tags[i];
-              break;
-            }
-          }
-        }else {
-          newsEntry.tagName = entry.tname;
-        }
+        newsEntry.tagName = findTagName(newsEntry.title, entry);
         if(!newsEntry.tagName) {
           return;
         }
