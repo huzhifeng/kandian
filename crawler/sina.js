@@ -11,15 +11,67 @@ var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
+var findTagName = utils.findTagName;
+var moment = require('moment');
+var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-  'User-Agent': 'MI_2__sinanews__3.4.0__android__os4.1.1',
+  'User-Agent': 'User-Agent: MI_2__sinanews__4.0.0__android__os4.1.1',
   'Host': 'api.sina.cn',
   'Connection': 'Keep-Alive',
 };
 var site = "sina";
+var sinaSubscribes = [
+  {
+    tname:'头条',
+    tid:'news_toutiao',
+    tags:[
+      '今日网言', // 2013-12-13 停止更新
+      '新观察', // 2013-12-02 停止更新
+      '海外观察',
+      '军情茶馆', // 2013-06-21 停止更新
+      '万花筒', // 2013-08-15 停止更新
+      '今日神最右', // 2013-11-27 停止更新 Refer to 搞笑
+      '午饭话题', // 2013-12-11 停止更新 Refer to 茶娱饭后
+      '午饭聊点啥', // 2013-12-06 停止更新 Refer to 茶娱饭后
+      '茶娱饭后',
+      '每日深度', // 2013-12-19 停止更新
+      '毒舌美少女',
+      '奇趣壹周',
+      '一周八卦',
+      '新历史',
+    ]
+  },
+  // 新浪订阅管理
+  {
+    tname:'搞笑',
+    tid:'news_funny',
+    tags:['神最右', '囧哥说事', '囧哥囧事', '新闻乐轻松', '图哥乐呵', '段子PK秀', '毒舌美少女', '奇趣壹周']
+  },
+  //{tname:'数码', tid:'news_digital', tags:[]},
+  //{tname:'时尚', tid:'news_fashion', tags:[]},
+  //{tname:'星座', tid:'news_ast', tags:[]},
+  //{tname:'历史', tid:'news_history', tags:[]},
+  //{tname:'女性', tid:'news_eladies', tags:[]},
+  //{tname:'科技', tid:'news_tech', tags:[]},
+  //{tname:'体育', tid:'news_sports', tags:[]},
+  //{tname:'财经', tid:'news_finance', tags:[]},
+  //{tname:'娱乐', tid:'news_ent', tags:[]},
+  //{tname:'军事', tid:'news_mil', tags:[]},
+  //{tname:'专栏', tid:'zhuanlan_recommend', tags:[]},
+  // 新浪图片
+  {tname:'图片.精选', tid:'hdpic_toutiao', tags:[]},
+  {tname:'图片.趣图', tid:'hdpic_funny', tags:[]},
+  {tname:'图片.美图', tid:'hdpic_pretty', tags:[]},
+  {tname:'图片.故事', tid:'hdpic_story', tags:[]},
+  // 新浪视频
+  //{tname:'视频.精选', tid:'video_video', tags:[]},
+  {tname:'视频.搞笑', tid:'video_funny', tags:[]},
+  //{tname:'视频.现场', tid:'video_scene', tags:[]},
+  //{tname:'视频.花絮', tid:'video_highlight', tags:[]},
+];
 
 var startGetDetail = new EventEmitter();
 
@@ -38,7 +90,7 @@ var getNewsDetail = function(entry) {
   }
   request(req, function (err, res, body) {
     var json = data2Json(err, res, body);
-    if(!json) {
+    if(!json || !json.data || (json.status == '-1')) {
       console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():JSON.parse() error");
       return;
     }
@@ -63,7 +115,17 @@ var getNewsDetail = function(entry) {
           obj.img[obj.img.length] = jObj.pics[i].pic;
         }
       }
-      obj.video = [];
+      if(jObj.videos) {
+        var i = 0;
+        var html = '';
+        for(i=0; i<jObj.videos.length; i++) {
+          jObj.videos[i].pic = jObj.videos[i].pic.replace(/auto\.jpg/, "original.jpg");
+          html = genLazyLoadHtml('', jObj.videos[i].pic);
+          html += util.format('<a href="%s" target="_blank">%s</a><br/>', jObj.videos[i].url, jObj.long_title);
+          obj.body = obj.body.replace(util.format("<!--{VIDEO_%d}-->", i+1), html);
+          obj.img[obj.img.length] = jObj.videos[i].pic;
+        }
+      }
       obj.link = "";
       if(jObj.link) {
         obj.link = jObj.link; // http://news.sina.cn/?sa=t124d8940595v2357
@@ -73,8 +135,8 @@ var getNewsDetail = function(entry) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), link null");
       }
       obj.title = entry.title;
-      obj.ptime = jObj.pubDate;
-      obj.time = new Date(parseInt(obj.ptime) * 1000);
+      obj.time = parseInt(jObj.pubDate) * 1000;
+      obj.ptime = moment(obj.time).format('YYYY-MM-DD HH:mm:ss');
       obj.marked = obj.body;
       obj.created = new Date();
       obj.views = 1;
@@ -94,20 +156,17 @@ var getNewsDetail = function(entry) {
   }); // request
 };
 
-var crawlerHeadLineFirstTime = 1; //Crawl more pages at the first time
-var crawlerHeadLine = function () {
+var crawlerSubscribe = function (entry) {
   // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
-  // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=25
-  var headlineLink = 'http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=%d';
   var MAX_PAGE_NUM = 3;
   var page = 1;
-  if(crawlerHeadLineFirstTime) {
+  if(entry.crawlFlag) {
     MAX_PAGE_NUM = 25;
-    crawlerHeadLineFirstTime = 0;
+    entry.crawlFlag = 0;
   }
   for(page=1; page<=MAX_PAGE_NUM; page++) {
     (function(page) {
-    var url = util.format(headlineLink, page);
+    var url = util.format('http://api.sina.cn/sinago/list.json?channel=%s&p=%d', entry.tid, page);
     var req = {uri: url, method: "GET", headers: headers};
     if(proxyEnable) {
       req.proxy = proxyUrl;
@@ -115,42 +174,57 @@ var crawlerHeadLine = function () {
     request(req, function (err, res, body) {
       var json = data2Json(err, res, body);
       if(!json || !json.data || !json.data.list) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():JSON.parse() error");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
         return;
       }
       var newsList = json.data.list;
       if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():newsList empty in url " + url);
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
         return;
       }
       newsList.forEach(function(newsEntry) {
         if(!newsEntry.title || !newsEntry.id) {
           return;
         }
-        for(var i = 0; i < tags.length; i++) {
-          if (newsEntry.title.indexOf(tags[i]) !== -1 || (newsEntry.long_title && newsEntry.long_title.indexOf(tags[i]) !== -1)) {
-            newsEntry.tagName = tags[i];
-            News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
-              if(err || result) {
-                return;
-              }
-              console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
-              startGetDetail.emit('startGetNewsDetail', newsEntry);
-            }); // News.findOne
-            break;
+        newsEntry.tagName = findTagName(newsEntry.title, entry) || findTagName(newsEntry.long_title, entry)
+        if(!newsEntry.tagName) {
+          return;
+        }
+        News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
+          if(err || result) {
+            return;
           }
-        }//for
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
+          startGetDetail.emit('startGetNewsDetail', newsEntry);
+        }); // News.findOne
       });//forEach
     });//request
     })(page);
   }//for
 };
 
+var crawlerSinaSubscribes = function () {
+  sinaSubscribes.forEach(function(entry) {
+    if(!crawlFlag && entry.stopped) {
+      return;
+    }
+    crawlerSubscribe(entry);
+  });
+}
+
 var sinaCrawler = function() {
   console.log('Start sinaCrawler() at ' + new Date());
-  crawlerHeadLine();
+  crawlerSinaSubscribes();
   setTimeout(sinaCrawler, 2000 * 60 * 60);
 }
 
+var crawlerInit = function() {
+  sinaSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+}
+
 exports.sinaCrawler = sinaCrawler;
+exports.sinaTags = sinaSubscribes;
+crawlerInit();
 sinaCrawler();

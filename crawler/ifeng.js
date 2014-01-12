@@ -178,6 +178,9 @@ var crawlerSubscribe = function (entry) {
         return;
       }
       newsList.forEach(function(newsEntry) {
+        if(!newsEntry.title || !newsEntry.documentId) {
+          return;
+        }
         newsEntry.tagName = findTagName(newsEntry.title, entry)
         if(!newsEntry.tagName) {
           return;

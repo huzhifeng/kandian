@@ -1,11 +1,8 @@
 ﻿var async = require('async');
 var News = require('../models/news');
-var tt = require('config').Config.sinaTags;
 var hotQty = require('config').Config.hotQty;
 var utils = require('../lib/utils')
 var mergeDict = utils.mergeDict;
-
-tt = mergeDict(tt,require('config').Config.qqTags);
 
 var index = function (req, res, next) {
   var tag = req.params.tag;
@@ -38,7 +35,7 @@ var index = function (req, res, next) {
     if (! err) {
       res.render('tag', {pageTitle: tag,
         currentPage: results.newss.currentPage, pages: results.newss.pages,
-        news: results.newss.newss, tag: tag, active: tt[tag],
+        news: results.newss.newss, tag: tag, active: tag,
         baseUrl: '/tag/' + encodeURIComponent(tag) + '/page/',
         hotNews: results.hotNewss.hotNewss});
     } else {

@@ -1,14 +1,11 @@
 ﻿var async = require('async');
 var News = require('../models/news');
 var Image = require('../models/image');
-var sinaTags = require('config').Config.sinaTags;
-var qqTags = require('config').Config.qqTags;
 var hotQty = require('config').Config.hotQty;
 var utils = require('../lib/utils')
 var mergeDict = utils.mergeDict;
 var decodeDocID = utils.decodeDocID;
 var encodeDocID = utils.encodeDocID;
-var tt = mergeDict(sinaTags, qqTags);
 
 var index = function (req, res, next) {
   var getNewss = function (callback) {
@@ -164,14 +161,14 @@ var viewNews = function (req, res, next) {
                     News.findLimit({"site":result.site, "tags":result.tags, time: {$gt: result.time}}, 4, null, function (err3, results3) {
                       if (!err3) {
                         res.render('view_news', {pageTitle: result.title, news: result,
-                          relatedNews: results3, active: tt[result.tags[0]], prevNews: results5, nextNews: results6});
+                          relatedNews: results3, active: result.tags[0], prevNews: results5, nextNews: results6});
                       } else {
                         next(new Error(err3.message));
                       }
                     });
                   } else {
                     res.render('view_news', {pageTitle: result.title, news: result,
-                      relatedNews: results2, active: tt[result.tags[0]], prevNews: results5, nextNews: results6});
+                      relatedNews: results2, active: result.tags[0], prevNews: results5, nextNews: results6});
                   }
 
                 } else {
