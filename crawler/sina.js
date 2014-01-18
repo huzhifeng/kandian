@@ -1,9 +1,6 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
-var _ = require("lodash");
-var sinaTags = require('config').Config.sinaTags;
-var tags = _.keys(sinaTags);
 var News = require('../models/news');
 var utils = require('../lib/utils')
 var genLazyLoadHtml = utils.genLazyLoadHtml;
@@ -147,6 +144,7 @@ var getNewsDetail = function(entry) {
         obj.cover = obj.img[0].url;
       }
 
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
       News.insert(obj, function (err, result) {
         if(err) {
           console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
@@ -186,7 +184,7 @@ var crawlerSubscribe = function (entry) {
         if(!newsEntry.title || !newsEntry.id) {
           return;
         }
-        newsEntry.tagName = findTagName(newsEntry.title, entry) || findTagName(newsEntry.long_title, entry)
+        newsEntry.tagName = findTagName(newsEntry.title, entry) || findTagName(newsEntry.long_title, entry);
         if(!newsEntry.tagName) {
           return;
         }
@@ -194,7 +192,6 @@ var crawlerSubscribe = function (entry) {
           if(err || result) {
             return;
           }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
           startGetDetail.emit('startGetNewsDetail', newsEntry);
         }); // News.findOne
       });//forEach

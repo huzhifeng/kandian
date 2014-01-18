@@ -446,6 +446,7 @@ var crawlerCategory = function (entry) {
             console.log('<a href="'+img+'" target="_blank"><img src="'+img+'"></a>');
           });*/
 
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+obj.tags+"]"+",id="+obj.id+",imgid="+obj.imgid);
           Image.insert(obj, function (err, result) {
             if(err) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.insert():error " + err);

@@ -81,6 +81,7 @@ var crawlerCategory = function (entry) {
           obj.page = page;
           obj.time = new Date();
 
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+obj.tags+"]"+",id="+obj.id+",imgid="+obj.imgid);
           Image.insert(obj, function (err, result) {
             if(err) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.insert():error " + err);

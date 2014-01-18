@@ -134,6 +134,7 @@ var getNewsDetail = function(entry) {
         console.log("hzfdbg file[" + __filename + "] could not fine a cover");
       }
 
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
       News.insert(obj, function (err, result) {
         if(err) {
           console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
@@ -181,7 +182,7 @@ var crawlerSubscribe = function (entry) {
         if(!newsEntry.title || !newsEntry.documentId) {
           return;
         }
-        newsEntry.tagName = findTagName(newsEntry.title, entry)
+        newsEntry.tagName = findTagName(newsEntry.title, entry);
         if(!newsEntry.tagName) {
           return;
         }
@@ -189,7 +190,6 @@ var crawlerSubscribe = function (entry) {
           if(err || result) {
             return;
           }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.documentId);
           startGetDetail.emit('startGetNewsDetail', newsEntry);
         }); // News.findOne
       });//forEach

@@ -107,6 +107,7 @@ var crawlerImageCategory = function (entry) {
             obj.time = obj.created;
           }
 
+          console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory():["+obj.tags+"]"+",id="+obj.id);
           Image.insert(obj, function (err, result) {
             if(err) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerImageCategory(), Image.insert():error " + err);
@@ -151,6 +152,7 @@ var newsAdd = function(entry) {
     obj.cover = 'http' + t[1];
   }
 
+  console.log("hzfdbg file[" + __filename + "]" + " newsAdd():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
   News.insert(obj, function (err, result) {
     if(err) {
       console.log("hzfdbg file[" + __filename + "]" + " newsAdd(), News.insert():error " + err);

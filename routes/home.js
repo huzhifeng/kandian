@@ -14,16 +14,8 @@ var index = function (req, res, next) {
       "$or":
         [
           {
-            "site": {"$in": ["netease", "sohu", "sina"]},
-            "tags": {"$nin":["网易深度","网易女人","健康养生","真话","搜查科","轻松一刻","神吐槽"]},
-          },
-          {
-            "site": "ifeng",
-            "tags": {"$in":["今日最大声","有报天天读","凤凰知道","史说新语","史林拍案","百部穿影"]},
-          },
-          {
-            "site": "qq",
-            "tags": {"$in":["新闻哥","图话"]},
+            "site": {"$in": ["netease", "sohu", "ifeng", "sina", "qq"]},
+            "tags": {"$nin":["轻松一刻", "神吐槽", "FUN来了"]},
           },
           {
             "site": "yoka",

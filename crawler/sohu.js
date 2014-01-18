@@ -49,7 +49,7 @@ var otherSubscribes = [
   //{tname:'对路网', tid:'532', tags:[], stopped:1}, // 2013-09-26 停止更新
   //{tname:'挖段子•冷笑话', tid:'533', tags:[]},
   //{tname:'无聊哦', tid:'580', tags:[]},
-  //{tname:'妹子图', tid:'581', tags:[]},
+  {tname:'妹子图', tid:'581', tags:[]},
   //{tname:'挖段子•趣图', tid:'610', tags:[]},
   //{tname:'留几手', tid:'671', tags:[]},
   //{tname:'黑眼睛看世界', tid:'672', tags:[]},
@@ -132,7 +132,7 @@ var getNewsDetail = function(entry) {
       }else {
         obj.link = util.format("http://3g.k.sohu.com/t/n%s", docid); // http://3g.k.sohu.com/t/n7189277
       }
-      obj.title = entry.title.trim().replace(/\s+/g, '');
+      obj.title = entry.title;
       obj.ptime = jObj.time; // 2014-01-03 06:32
       obj.time = Date.parse(obj.ptime); // 1388701920000
       obj.marked = obj.body;
@@ -159,6 +159,7 @@ var getNewsDetail = function(entry) {
         //console.log("hzfdbg file[" + __filename + "]" + " imgHtml="+imgHtml);
       };
 
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
       News.insert(obj, function (err, result) {
         if(err) {
           console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
@@ -260,7 +261,7 @@ var getPhotoDetail = function(entry) {
       }else {
         obj.link = util.format("http://3g.k.sohu.com/t/p%s", docid); // http://3g.k.sohu.com/t/p78321
       }
-      obj.title = entry.title.trim().replace(/\s+/g, '');
+      obj.title = entry.title;
       obj.ptime = jObj.time; // 2014-01-04
       obj.time = Date.parse(obj.ptime); // 1388793600000
       obj.marked = obj.body;
@@ -275,6 +276,7 @@ var getPhotoDetail = function(entry) {
         obj.cover = obj.img[0];
       }
 
+      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
       News.insert(obj, function (err, result) {
         if(err) {
           console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.insert():error " + err);
@@ -323,7 +325,6 @@ var crawlerHeadLine = function (entry) {
           if(err || result) {
             return;
           }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerHeadLine():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.newsId);
           startGetDetail.emit('startGetNewsDetail', newsEntry);
         }); // News.findOne
       });//forEach
@@ -374,7 +375,6 @@ var crawlerPhoto = function (entry) {
           if(err || result) {
             return;
           }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerPhoto():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.gid);
           startGetDetail.emit('startGetPhotoDetail', newsEntry);
         }); // News.findOne
       });//forEach
@@ -431,7 +431,6 @@ var crawlerTag = function (entry) {
           if(err || result) {
             return;
           }
-          console.log("hzfdbg file[" + __filename + "]" + " crawlerTag():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.newsId);
           startGetDetail.emit('startGetNewsDetail', newsEntry);
         }); // News.findOne
       });//forEach
@@ -465,7 +464,7 @@ var crawlerOtherSubscribes = function () {
 var sohuCrawler = function() {
   console.log('Start sohuCrawler() at ' + new Date());
   crawlerSohuSubscribes();
-  //crawlerOtherSubscribes();
+  crawlerOtherSubscribes();
   crawlerPhotos();
   setTimeout(sohuCrawler, 2000 * 60 * 60);
 }
@@ -483,6 +482,6 @@ var crawlerInit = function() {
 }
 
 exports.sohuCrawler = sohuCrawler;
-exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags)
+exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags);
 crawlerInit();
 sohuCrawler();

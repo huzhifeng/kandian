@@ -128,6 +128,7 @@ var getNewsDetail = function(entry) {
       obj.cover = obj.img[0];
     }
 
+    console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
     News.insert(obj, function (err, result) {
       if(err) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
@@ -178,7 +179,6 @@ var crawlerCategory = function (entry) {
             if(err || result) {
               return;
             }
-            console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+newsEntry.tagName+"]"+newsEntry.title+",docid="+newsEntry.id);
             startGetDetail.emit('startGetNewsDetail', newsEntry);
           }); // News.findOne
           break;
