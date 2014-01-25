@@ -49,7 +49,7 @@ var otherSubscribes = [
   //{tname:'对路网', tid:'532', tags:[], stopped:1}, // 2013-09-26 停止更新
   //{tname:'挖段子•冷笑话', tid:'533', tags:[]},
   //{tname:'无聊哦', tid:'580', tags:[]},
-  {tname:'妹子图', tid:'581', tags:[]},
+  //{tname:'妹子图', tid:'581', tags:[]}, // Refer to wumii.js
   //{tname:'挖段子•趣图', tid:'610', tags:[]},
   //{tname:'留几手', tid:'671', tags:[]},
   //{tname:'黑眼睛看世界', tid:'672', tags:[]},

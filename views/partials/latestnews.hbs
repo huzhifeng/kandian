@@ -20,8 +20,8 @@
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h4>{{this.title}}</h4>
-      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
-      <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
+      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
+      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
   </div>
@@ -37,8 +37,8 @@
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h4>{{this.title}}</h4>
-      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
-      <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
+      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
+      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
   </div>
@@ -53,8 +53,8 @@
   {{#each randomImages}}
   <div class="span2">
     <a href="/image/{{this.imgid}}" title="{{this.alt}}" target="_blank">
-      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.src '200x150'}}" alt="{{this.alt}}">
-      <noscript><img src="{{miniImg this.src '200x150'}}" alt="{{this.alt}}"></noscript>
+      <img class="lazy" src="/img/grey.gif" data-original="{{this.src}}" alt="{{this.alt}}" width="144" height="100">
+      <noscript><img src="{{this.src}}" alt="{{this.alt}}" width="144" height="100"></noscript>
     </a>
   </div>
   {{/each}}

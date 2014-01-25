@@ -45,15 +45,15 @@ var neteaseSubscribes = [
   // 专栏
   {tname:'新闻杂谈', tid:'T1374655362262', tags:[]},
   {tname:'新闻漫画', tid:'T1374655548448', tags:[]},
-  {tname:'军事控', tid:'T1374655601172', tags:[]},
+  {tname:'军事控', tid:'T1374655601172', tags:[], stopped:1}, // 2014-01-07 停止更新
   {tname:'读写客', tid:'T1374655641708', tags:[]},
   //{tname:'8点1氪', tid:'T1374655687362', tags:[]},
   {tname:'科学现场调查', tid:'T1374655737387', tags:[]},
   {tname:'读报', tid:'T1378876118770', tags:[]},
-  {tname:'知乎日报', tid:'T1383207786512', tags:[]}, // 专题
+  {tname:'知乎日报', tid:'T1383207786512', tags:[], stopped:1}, // 专题 2014-01-07 停止更新
   {tname:'每周观察', tid:'T1383207857966', tags:[]},
   //{tname:'隔洋观花', tid:'T1385106187014', tags:[]},
-  {tname:'罗辑思维', tid:'T1385106069241', tags:[], stopped:1}, // 2013-11-17 停止更新
+  {tname:'罗辑思维', tid:'T1385106069241', tags:[]}, // Video
   {tname:'打铁记', tid:'T1383639452806', tags:[], stopped:1}, // 2013-11-22 停止更新
   {tname:'爱解析', tid:'T1383639904180', tags:[], stopped:1}, // 2013-12-13 停止更新
   //{tname:'亲历死亡', tid:'T1383640198969', tags:[], stopped:1}, // 2013-12-02 停止更新
@@ -77,81 +77,81 @@ var neteaseSubscribes = [
 
 var otherSubscribes = [
   // 报刊
-  {tname:'南都娱乐周刊', tid:'T1374537739895', tags:['年度', '头条人物']},
-  {tname:'凤凰周刊', tid:'T1374538012901', tags:[]},
-  {tname:'壹读', tid:'T1380165047292', tags:['时政笔记', '壹读百科', '纯干货', '壹读姿势', '数据', '职觉', '边角料']},
-  {tname:'商业价值', tid:'T1374538092965', tags:[]},
-  {tname:'南方人物周刊', tid:'T1380165663024', tags:[]},
-  {tname:'IT时代周刊', tid:'T1374537778882', tags:[]},
-  {tname:'互联网周刊', tid:'T1374538770149', tags:[]},
-  {tname:'城市画报', tid:'T1374539228305', tags:[]},
+  //{tname:'南都娱乐周刊', tid:'T1374537739895', tags:['年度', '头条人物']},
+  //{tname:'凤凰周刊', tid:'T1374538012901', tags:[]},
+  //{tname:'壹读', tid:'T1380165047292', tags:['时政笔记', '壹读百科', '纯干货', '壹读姿势', '数据', '职觉', '边角料']},
+  //{tname:'商业价值', tid:'T1374538092965', tags:[]},
+  //{tname:'南方人物周刊', tid:'T1380165663024', tags:[]},
+  //{tname:'IT时代周刊', tid:'T1374537778882', tags:[]},
+  //{tname:'互联网周刊', tid:'T1374538770149', tags:[]},
+  //{tname:'城市画报', tid:'T1374539228305', tags:[]},
   // 资讯
-  {tname:'一五一十部落', tid:'T1374480580631', tags:[]},
-  {tname:'喷嚏网', tid:'T1380165278983', tags:[]},
-  {tname:'没品新闻', tid:'T1380165400636', tags:[]},
-  {tname:'麦格时光网', tid:'T1379312559214', tags:[]}, // all
-  {tname:'坏新闻', tid:'T1383813385385', tags:[]}, // all
+  //{tname:'一五一十部落', tid:'T1374480580631', tags:[]},
+  //{tname:'喷嚏网', tid:'T1380165278983', tags:[]},
+  //{tname:'没品新闻', tid:'T1380165400636', tags:[]},
+  //{tname:'麦格时光网', tid:'T1379312559214', tags:[]},
+  //{tname:'坏新闻', tid:'T1383813385385', tags:[]},
   // 漫画
-  {tname:'冷兔', tid:'T1376989764224', tags:[]},
-  {tname:'张小盒漫画', tid:'T1374654808952', tags:[]},
-  {tname:'蔡志忠漫画', tid:'T1374655157113', tags:[]},
-  {tname:'长颈鹿但丁', tid:'T1385975344862', tags:[]},
-  {tname:'小破孩', tid:'T1385457660845', tags:[]},
-  {tname:'暴走漫画', tid:'T1381825412501', tags:[]},
-  {tname:'小丑出品', tid:'T1386300294647', tags:[]},
-  {tname:'想太多的猪', tid:'T1374654037531', tags:[]},
-  {tname:'罗罗布家族', tid:'T1385977225272', tags:[]},
+  //{tname:'冷兔', tid:'T1376989764224', tags:[]}, // 乱码
+  //{tname:'张小盒漫画', tid:'T1374654808952', tags:[]},
+  //{tname:'蔡志忠漫画', tid:'T1374655157113', tags:[]},
+  //{tname:'长颈鹿但丁', tid:'T1385975344862', tags:[]},
+  //{tname:'小破孩', tid:'T1385457660845', tags:[]},
+  //{tname:'暴走漫画', tid:'T1381825412501', tags:[]},
+  //{tname:'小丑出品', tid:'T1386300294647', tags:[]},
+  //{tname:'想太多的猪', tid:'T1374654037531', tags:[]},
+  //{tname:'罗罗布家族', tid:'T1385977225272', tags:[]},
   // 美女
-  {tname:'游戏美女', tid:'T1374483001879', tags:[]},
-  {tname:'妹子图', tid:'T1374482883888', tags:[]},
-  {tname:'美媛馆', tid:'T1385719108476', tags:[]},
-  {tname:'私の写真', tid:'T1383643220558', tags:[]},
-  {tname:'Showgirl美女写真馆', tid:'T1383810777853', tags:[]},
+  //{tname:'游戏美女', tid:'T1374483001879', tags:[]},
+  //{tname:'妹子图', tid:'T1374482883888', tags:[]},
+  //{tname:'美媛馆', tid:'T1385719108476', tags:[]},
+  //{tname:'私の写真', tid:'T1383643220558', tags:[]},
+  //{tname:'Showgirl美女写真馆', tid:'T1383810777853', tags:[]},
   {tname:'天天诱惑·美女', tid:'T1383810866284', tags:[]},
-  {tname:'美女·写真·艺术', tid:'T1383818365070', tags:[]},
-  {tname:'咔嚓咔嚓', tid:'T1383818583837', tags:[]},
+  //{tname:'美女·写真·艺术', tid:'T1383818365070', tags:[]},
+  //{tname:'咔嚓咔嚓', tid:'T1383818583837', tags:[]},
   {tname:'啊噜哈Aluha', tid:'T1388400299205', tags:[]},
   // 生活
-  {tname:'煎蛋', tid:'T1374543275708', tags:[]},
-  {tname:'惠惠购物锦囊', tid:'T1374543622922', tags:[]},
-  {tname:'生活早参考', tid:'T1380447562863', tags:[]},
-  {tname:'5TIME语录网', tid:'T1374544255040', tags:[]},
+  //{tname:'煎蛋', tid:'T1374543275708', tags:[]},
+  //{tname:'惠惠购物锦囊', tid:'T1374543622922', tags:[]},
+  //{tname:'生活早参考', tid:'T1380447562863', tags:[]}, // Video
+  //{tname:'5TIME语录网', tid:'T1374544255040', tags:[]},
   // 人文
-  {tname:'佳人', tid:'T1374488941509', tags:['插画心语']},
+  //{tname:'佳人', tid:'T1374488941509', tags:['插画心语']},
   {tname:'美文日赏', tid:'T1374488449712', tags:[]},
   // 历史
   {tname:'民国秘闻', tid:'T1383647115505', tags:[]},
   // 娱乐
   {tname:'我们爱讲冷笑话', tid:'T1376989923762', tags:[]},
-  {tname:'如厕ing', tid:'T1374549843906', tags:[]},
-  {tname:'糗事百科', tid:'T1374550407902', tags:[]},
-  {tname:'笑话精选', tid:'T1374550232723', tags:[]},
+  //{tname:'如厕ing', tid:'T1374549843906', tags:[]},
+  //{tname:'糗事百科', tid:'T1374550407902', tags:[]},
+  //{tname:'笑话精选', tid:'T1374550232723', tags:[]},
   {tname:'冷笑话精选', tid:'T1381732564640', tags:[]},
   {tname:'有意思吧', tid:'T1380448203066', tags:[]},
-  {tname:'挖段子冷笑话', tid:'T1376635837979', tags:[]},
-  {tname:'涨姿势', tid:'T1376638549337', tags:[]},
-  {tname:'爱重口味', tid:'T1376636972612', tags:[]},
-  {tname:'掘图志', tid:'T1376637148182', tags:[]},
-  {tname:'萝卜网', tid:'T1376637252500', tags:[]},
-  {tname:'狂囧网', tid:'T1376637481760', tags:[]},
+  //{tname:'挖段子冷笑话', tid:'T1376635837979', tags:[]},
+  //{tname:'涨姿势', tid:'T1376638549337', tags:[]},
+  //{tname:'爱重口味', tid:'T1376636972612', tags:[]},
+  //{tname:'掘图志', tid:'T1376637148182', tags:[]},
+  //{tname:'萝卜网', tid:'T1376637252500', tags:[]},
+  //{tname:'狂囧网', tid:'T1376637481760', tags:[]},
   {tname:'笑话幽默', tid:'T1376637720014', tags:[]},
-  {tname:'鸸鹋动物园', tid:'T1376641060407', tags:[]},
-  {tname:'来福岛', tid:'T1376641060418', tags:[]},
-  {tname:'囧马热文', tid:'T1376642915530', tags:[]},
+  //{tname:'鸸鹋动物园', tid:'T1376641060407', tags:[]},
+  //{tname:'来福岛', tid:'T1376641060418', tags:[]},
+  //{tname:'囧马热文', tid:'T1376642915530', tags:[]},
   {tname:'笑话集', tid:'T1376643082077', tags:[]},
-  {tname:'乐不思蜀', tid:'T1376643174873', tags:[]},
-  {tname:'多玩图库', tid:'T1376643423014', tags:[]},
+  //{tname:'乐不思蜀', tid:'T1376643174873', tags:[]},
+  //{tname:'多玩图库', tid:'T1376643423014', tags:[]},
   {tname:'笑话之家', tid:'T1376643747659', tags:[]},
-  {tname:'掘精小娘子', tid:'T1383811813773', tags:[]},
-  {tname:'剧情神展开', tid:'T1383811980965', tags:[]},
-  {tname:'神回复', tid:'T1383817412975', tags:[]},
+  //{tname:'掘精小娘子', tid:'T1383811813773', tags:[]},
+  //{tname:'剧情神展开', tid:'T1383811980965', tags:[]},
+  //{tname:'神回复', tid:'T1383817412975', tags:[]},
   {tname:'每日一乐', tid:'T1383817602040', tags:[]},
   {tname:'笑料百科', tid:'T1385541837579', tags:[]},
   {tname:'趣图百科', tid:'T1385542239547', tags:[]},
   {tname:'脑残对话', tid:'T1385542317968', tags:[]},
-  {tname:'神吐槽', tid:'T1385542359888', tags:[]},
+  //{tname:'神吐槽', tid:'T1385542359888', tags:[]},
   // 视觉
-  {tname:'猫舍', tid:'T1374483113516', tags:[]},
+  //{tname:'猫舍', tid:'T1374483113516', tags:[]},
   // 未知分类
   {tname:'真话', tid:'T1370583240249', tags:[]},
   //{tname:'健康养生', tid:'T1370589182416', tags:[]},
@@ -374,20 +374,83 @@ var crawlerPhotoTag = function(entry) {
         startGetDetail.emit('startGetPhotoDetail', newsEntry);
       }); // News.findOne
     });//forEach
-    if(newsList.length == 10) {
-      if(entry.crawlFlag) {
+    if(entry.crawlFlag) {
+      if(newsList.length == 10) {
         entry.url = util.format("http://c.m.163.com/photo/api/morelist/0096/%s/%s.json", entry.tid, newsList[9].setid);
         console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): next page="+entry.url);
         setTimeout(function() {
           crawlerPhotoTag(entry);
-        }, 10000); // crawl next page after 10 seconds
+        }, 3000); // crawl next page after 3 seconds
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): last page");
+        entry.crawlFlag = 0;
       }
-    }else {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): last page");
-      entry.crawlFlag = 0;
     }
   });//request
 }
+
+var crawlerSubscribe = function (entry) {
+  var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, entry.page*20);
+  if(entry.tid === 'T1348647909107') { // 头条
+    url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, entry.page*20);
+  }
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+      return;
+    }
+    var newsList = json[entry.tid];
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if(!newsEntry.docid || !newsEntry.title) {
+        return;
+      }
+      newsEntry.tagName = findTagName(newsEntry.title, entry);
+      if(!newsEntry.tagName) {
+        return;
+      }
+      News.findOne(genFindCmd(site, newsEntry.docid), function(err, result) {
+        if(err || result) {
+          return;
+        }
+        if('T1387970173334' == entry.tid) { // 看客
+          if(newsEntry.photosetID){
+            var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
+            if(l && l.length == 2) {
+              newsEntry.setid = l[1]
+            }
+          }
+          if(!newsEntry.setid) {
+            return;
+          }
+          startGetDetail.emit('startGetPhotoDetail', newsEntry);
+        }else {
+          startGetDetail.emit('startGetNewsDetail', newsEntry);
+        }
+      }); // News.findOne
+    });//forEach
+    if(entry.crawlFlag) {
+      if(newsList.length == 20) {
+        entry.page += 1;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(): next page="+entry.page);
+        setTimeout(function() {
+          crawlerSubscribe(entry);
+        }, 3000); // crawl next page after 3 seconds
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(): last page");
+        entry.crawlFlag = 0;
+      }
+    }
+  });//request
+};
 
 var crawlerPhotoTags = function() {
   photoTags.forEach(function(entry) {
@@ -399,103 +462,28 @@ var crawlerPhotoTags = function() {
   });//forEach
 }
 
-var crawlerSubscribe = function (entry) {
-  var MAX_PAGE_NUM = 1;
-  var page = 0;
-
-  if(entry.tid === 'T1348647909107') { // 头条
-    MAX_PAGE_NUM = 5;
-  }
-  if(entry.crawlFlag) {
-    MAX_PAGE_NUM = 10;
-    entry.crawlFlag = 0;
-  }
-  for(page=0; page<MAX_PAGE_NUM; page++) {
-    (function(page) {
-    // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
-    // http://c.m.163.com/nc/article/list/T1350383429665/0-20.html
-    var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, page*20);
-    if(entry.tid === 'T1348647909107') { // 头条
-      url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, page*20);
-    }
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
-    }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
-        return;
-      }
-      var newsList = json[entry.tid];
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
-        return;
-      }
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.docid || !newsEntry.title) {
-          return;
-        }
-        if(newsEntry.docid == '9815P05N00963VRO') { // 网易新闻客户端栏目迁移公告
-          return;
-        }
-        newsEntry.tagName = findTagName(newsEntry.title, entry);
-        if(!newsEntry.tagName) {
-          return;
-        }
-        News.findOne(genFindCmd(site, newsEntry.docid), function(err, result) {
-          if(err || result) {
-            return;
-          }
-          if('T1387970173334' == entry.tid) { // 看客
-            if(newsEntry.photosetID){
-              var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
-              if(l && l.length == 2) {
-                newsEntry.setid = l[1]
-              }
-            }
-            if(!newsEntry.setid) {
-              return;
-            }
-            startGetDetail.emit('startGetPhotoDetail', newsEntry);
-          }else {
-            startGetDetail.emit('startGetNewsDetail', newsEntry);
-          }
-        }); // News.findOne
-      });//forEach
-    });//request
-    })(page);
-  }//for
-};
-
-var crawlerNeteaseSubscribes = function() {
-  neteaseSubscribes.forEach(function(entry) {
+var crawlerSubscribes = function() {
+  var subscribes = neteaseSubscribes.concat(otherSubscribes);
+  subscribes.forEach(function(entry) {
     if(!crawlFlag && entry.stopped) {
       return;
     }
-    crawlerSubscribe(entry);
-  });//forEach
-}
-
-var crawlerOtherSubscribes = function() {
-  otherSubscribes.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
-      return;
-    }
+    entry.page = 0;
     crawlerSubscribe(entry);
   });//forEach
 }
 
 var neteaseCrawler = function() {
   console.log('Start neteaseCrawler() at ' + new Date());
+  crawlerSubscribes();
   crawlerPhotoTags();
-  crawlerNeteaseSubscribes();
-  crawlerOtherSubscribes();
   setTimeout(neteaseCrawler, 2000 * 60 * 60);
 }
 
 var crawlerInit = function() {
+  if(process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
   neteaseSubscribes.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });

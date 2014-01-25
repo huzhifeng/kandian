@@ -39,7 +39,7 @@ var qqSubscribes = [
   {tname:'TMT解码', tid:'1780', tags:[]},
   {tname:'启示录', tid:'1779', tags:[]},
   {tname:'所谓娱乐', tid:'1451', tags:[]},
-  {tname:'娱乐钢牙哥', tid:'1039', tags:['钢牙八卦', '钢牙漫画', '钢牙答题']},
+  {tname:'娱乐钢牙哥', tid:'1039', tags:['钢牙八卦']},
   {tname:'凡人观时尚', tid:'1804', tags:[]},
   {tname:'图话', tid:'55', tags:[]},
   {tname:'存照', tid:'49', tags:[]},
@@ -58,15 +58,15 @@ var otherSubscribes = [
   {tname:'香港凤凰周刊', tid:'1154', tags:['历史档', '奇闻录', '周刊速读', '新刊速读']},
   {tname:'夜夜谈', tid:'1212', tags:[]}, // Video
   {tname:'微博搞笑', tid:'1240', tags:[]},
-  {tname:'冷兔', tid:'1250', tags:[]},
-  {tname:'我们爱讲冷笑话', tid:'1251', tags:[]},
+  //{tname:'冷兔', tid:'1250', tags:[]}, // Refer to netease
+  //{tname:'我们爱讲冷笑话', tid:'1251', tags:[]}, // Refer to netease
   {tname:'封面秀', tid:'1310', tags:['封面秀']}, // 图片防盗链
   {tname:'洋葱新闻', tid:'1344', tags:['洋葱新闻']},
   {tname:'趣你的', tid:'1354', tags:[]},
   {tname:'骂人宝典', tid:'1338', tags:[]},
   {tname:'M老头', tid:'1410', tags:[]},
   {tname:'冷知识', tid:'1478', tags:[]},
-  {tname:'冷笑话精选', tid:'1503', tags:[]},
+  //{tname:'冷笑话精选', tid:'1503', tags:[]}, // Refer to netease
   {tname:'每周一品', tid:'1708', tags:[]},
 ];
 var photoTags = [
