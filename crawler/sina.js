@@ -45,7 +45,7 @@ var sinaSubscribes = [
   {
     tname:'搞笑',
     tid:'news_funny',
-    tags:['神最右', '囧哥说事', '囧哥囧事', '新闻乐轻松', '图哥乐呵', '段子PK秀', '毒舌美少女', '奇趣壹周']
+    tags:['神最右', '囧哥说事', '囧哥囧事', '一日一囧', '新闻乐轻松', '图哥乐呵', '段子PK秀', '毒舌美少女', '奇趣壹周']
   },
   //{tname:'数码', tid:'news_digital', tags:[]},
   //{tname:'时尚', tid:'news_fashion', tags:[]},
@@ -132,7 +132,7 @@ var getNewsDetail = function(entry) {
         console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), link null");
       }
       obj.title = entry.title;
-      obj.time = parseInt(jObj.pubDate) * 1000;
+      obj.time = parseInt(jObj.pubDate) * 1000; // 1390574527 * 1000
       obj.ptime = moment(obj.time).format('YYYY-MM-DD HH:mm:ss');
       obj.marked = obj.body;
       obj.created = new Date();
@@ -156,48 +156,50 @@ var getNewsDetail = function(entry) {
 
 var crawlerSubscribe = function (entry) {
   // http://api.sina.cn/sinago/list.json?channel=news_toutiao&p=1
-  var MAX_PAGE_NUM = 3;
-  var page = 1;
-  if(entry.crawlFlag) {
-    MAX_PAGE_NUM = 25;
-    entry.crawlFlag = 0;
+  var url = util.format('http://api.sina.cn/sinago/list.json?channel=%s&p=%d', entry.tid, entry.page);
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
   }
-  for(page=1; page<=MAX_PAGE_NUM; page++) {
-    (function(page) {
-    var url = util.format('http://api.sina.cn/sinago/list.json?channel=%s&p=%d', entry.tid, page);
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || !json.data || !json.data.list) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+      return;
     }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json || !json.data || !json.data.list) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+    var newsList = json.data.list;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if(!newsEntry.title || !newsEntry.id) {
         return;
       }
-      var newsList = json.data.list;
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      newsEntry.tagName = findTagName(newsEntry.title, entry) || findTagName(newsEntry.long_title, entry);
+      if(!newsEntry.tagName) {
         return;
       }
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.id) {
+      News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
+        if(err || result) {
           return;
         }
-        newsEntry.tagName = findTagName(newsEntry.title, entry) || findTagName(newsEntry.long_title, entry);
-        if(!newsEntry.tagName) {
-          return;
-        }
-        News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
-          if(err || result) {
-            return;
-          }
-          startGetDetail.emit('startGetNewsDetail', newsEntry);
-        }); // News.findOne
-      });//forEach
-    });//request
-    })(page);
-  }//for
+        startGetDetail.emit('startGetNewsDetail', newsEntry);
+      }); // News.findOne
+    });//forEach
+    if(entry.crawlFlag) {
+      if(newsList.length > 1) {
+        entry.page += 1;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
+        setTimeout(function() {
+          crawlerSubscribe(entry);
+        }, 3000); // crawl next page after 3 seconds
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
+        entry.crawlFlag = 0;
+      }
+    }
+  });//request
 };
 
 var crawlerSinaSubscribes = function () {
@@ -205,6 +207,7 @@ var crawlerSinaSubscribes = function () {
     if(!crawlFlag && entry.stopped) {
       return;
     }
+    entry.page = 1;
     crawlerSubscribe(entry);
   });
 }
@@ -212,10 +215,13 @@ var crawlerSinaSubscribes = function () {
 var sinaCrawler = function() {
   console.log('Start sinaCrawler() at ' + new Date());
   crawlerSinaSubscribes();
-  setTimeout(sinaCrawler, 2000 * 60 * 60);
+  setTimeout(sinaCrawler, 4000 * 60 * 60);
 }
 
 var crawlerInit = function() {
+  if(process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
   sinaSubscribes.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });
