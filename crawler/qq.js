@@ -9,7 +9,7 @@ var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
 var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
+var crawlFlag = require('config').Config.crawlFlag;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -44,6 +44,10 @@ var qqSubscribes = [
   {tname:'图话', tid:'55', tags:[]},
   {tname:'存照', tid:'49', tags:[]},
   {tname:'中国人的一天', tid:'37', tags:[]},
+  {tname:'天天看', tid:'44', tags:[]}, // Video
+  {tname:'腾讯大家', tid:'45', tags:[]},
+  {tname:'腾讯精品课', tid:'1432', tags:[]}, // Video
+  {tname:'腾讯育儿宝典', tid:'1328', tags:[]},
 ];
 var otherSubscribes = [
   {tname:'贵圈', tid:'32', tags:[]},
@@ -68,6 +72,19 @@ var otherSubscribes = [
   {tname:'冷知识', tid:'1478', tags:[]},
   //{tname:'冷笑话精选', tid:'1503', tags:[]}, // Refer to netease
   {tname:'每周一品', tid:'1708', tags:[]},
+  {tname:'健康每一天', tid:'1252', tags:[]}, // Video
+  {tname:'捧腹网', tid:'1796', tags:[]},
+  //{tname:'妹子图', tid:'1727', tags:[]},
+  {tname:'哈爸哼妈', tid:'1389', tags:[]},
+  {tname:'时尚有意思', tid:'1312', tags:[]}, // Video
+  {tname:'恋爱高手', tid:'1480', tags:[]}, // Video
+  {tname:'V+视频', tid:'1811', tags:[]}, // Video
+  {tname:'网络新闻联播', tid:'1681', tags:[]},
+  {tname:'笑来了大姨夫', tid:'1373', tags:[]}, // Video
+  {tname:'生活家', tid:'1386', tags:[]}, // Video
+  {tname:'吃货大本营', tid:'1401', tags:[]}, // Video
+  {tname:'家有萌宝', tid:'1268', tags:[]}, // Video
+  {tname:'推软妹', tid:'1365', tags:[]},
 ];
 var photoTags = [
   {tname:'精选', tid:'news_photo', tags:['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点']},
@@ -320,6 +337,9 @@ var qqCrawler = function() {
 }
 
 var crawlerInit = function() {
+  if(process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
   qqSubscribes.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });

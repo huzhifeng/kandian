@@ -13,6 +13,7 @@ var krCrawler = require('./crawler/kr').krCrawler;
 var huxiuCrawler = require('./crawler/huxiu').huxiuCrawler;
 var iheimaCrawler = require('./crawler/iheima').iheimaCrawler;
 var businessvalueCrawler = require('./crawler/businessvalue').businessvalueCrawler;
+var wumiiCrawler = require('./crawler/wumii').wumiiCrawler;
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express Start server.js at http://127.0.0.1:" + app.get('port') + "  " + new Date());

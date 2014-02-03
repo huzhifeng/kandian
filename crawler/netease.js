@@ -9,7 +9,7 @@ var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
 var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
+var crawlFlag = require('config').Config.crawlFlag;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -107,7 +107,7 @@ var otherSubscribes = [
   //{tname:'美媛馆', tid:'T1385719108476', tags:[]},
   //{tname:'私の写真', tid:'T1383643220558', tags:[]},
   //{tname:'Showgirl美女写真馆', tid:'T1383810777853', tags:[]},
-  {tname:'天天诱惑·美女', tid:'T1383810866284', tags:[]},
+  //{tname:'天天诱惑·美女', tid:'T1383810866284', tags:[]},
   //{tname:'美女·写真·艺术', tid:'T1383818365070', tags:[]},
   //{tname:'咔嚓咔嚓', tid:'T1383818583837', tags:[]},
   {tname:'啊噜哈Aluha', tid:'T1388400299205', tags:[]},
@@ -155,7 +155,7 @@ var otherSubscribes = [
   // 未知分类
   {tname:'真话', tid:'T1370583240249', tags:[]},
   //{tname:'健康养生', tid:'T1370589182416', tags:[]},
-  //{tname:'网易女人', tid:'T1364183816404', tags:[]},
+  //{tname:'网易女人', tid:'T1364183816404', tags:[], stopped:1}, // 2013-08-04 停止更新
   {tname:'每日钛度', tid:'T1366183190095', tags:[], stopped:1}, // 2013-06-20 停止更新
   {tname:'专业控', tid:'T1348654797196', tags:[], stopped:1}, // 2013-05-16 停止更新
 ];
@@ -375,14 +375,14 @@ var crawlerPhotoTag = function(entry) {
       }); // News.findOne
     });//forEach
     if(entry.crawlFlag) {
-      if(newsList.length == 10) {
+      if(newsList.length === 10) {
         entry.url = util.format("http://c.m.163.com/photo/api/morelist/0096/%s/%s.json", entry.tid, newsList[9].setid);
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): next page="+entry.url);
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():["+entry.tname+"] next page="+entry.url);
         setTimeout(function() {
           crawlerPhotoTag(entry);
         }, 3000); // crawl next page after 3 seconds
       }else {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag(): last page");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():["+entry.tname+"] last page");
         entry.crawlFlag = 0;
       }
     }
@@ -424,7 +424,7 @@ var crawlerSubscribe = function (entry) {
         if('T1387970173334' == entry.tid) { // 看客
           if(newsEntry.photosetID){
             var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
-            if(l && l.length == 2) {
+            if(l && l.length === 2) {
               newsEntry.setid = l[1]
             }
           }
@@ -438,14 +438,14 @@ var crawlerSubscribe = function (entry) {
       }); // News.findOne
     });//forEach
     if(entry.crawlFlag) {
-      if(newsList.length == 20) {
+      if(newsList.length === 20) {
         entry.page += 1;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(): next page="+entry.page);
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
         setTimeout(function() {
           crawlerSubscribe(entry);
         }, 3000); // crawl next page after 3 seconds
       }else {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe(): last page");
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
         entry.crawlFlag = 0;
       }
     }

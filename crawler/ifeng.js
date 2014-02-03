@@ -9,7 +9,7 @@ var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
 var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
+var crawlFlag = require('config').Config.crawlFlag;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -24,7 +24,6 @@ var ifengSubscribes = [
     tname:'头条',
     tid:'1',
     tags:[
-      //'史说新语', // Refer to 史林拍案
       '百部穿影', // 2013-12-05 停止更新 //http://ent.ifeng.com/movie/special/baibuchuanying/
       '影像志',
       '凤凰热追踪',
@@ -93,7 +92,7 @@ var getNewsDetail = function(entry) {
   request(req, function (err, res, body) {
     var json = data2Json(err, res, body);
     if(!json || !json.body || !json.body.text) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
+      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():[" + entry.tagName + "] json null");
       return;
     }
     var jObj = json.body;
@@ -145,57 +144,53 @@ var getNewsDetail = function(entry) {
 };
 
 var crawlerSubscribe = function (entry) {
-  var headlineLink = 'http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-  var docListUrl = 'http://api.3g.ifeng.com/origin_doc_list?id=%s&pageindex=%d&pagesize=20&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005';
-  var MAX_PAGE_NUM = 1;
-  var page = 1;
-
+  var url = util.format('http://api.3g.ifeng.com/origin_doc_list?id=%s&pageindex=%d&pagesize=20&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005', entry.tid, entry.page);
   if(entry.tid === '1') { // 头条
-    MAX_PAGE_NUM = 5;
+    url = util.format('http://api.3g.ifeng.com/iosNews?id=aid=SYLB10,SYDT10&imgwidth=480,100&type=list,list&pagesize=20,20&page=%d&gv=4.0.8&av=4.0.8&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005', entry.page);
   }
-  if(entry.crawlFlag) {
-    MAX_PAGE_NUM = 10;
-    entry.crawlFlag = 0;
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
   }
-  for(page=1; page<=MAX_PAGE_NUM; page++) {
-    (function(page) {
-    var url = util.format(docListUrl, entry.tid, page);
-    if(entry.tid === '1') { // 头条
-      url = util.format(headlineLink, page);
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || !json[0] || !json[0].body || !json[0].body.item) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+      return;
     }
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
+    var newsList = json[0].body.item;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      return;
     }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json || !json[0] || !json[0].body || !json[0].body.item) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+    newsList.forEach(function(newsEntry) {
+      if(!newsEntry.title || !newsEntry.documentId) {
         return;
       }
-      var newsList = json[0].body.item;
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      newsEntry.tagName = findTagName(newsEntry.title, entry);
+      if(!newsEntry.tagName) {
         return;
       }
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.documentId) {
+      News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
+        if(err || result) {
           return;
         }
-        newsEntry.tagName = findTagName(newsEntry.title, entry);
-        if(!newsEntry.tagName) {
-          return;
-        }
-        News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-          if(err || result) {
-            return;
-          }
-          startGetDetail.emit('startGetNewsDetail', newsEntry);
-        }); // News.findOne
-      });//forEach
-    });//request
-    })(page);
-  }//for
+        startGetDetail.emit('startGetNewsDetail', newsEntry);
+      }); // News.findOne
+    });//forEach
+    if(entry.crawlFlag) {
+      if(newsList.length === 20) {
+        entry.page += 1;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
+        setTimeout(function() {
+          crawlerSubscribe(entry);
+        }, 3000); // crawl next page after 3 seconds
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
+        entry.crawlFlag = 0;
+      }
+    }
+  });//request
 };
 
 var crawlerIfengSubscribes = function() {
@@ -203,6 +198,7 @@ var crawlerIfengSubscribes = function() {
     if(!crawlFlag && entry.stopped) {
       return;
     }
+    entry.page = 1;
     crawlerSubscribe(entry);
   });//forEach
 }
@@ -214,6 +210,9 @@ var ifengCrawler = function() {
 }
 
 var crawlerInit = function() {
+  if(process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
   ifengSubscribes.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });

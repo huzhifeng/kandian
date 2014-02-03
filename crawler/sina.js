@@ -10,7 +10,7 @@ var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
 var findTagName = utils.findTagName;
 var moment = require('moment');
-var crawlFlag = require('config').Config.crawlFlag; // 0: only one or few pages; 1: all pages
+var crawlFlag = require('config').Config.crawlFlag;
 
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -30,13 +30,8 @@ var sinaSubscribes = [
       '海外观察',
       '军情茶馆', // 2013-06-21 停止更新
       '万花筒', // 2013-08-15 停止更新
-      '今日神最右', // 2013-11-27 停止更新 Refer to 搞笑
-      '午饭话题', // 2013-12-11 停止更新 Refer to 茶娱饭后
-      '午饭聊点啥', // 2013-12-06 停止更新 Refer to 茶娱饭后
       '茶娱饭后',
       '每日深度', // 2013-12-19 停止更新
-      '毒舌美少女',
-      '奇趣壹周',
       '一周八卦',
       '新历史',
     ]
