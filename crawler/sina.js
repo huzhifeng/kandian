@@ -2,8 +2,9 @@
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var News = require('../models/news');
-var utils = require('../lib/utils')
+var utils = require('../lib/utils');
 var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genJwPlayerEmbedCode = utils.genJwPlayerEmbedCode;
 var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
@@ -112,8 +113,8 @@ var getNewsDetail = function(entry) {
         var html = '';
         for(i=0; i<jObj.videos.length; i++) {
           jObj.videos[i].pic = jObj.videos[i].pic.replace(/auto\.jpg/, "original.jpg");
-          html = genLazyLoadHtml('', jObj.videos[i].pic);
           html += util.format('<a href="%s" target="_blank">%s</a><br/>', jObj.videos[i].url, jObj.long_title);
+          html += genJwPlayerEmbedCode(util.format("vid_%s", jObj.videos[i].video_id), jObj.videos[i].url, jObj.videos[i].pic);
           obj.body = obj.body.replace(util.format("<!--{VIDEO_%d}-->", i+1), html);
           obj.img[obj.img.length] = jObj.videos[i].pic;
         }
