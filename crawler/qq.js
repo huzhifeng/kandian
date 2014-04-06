@@ -14,7 +14,7 @@ var crawlFlag = require('config').Config.crawlFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-  'User-Agent': '%E8%85%BE%E8%AE%AF%E6%96%B0%E9%97%BB330(android)',
+  'User-Agent': '%E8%85%BE%E8%AE%AF%E6%96%B0%E9%97%BB342(android)',
   'Host': 'r.inews.qq.com',
   'Connection': 'Keep-Alive',
 };
@@ -45,7 +45,12 @@ var qqSubscribes = [
   {tname:'存照', tid:'49', tags:[]},
   {tname:'中国人的一天', tid:'37', tags:[]},
   {tname:'天天看', tid:'44', tags:[]}, // Video
+  {tname:'文化观察', tid:'1258', tags:[]},
   {tname:'腾讯大家', tid:'45', tags:[]},
+  {tname:'腾讯道学', tid:'1839', tags:[]},
+  {tname:'腾讯佛学', tid:'1420', tags:[]},
+  {tname:'腾讯儒学', tid:'1840', tags:[]},
+  {tname:'腾讯思享会', tid:'1243', tags:[]},
   {tname:'腾讯精品课', tid:'1432', tags:[]}, // Video
   {tname:'腾讯育儿宝典', tid:'1328', tags:[]},
 ];
@@ -64,12 +69,12 @@ var otherSubscribes = [
   {tname:'微博搞笑', tid:'1240', tags:[]},
   //{tname:'冷兔', tid:'1250', tags:[]}, // Refer to netease
   //{tname:'我们爱讲冷笑话', tid:'1251', tags:[]}, // Refer to netease
-  {tname:'封面秀', tid:'1310', tags:['封面秀']}, // 图片防盗链
+  {tname:'封面秀', tid:'1310', tags:['封面秀']}, // Video 图片防盗链
   {tname:'洋葱新闻', tid:'1344', tags:['洋葱新闻']},
   {tname:'趣你的', tid:'1354', tags:[]},
   {tname:'骂人宝典', tid:'1338', tags:[]},
   {tname:'M老头', tid:'1410', tags:[]},
-  {tname:'冷知识', tid:'1478', tags:[]},
+  {tname:'冷知识', tid:'1478', tags:[]}, // Video
   //{tname:'冷笑话精选', tid:'1503', tags:[]}, // Refer to netease
   {tname:'每周一品', tid:'1708', tags:[]},
   {tname:'健康每一天', tid:'1252', tags:[]}, // Video
@@ -84,10 +89,15 @@ var otherSubscribes = [
   {tname:'生活家', tid:'1386', tags:[]}, // Video
   {tname:'吃货大本营', tid:'1401', tags:[]}, // Video
   {tname:'家有萌宝', tid:'1268', tags:[]}, // Video
+  {tname:'你说了蒜', tid:'1441', tags:[]}, // Video
+  {tname:'乐呵视频', tid:'1504', tags:[]}, // Video
+  {tname:'雷眼看世界', tid:'1405', tags:[]}, // Video
   {tname:'推软妹', tid:'1365', tags:[]},
+  {tname:'百思不得姐', tid:'1838', tags:[]},
+  {tname:'狠了去啦', tid:'1707', tags:[]},
 ];
 var photoTags = [
-  {tname:'精选', tid:'news_photo', tags:['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点']},
+  {tname:'精选', tid:'news_photo', tags:['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点', '图片故事']},
   {tname:'娱乐', tid:'news_photo_yl', tags:['底片', '趣图', '娱图', '一周', ]},
   //{tname:'美女', tid:'news_photo_mn', tags:[]},
   //{tname:'奇趣', tid:'news_photo_qiqu', tags:['盘点']},

@@ -1,9 +1,11 @@
 ﻿var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
+var SysUrl = require('url');
 var News = require('../models/news');
 var utils = require('../lib/utils')
 var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genJwPlayerEmbedCode = utils.genJwPlayerEmbedCode;
 var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
@@ -24,6 +26,7 @@ var neteaseSubscribes = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
   {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历']},
   // 原创
+  //{tname:'原创', tid:'T1367050859308', tags:[]},
   {tname:'轻松一刻', tid:'T1350383429665', tags:[]},
   {tname:'另一面', tid:'T1348654756909', tags:[]},
   {tname:'今日之声', tid:'T1348654628034', tags:[]},
@@ -38,10 +41,13 @@ var neteaseSubscribes = [
   {tname:'独家解读', tid:'T1348654778699', tags:[]},
   {tname:'历史七日谈', tid:'T1359605505216', tags:[], stopped:1}, // 2013-12-05 停止更新
   {tname:'数读', tid:'T1348654813857', tags:[]},
+  {tname:'娱乐连环画', tid:'T1393399130300', tags:[]},
   {tname:'一周人物', tid:'T1385105962170', tags:[], stopped:1}, // 2014-01-07 停止更新
   {tname:'一周车坛囧事', tid:'T1382946585552', tags:[]},
   {tname:'视野', tid:'T1382946778301', tags:['视野'], stopped:1}, // 2013-11-27 停止更新
   {tname:'应用一勺烩', tid:'T1383187051764', tags:[], stopped:1}, // 2013-11-21 停止更新
+  {tname:'网易UGC实验室', tid:'T1395385797796', tags:[]},
+  {tname:'一周车坛囧事', tid:'T1382946585552', tags:[]},
   // 专栏
   {tname:'新闻杂谈', tid:'T1374655362262', tags:[]},
   {tname:'新闻漫画', tid:'T1374655548448', tags:[]},
@@ -73,6 +79,18 @@ var neteaseSubscribes = [
   //{tname:'网易音乐', tid:'T1348648696641', tags:['面对面']},
   //{tname:'网易时尚', tid:'T1348651069938', tags:[]},
   //{tname:'网易美容', tid:'T1348652387145', tags:[]},
+  //
+  {tname:'轻松一刻语音版', tid:'T1379040077136', tags:[]}, // Audio
+  {tname:'娱乐BigBang语音版', tid:'T1394711522757', tags:[]}, // Audio
+  //{tname:'有声', tid:'T1394610975770', tags:[]}, // Audio
+  {tname:'清晨时光', tid:'T1394618026933', tags:[]}, // Audio
+  {tname:'历史上的今天', tid:'T1394626686487', tags:[]}, // Audio
+  {tname:'糗事百科音频版', tid:'T1379039985773', tags:[]}, // Audio
+  {tname:'头条新闻', tid:'T1379039891960', tags:[]}, // Audio
+  {tname:'新闻直播间', tid:'T1378713857672', tags:[]}, // Audio
+  {tname:'奇葩一朵朵', tid:'T1394626394234', tags:[]}, // Audio
+  {tname:'罗辑思维', tid:'T1379040133684', tags:[]}, // Audio
+  {tname:'大哈讲段子', tid:'T1394626579176', tags:[]}, // Audio
 ];
 
 var otherSubscribes = [
@@ -118,7 +136,7 @@ var otherSubscribes = [
   //{tname:'5TIME语录网', tid:'T1374544255040', tags:[]},
   // 人文
   //{tname:'佳人', tid:'T1374488941509', tags:['插画心语']},
-  {tname:'美文日赏', tid:'T1374488449712', tags:[]},
+  //{tname:'美文日赏', tid:'T1374488449712', tags:[]},
   // 历史
   {tname:'民国秘闻', tid:'T1383647115505', tags:[]},
   // 娱乐
@@ -232,15 +250,20 @@ var getNewsDetail = function(entry) {
       if(jObj.video) {
         for(var i=0; i<jObj.video.length; i++) {
           var v = jObj.video[i];
-          if(!v.alt || !v.url_m3u8 || !v.ref) {
+          var link = v.url_m3u8 || v.url_mp4;
+          if(!v.alt || !link || !v.ref) {
             continue;
           }
+          link = link.replace(/&amp;/g,'&');
+          var query = SysUrl.parse(decodeURIComponent(link),true).query;
+          var url = query['url'] || link;
           var html = '';
-          if(v.cover) {
-            html += genLazyLoadHtml(v.alt, v.cover);
-          }
-          html += util.format('<br/><a href="%s" target="_blank">%s</a><br/>', v.url_m3u8, v.alt);
+          html += util.format('<br/><a href="%s" target="_blank">%s</a><br/>', url, v.alt);
+          html += genJwPlayerEmbedCode(util.format("vid_%s_%d", jObj.docid, i), url, v.cover, i===0);
           obj.marked = obj.marked.replace(v.ref, html);
+          if(!obj.cover) {
+            obj.cover = v.cover;
+          }
         }
       }
 

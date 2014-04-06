@@ -16,7 +16,7 @@ var crawlFlag = require('config').Config.crawlFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
-  'User-Agent': 'User-Agent: MI_2__sinanews__4.0.0__android__os4.1.1',
+  'User-Agent': 'MI_2__sinanews__4.0.1__android__os4.1.1',
   'Host': 'api.sina.cn',
   'Connection': 'Keep-Alive',
 };
@@ -26,22 +26,34 @@ var sinaSubscribes = [
     tname:'头条',
     tid:'news_toutiao',
     tags:[
-      '今日网言', // 2013-12-13 停止更新
-      '新观察', // 2013-12-02 停止更新
-      '海外观察',
-      '军情茶馆', // 2013-06-21 停止更新
+      '新观察', // 2014-02-12 停止更新
       '万花筒', // 2013-08-15 停止更新
-      '茶娱饭后',
+      '新历史', // 2014-01-18 停止更新
+      '今日网言', // 2013-12-13 停止更新
+      '海外观察', // 2014-01-31 停止更新
+      '军情茶馆', // 2013-06-21 停止更新
       '每日深度', // 2013-12-19 停止更新
-      '一周八卦',
-      '新历史',
+      '一周八卦', // 2014-01-12 停止更新
+      '茶娱饭后',
+      '新闻早点',
     ]
   },
-  // 新浪订阅管理
+  // 新浪订阅管理 // 2014-02-21 停止更新
   {
     tname:'搞笑',
     tid:'news_funny',
-    tags:['神最右', '囧哥说事', '囧哥囧事', '一日一囧', '新闻乐轻松', '图哥乐呵', '段子PK秀', '毒舌美少女', '奇趣壹周']
+    tags:[
+      '神最右',
+      '囧哥说事',
+      '囧哥囧事', // 2013-12-27 停止更新
+      '图哥乐呵',
+      '一日一囧',
+      '奇趣壹周', // 2014-02-07 停止更新
+      '段子PK秀',
+      '新闻乐轻松', // 2014-03-07 停止更新
+      '毒舌美少女',
+      '周末乐不停',
+    ]
   },
   //{tname:'数码', tid:'news_digital', tags:[]},
   //{tname:'时尚', tid:'news_fashion', tags:[]},
@@ -61,7 +73,7 @@ var sinaSubscribes = [
   {tname:'图片.故事', tid:'hdpic_story', tags:[]},
   // 新浪视频
   //{tname:'视频.精选', tid:'video_video', tags:[]},
-  {tname:'视频.搞笑', tid:'video_funny', tags:[]},
+  //{tname:'视频.搞笑', tid:'video_funny', tags:[]}, // TODO 自2014-02-10起, 视频地址跳转多次导致JwPlayer无法播放
   //{tname:'视频.现场', tid:'video_scene', tags:[]},
   //{tname:'视频.花絮', tid:'video_highlight', tags:[]},
 ];
@@ -114,7 +126,7 @@ var getNewsDetail = function(entry) {
         for(i=0; i<jObj.videos.length; i++) {
           jObj.videos[i].pic = jObj.videos[i].pic.replace(/auto\.jpg/, "original.jpg");
           html += util.format('<a href="%s" target="_blank">%s</a><br/>', jObj.videos[i].url, jObj.long_title);
-          html += genJwPlayerEmbedCode(util.format("vid_%s", jObj.videos[i].video_id), jObj.videos[i].url, jObj.videos[i].pic);
+          html += genJwPlayerEmbedCode(util.format("vid_%s", jObj.videos[i].video_id), jObj.videos[i].url, jObj.videos[i].pic, i===0);
           obj.body = obj.body.replace(util.format("<!--{VIDEO_%d}-->", i+1), html);
           obj.img[obj.img.length] = jObj.videos[i].pic;
         }

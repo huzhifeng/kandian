@@ -4,6 +4,7 @@ var request = require('request');
 var News = require('../models/news');
 var utils = require('../lib/utils')
 var genLazyLoadHtml = utils.genLazyLoadHtml;
+var genJwPlayerEmbedCode = utils.genJwPlayerEmbedCode;
 var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
@@ -35,9 +36,44 @@ var sohuSubscribes = [
   {tname:'先知道', tid:'681', tags:[]},
   {tname:'神吐槽', tid:'682', tags:[]},
   {tname:'热辣评', tid:'683', tags:[]},
-  {tname:'我来说两句', tid:'915', tags:[]},
+  {tname:'我来说两句', tid:'915', tags:[], stopped:1}, // 2014-01-09 停止更新
   //{tname:'变态辣椒', tid:'677', tags:[], stopped:1}, // 停止更新
   //{tname:'IQ问答', tid:'684', tags:[], stopped:1}, // 2013-09-22 停止更新
+];
+var videoSubscribes = [
+  // 视频频道
+  // http://api.k.sohu.com/api/video/channelList.go?p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
+  // 文章列表
+  // http://api.k.sohu.com/api/video/multipleMessageList.go?type=0&channelId=16&cursor=0&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
+  // http://api.k.sohu.com/api/video/multipleMessageList.go?type=0&channelId=16&cursor=1396578656584&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
+  // 文章详情
+  // http://api.k.sohu.com/api/video/message.go?id=28561495&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
+  // 关联文章
+  // http://api.k.sohu.com/api/video/relationMessageList.go?mid=28561495&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
+  //{tname:'热播', tid:'1', tags:[]},
+  //{tname:'美女', tid:'14', tags:[]},
+  //{tname:'搞笑', tid:'13', tags:[]},
+  //{tname:'娱乐', tid:'23', tags:[]},
+  //{tname:'体育', tid:'15', tags:[]},
+  //{tname:'电影', tid:'22', tags:[]},
+  //{tname:'剧集', tid:'20', tags:[]},
+  //{tname:'游戏', tid:'19', tags:[], stopped:1},
+  //{tname:'专辑', tid:'24', tags:[]},
+  {
+    tname:'搜狐原创视频',
+    tid:'16',
+    tags:[
+      '每日一囧',
+      'Big笑工坊',
+      '老陕说穿帮',
+      '飞碟一分钟',
+      '发热盘点',
+      '十万个冷幽默',
+      '大姨来了吗',
+      '胥渡吧',
+      '胡狼出品',
+    ]
+  },
 ];
 var otherSubscribes = [
   //{tname:'知乎每日精选', tid:'416', tags:[]},
@@ -286,6 +322,93 @@ var getPhotoDetail = function(entry) {
   });// request
 };
 
+var genVideoPlayerHtml = function(vid, id) {
+  var html = '';
+  html = util.format('</br><object width="640" height="515"><param name="movie" value="http://share.vrs.sohu.com/my/v.swf&autoplay=true&id=%s&skinNum=1&topBar=1&xuid="></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed width="640" height="515"  allowfullscreen="true" allowscriptaccess="always" quality="high" src="http://share.vrs.sohu.com/my/v.swf&autoplay=true&id=%s&skinNum=1&topBar=1&xuid=" type="application/x-shockwave-flash"/></embed></object></br>', vid, vid);
+  html += util.format('</br><a href="http://3g.k.sohu.com/v/t%s" target="_blank">传送门</a></br>', id);
+
+  return html;
+}
+
+var crawlerVideo = function (entry) {
+  var url = util.format('http://api.k.sohu.com/api/video/multipleMessageList.go?type=0&channelId=%s&cursor=%d&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1', entry.tid, entry.cursor);
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json || !json.data) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerVideo():JSON.parse() error");
+      return;
+    }
+    var newsList = json.data;
+    if(!newsList || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerVideo():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if(!newsEntry.id || !newsEntry.title || !newsEntry.playurl) {
+        return;
+      }
+      newsEntry.tagName = findTagName(newsEntry.title, entry);
+      if(!newsEntry.tagName) {
+        return;
+      }
+      News.findOne(genFindCmd(site, newsEntry.id), function(err, result) {
+        if(err || result) {
+          return;
+        }
+        var obj = newsEntry;
+        obj.docid = encodeDocID(site, util.format("%s",newsEntry.id));
+        obj.site = site;
+        obj.body = newsEntry.title || newsEntry.content;
+        obj.link = "";
+        if(newsEntry.url) {
+          obj.link = newsEntry.url; // http://my.tv.sohu.com/pl/5824396/66932488.shtml?pvid=059744aacf7bd631
+        }else if(newsEntry.share && newsEntry.share.h5Url){
+          obj.link = newsEntry.share.h5Url; // http://3g.k.sohu.com/v/t28561495
+        }else {
+          obj.link = util.format("http://3g.k.sohu.com/v/t%s", newsEntry.id);
+        }
+        obj.title = newsEntry.title;
+        obj.ptime = newsEntry.pubDateName; // 2014-04-06 14:59:03
+        obj.time = Date.parse(obj.ptime); // 1396767543795
+        obj.marked = obj.body;
+        obj.created = new Date();
+        obj.views = 1;
+        obj.tags = newsEntry.tagName;
+        obj.digest = genDigest(obj.body);
+        obj.cover = newsEntry.pic || newsEntry.smallPic || newsEntry.pic_4_3;
+        //var video_url = newsEntry.playurl.highMp4 || newsEntry.playurl.mp4;
+        //obj.marked += genJwPlayerEmbedCode(util.format("vid_%s", newsEntry.id), video_url, obj.cover, 1);
+        if(newsEntry.siteInfo && newsEntry.siteInfo.siteId) {
+          obj.marked += genVideoPlayerHtml(newsEntry.siteInfo.siteId, newsEntry.id)
+        }
+
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerVideo():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
+        News.insert(obj, function (err, result) {
+          if(err) {
+            console.log("hzfdbg file[" + __filename + "]" + " crawlerVideo(), News.insert():error " + err);
+          }
+        }); // News.insert
+      }); // News.findOne
+    });//forEach
+    if(entry.crawlFlag) {
+      if((newsList.length > 1) && json.hasnext && json.nextCursor) {
+        entry.cursor = json.nextCursor;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerVideo():["+entry.tname+"] next cursor="+entry.cursor);
+        setTimeout(function() {
+          crawlerVideo(entry);
+        }, 3000); // crawl next page after 3 seconds
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerVideo():["+entry.tname+"] last page");
+        entry.crawlFlag = 0;
+      }
+    }
+  });//request
+};
+
 var crawlerPhoto = function (entry) {
   var url = util.format("http://api.k.sohu.com/api/photos/list.go?&tagId=%s&rt=json&pageNo=%d&pageSize=10&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D", entry.tid, entry.page);
   if(1 === entry.page) {
@@ -391,6 +514,16 @@ var crawlerSubscribe = function (entry) {
   });//request
 };
 
+var crawlerVideos = function () {
+  videoSubscribes.forEach(function(entry) {
+    if(!crawlFlag && entry.stopped) {
+      return;
+    }
+    entry.cursor = 0;
+    crawlerVideo(entry);
+  });
+}
+
 var crawlerPhotos = function () {
   photoTags.forEach(function(entry) {
     if(!crawlFlag && entry.stopped) {
@@ -426,6 +559,7 @@ var sohuCrawler = function() {
   crawlerSohuSubscribes();
   crawlerOtherSubscribes();
   crawlerPhotos();
+  crawlerVideos();
   setTimeout(sohuCrawler, 2000 * 60 * 60);
 }
 
@@ -442,9 +576,12 @@ var crawlerInit = function() {
   photoTags.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });
+  videoSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
 }
 
 exports.sohuCrawler = sohuCrawler;
-exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags);
+exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags, videoSubscribes);
 crawlerInit();
 sohuCrawler();
