@@ -24,30 +24,34 @@ var site = "netease";
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
 var neteaseSubscribes = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
-  {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历']},
+  {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历', '街头会易', '数码贱男']},
   // 原创
   //{tname:'原创', tid:'T1367050859308', tags:[]},
   {tname:'轻松一刻', tid:'T1350383429665', tags:[]},
+  //{tname:'轻松一刻语音版', tid:'T1379040077136', tags:[]},
   {tname:'另一面', tid:'T1348654756909', tags:[]},
   {tname:'今日之声', tid:'T1348654628034', tags:[]},
   {tname:'今日环球侃客', tid:'T1381482353221', tags:[]},
   {tname:'易百科', tid:'T1355887570398', tags:[]},
   {tname:'看客', tid:'T1387970173334', tags:[]},
   {tname:'微历史', tid:'T1376554225976', tags:[]},
-  {tname:'科技万有瘾力', tid:'T1359605530115', tags:[], stopped:1}, // 2014-01-07 停止更新
-  {tname:'一周军情观察', tid:'T1359613635637', tags:[], stopped:1}, // 专题 2014-01-07 停止更新
-  {tname:'一周媒体速递', tid:'T1359605600543', tags:[], stopped:1}, // 2014-01-06 停止更新
   {tname:'娱乐BigBang', tid:'T1359605557219', tags:[]},
+  //{tname:'娱乐BigBang语音版', tid:'T1394711522757', tags:[]},
   {tname:'独家解读', tid:'T1348654778699', tags:[]},
-  {tname:'历史七日谈', tid:'T1359605505216', tags:[], stopped:1}, // 2013-12-05 停止更新
   {tname:'数读', tid:'T1348654813857', tags:[]},
   {tname:'娱乐连环画', tid:'T1393399130300', tags:[]},
-  {tname:'一周人物', tid:'T1385105962170', tags:[], stopped:1}, // 2014-01-07 停止更新
   {tname:'一周车坛囧事', tid:'T1382946585552', tags:[]},
   {tname:'视野', tid:'T1382946778301', tags:['视野'], stopped:1}, // 2013-11-27 停止更新
   {tname:'应用一勺烩', tid:'T1383187051764', tags:[], stopped:1}, // 2013-11-21 停止更新
   {tname:'网易UGC实验室', tid:'T1395385797796', tags:[]},
-  {tname:'一周车坛囧事', tid:'T1382946585552', tags:[]},
+  {tname:'深夜畅聊', tid:'T1396928569598', tags:[]},
+  {tname:'胖编怪谈', tid:'T1396928667862', tags:[]},
+  {tname:'真人秀', tid:'T1396928753073', tags:[]},
+  {tname:'历史七日谈', tid:'T1359605505216', tags:[], stopped:1}, // 2013-12-05 停止更新
+  {tname:'科技万有瘾力', tid:'T1359605530115', tags:[], stopped:1}, // 2014-01-07 停止更新
+  {tname:'一周媒体速递', tid:'T1359605600543', tags:[], stopped:1}, // 2014-01-06 停止更新
+  {tname:'一周军情观察', tid:'T1359613635637', tags:[], stopped:1}, // 专题 2014-01-07 停止更新
+  {tname:'一周人物', tid:'T1385105962170', tags:[], stopped:1}, // 2014-01-07 停止更新
   // 专栏
   {tname:'新闻杂谈', tid:'T1374655362262', tags:[]},
   {tname:'新闻漫画', tid:'T1374655548448', tags:[]},
@@ -60,6 +64,7 @@ var neteaseSubscribes = [
   {tname:'每周观察', tid:'T1383207857966', tags:[]},
   //{tname:'隔洋观花', tid:'T1385106187014', tags:[]},
   {tname:'罗辑思维', tid:'T1385106069241', tags:[]}, // Video
+  //{tname:'罗辑思维', tid:'T1379040133684', tags:[]}, // Audio
   {tname:'打铁记', tid:'T1383639452806', tags:[], stopped:1}, // 2013-11-22 停止更新
   {tname:'爱解析', tid:'T1383639904180', tags:[], stopped:1}, // 2013-12-13 停止更新
   //{tname:'亲历死亡', tid:'T1383640198969', tags:[], stopped:1}, // 2013-12-02 停止更新
@@ -79,17 +84,14 @@ var neteaseSubscribes = [
   //{tname:'网易音乐', tid:'T1348648696641', tags:['面对面']},
   //{tname:'网易时尚', tid:'T1348651069938', tags:[]},
   //{tname:'网易美容', tid:'T1348652387145', tags:[]},
-  //
-  {tname:'轻松一刻语音版', tid:'T1379040077136', tags:[]}, // Audio
-  {tname:'娱乐BigBang语音版', tid:'T1394711522757', tags:[]}, // Audio
-  //{tname:'有声', tid:'T1394610975770', tags:[]}, // Audio
+  // 音频
+  {tname:'有声', tid:'T1394610975770', tags:[]}, // Audio
   {tname:'清晨时光', tid:'T1394618026933', tags:[]}, // Audio
   {tname:'历史上的今天', tid:'T1394626686487', tags:[]}, // Audio
   {tname:'糗事百科音频版', tid:'T1379039985773', tags:[]}, // Audio
   {tname:'头条新闻', tid:'T1379039891960', tags:[]}, // Audio
   {tname:'新闻直播间', tid:'T1378713857672', tags:[]}, // Audio
   {tname:'奇葩一朵朵', tid:'T1394626394234', tags:[]}, // Audio
-  {tname:'罗辑思维', tid:'T1379040133684', tags:[]}, // Audio
   {tname:'大哈讲段子', tid:'T1394626579176', tags:[]}, // Audio
 ];
 

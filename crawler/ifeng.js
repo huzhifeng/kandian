@@ -81,7 +81,7 @@ var ifengSubscribes = [
     tid:'YC10',
     tags:[
       '刺点',
-      '跟帖榜',
+      '洋跟帖',
       '独家图解',
     ]
   },
