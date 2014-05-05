@@ -53,6 +53,7 @@ var neteaseSubscribes = [
   {tname:'一周军情观察', tid:'T1359613635637', tags:[], stopped:1}, // 专题 2014-01-07 停止更新
   {tname:'一周人物', tid:'T1385105962170', tags:[], stopped:1}, // 2014-01-07 停止更新
   // 专栏
+  {tname:'真话', tid:'T1370583240249', tags:[]},
   {tname:'新闻杂谈', tid:'T1374655362262', tags:[]},
   {tname:'新闻漫画', tid:'T1374655548448', tags:[]},
   {tname:'军事控', tid:'T1374655601172', tags:[], stopped:1}, // 2014-01-07 停止更新
@@ -61,12 +62,12 @@ var neteaseSubscribes = [
   {tname:'科学现场调查', tid:'T1374655737387', tags:[]},
   {tname:'读报', tid:'T1378876118770', tags:[]},
   {tname:'知乎日报', tid:'T1383207786512', tags:[], stopped:1}, // 专题 2014-01-07 停止更新
-  {tname:'每周观察', tid:'T1383207857966', tags:[]},
-  //{tname:'隔洋观花', tid:'T1385106187014', tags:[]},
+  {tname:'每周观察', tid:'T1383207857966', tags:[], stopped:1}, // 专题 2014-01-20 停止更新
+  {tname:'隔洋观花', tid:'T1385106187014', tags:[], stopped:1}, // 2014-01-09 停止更新
   {tname:'罗辑思维', tid:'T1385106069241', tags:[]}, // Video
   //{tname:'罗辑思维', tid:'T1379040133684', tags:[]}, // Audio
   {tname:'打铁记', tid:'T1383639452806', tags:[], stopped:1}, // 2013-11-22 停止更新
-  {tname:'爱解析', tid:'T1383639904180', tags:[], stopped:1}, // 2013-12-13 停止更新
+  {tname:'爱解析', tid:'T1383639904180', tags:[]},
   //{tname:'亲历死亡', tid:'T1383640198969', tags:[], stopped:1}, // 2013-12-02 停止更新
   //{tname:'理中客', tid:'T1387349830515', tags:['真话讲堂']},
   //{tname:'大国小民', tid:'T1387350092857', tags:['大国小民']},
@@ -84,15 +85,24 @@ var neteaseSubscribes = [
   //{tname:'网易音乐', tid:'T1348648696641', tags:['面对面']},
   //{tname:'网易时尚', tid:'T1348651069938', tags:[]},
   //{tname:'网易美容', tid:'T1348652387145', tags:[]},
+  //{tname:'健康养生', tid:'T1370589182416', tags:[]},
+  //{tname:'网易女人', tid:'T1364183816404', tags:[], stopped:1}, // 2013-08-04 停止更新
   // 音频
-  {tname:'有声', tid:'T1394610975770', tags:[]}, // Audio
-  {tname:'清晨时光', tid:'T1394618026933', tags:[]}, // Audio
-  {tname:'历史上的今天', tid:'T1394626686487', tags:[]}, // Audio
-  {tname:'糗事百科音频版', tid:'T1379039985773', tags:[]}, // Audio
-  {tname:'头条新闻', tid:'T1379039891960', tags:[]}, // Audio
-  {tname:'新闻直播间', tid:'T1378713857672', tags:[]}, // Audio
-  {tname:'奇葩一朵朵', tid:'T1394626394234', tags:[]}, // Audio
-  {tname:'大哈讲段子', tid:'T1394626579176', tags:[]}, // Audio
+  //{tname:'有声', tid:'T1394610975770', tags:[]}, // Audio
+  //{tname:'清晨时光', tid:'T1394618026933', tags:[]}, // Audio
+  //{tname:'历史上的今天', tid:'T1394626686487', tags:[]}, // Audio
+  //{tname:'糗事百科音频版', tid:'T1379039985773', tags:[]}, // Audio
+  //{tname:'头条新闻', tid:'T1379039891960', tags:[]}, // Audio
+  //{tname:'新闻直播间', tid:'T1378713857672', tags:[]}, // Audio
+  //{tname:'奇葩一朵朵', tid:'T1394626394234', tags:[]}, // Audio
+  //{tname:'大哈讲段子', tid:'T1394626579176', tags:[]}, // Audio
+  // 视频
+  // http://c.m.163.com/nc/video/list/00850FRB/n/0-10.html
+  // http://c.m.163.com/nc/video/detail/V9PJS6H0U.html
+  //{tname:'热点', tid:'V9LG4B3A0', tags:[]},
+  //{tname:'娱乐', tid:'V9LG4CHOR', tags:[]},
+  //{tname:'搞笑', tid:'V9LG4E6VR', tags:[]},
+  //{tname:'精品', tid:'00850FRB', tags:['新闻52秒', 'YouTube天天精选', '腐女办公室', '超级颜论', '数码贱男', '飞碟一分钟', '飞碟说', '娱乐快报', '这个历史挺靠谱', '逻辑思维']},
 ];
 
 var otherSubscribes = [
@@ -173,9 +183,6 @@ var otherSubscribes = [
   // 视觉
   //{tname:'猫舍', tid:'T1374483113516', tags:[]},
   // 未知分类
-  {tname:'真话', tid:'T1370583240249', tags:[]},
-  //{tname:'健康养生', tid:'T1370589182416', tags:[]},
-  //{tname:'网易女人', tid:'T1364183816404', tags:[], stopped:1}, // 2013-08-04 停止更新
   {tname:'每日钛度', tid:'T1366183190095', tags:[], stopped:1}, // 2013-06-20 停止更新
   {tname:'专业控', tid:'T1348654797196', tags:[], stopped:1}, // 2013-05-16 停止更新
 ];
@@ -488,7 +495,7 @@ var crawlerPhotoTags = function() {
 }
 
 var crawlerSubscribes = function() {
-  var subscribes = neteaseSubscribes.concat(otherSubscribes);
+  var subscribes = neteaseSubscribes;
   subscribes.forEach(function(entry) {
     if(!crawlFlag && entry.stopped) {
       return;
@@ -521,6 +528,6 @@ var crawlerInit = function() {
 }
 
 exports.neteaseCrawler = neteaseCrawler;
-exports.neteaseTags = neteaseSubscribes.concat(otherSubscribes, photoTags);
+exports.neteaseTags = neteaseSubscribes.concat(photoTags);
 crawlerInit();
 neteaseCrawler();
