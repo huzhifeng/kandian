@@ -24,7 +24,7 @@ var site = "netease";
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
 var neteaseSubscribes = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
-  {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历', '街头会易', '数码贱男']},
+  {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历', '最跟帖', '数码贱男', '科学搬主任']},
   // 原创
   //{tname:'原创', tid:'T1367050859308', tags:[]},
   {tname:'轻松一刻', tid:'T1350383429665', tags:[]},
@@ -47,6 +47,7 @@ var neteaseSubscribes = [
   {tname:'深夜畅聊', tid:'T1396928569598', tags:[]},
   {tname:'胖编怪谈', tid:'T1396928667862', tags:[]},
   {tname:'真人秀', tid:'T1396928753073', tags:[]},
+  {tname:'街头会易', tid:'T1399258893359', tags:[]},
   {tname:'历史七日谈', tid:'T1359605505216', tags:[], stopped:1}, // 2013-12-05 停止更新
   {tname:'科技万有瘾力', tid:'T1359605530115', tags:[], stopped:1}, // 2014-01-07 停止更新
   {tname:'一周媒体速递', tid:'T1359605600543', tags:[], stopped:1}, // 2014-01-06 停止更新
@@ -103,6 +104,10 @@ var neteaseSubscribes = [
   //{tname:'娱乐', tid:'V9LG4CHOR', tags:[]},
   //{tname:'搞笑', tid:'V9LG4E6VR', tags:[]},
   //{tname:'精品', tid:'00850FRB', tags:['新闻52秒', 'YouTube天天精选', '腐女办公室', '超级颜论', '数码贱男', '飞碟一分钟', '飞碟说', '娱乐快报', '这个历史挺靠谱', '逻辑思维']},
+  // 其它订阅
+  {tname:'爆笑gif图', tid:'T1395298452550', tags:[]},
+  {tname:'gif怪兽', tid:'T1385542280953', tags:[]},
+  {tname:'碉民早爆', tid:'T1390457192301', tags:[]},
 ];
 
 var otherSubscribes = [
@@ -170,7 +175,24 @@ var otherSubscribes = [
   //{tname:'囧马热文', tid:'T1376642915530', tags:[]},
   {tname:'笑话集', tid:'T1376643082077', tags:[]},
   //{tname:'乐不思蜀', tid:'T1376643174873', tags:[]},
-  //{tname:'多玩图库', tid:'T1376643423014', tags:[]},
+  {tname:'多玩图库', tid:'T1376643423014', tags:[
+    '段子精选',
+    '多玩洋葱新闻',
+    '无品新闻',
+    '日式冷笑话',
+    '十万个冷知识',
+    '今日囧图',
+    '吐槽囧图',
+    '全球搞笑GIF',
+    '宠物卖萌囧图',
+    '暴走漫画',
+    '每日美女',
+    '奇趣档案',
+    '搞笑漫画',
+    '一起神回复',
+    '明星囧图',
+    '异色画报',
+  ]},
   {tname:'笑话之家', tid:'T1376643747659', tags:[]},
   //{tname:'掘精小娘子', tid:'T1383811813773', tags:[]},
   //{tname:'剧情神展开', tid:'T1383811980965', tags:[]},

@@ -8,8 +8,8 @@ var decodeDocID = utils.decodeDocID;
 var encodeDocID = utils.encodeDocID;
 
 var index = function (req, res, next) {
+  var page = req.params.page || 1;
   var getNewss = function (callback) {
-    var page = req.params.page || 1;
     var cmd = {
       "$or":
         [
@@ -42,30 +42,40 @@ var index = function (req, res, next) {
     });
   };
 
-  var getLatestQingSongNews = function (callback) {
-    News.findLimit({tags:'轻松一刻'}, 3, {time: -1}, function (err, result) {
+  var getLatestNews = function (callback) {
+    News.findLimit({tags: {'$in': ['轻松一刻', '神吐槽', 'FUN来了', '新闻晚8点', '新闻哥']}}, 4, {time: -1}, function (err, result) {
       if (! err) {
-        callback(null, {latestQingSong: result});
+        callback(null, {result: result});
       } else {
         callback(err);
       }
     });
   };
 
-  var getLatestTuCaoNews = function (callback) {
-    News.findLimit({tags:'神吐槽'}, 3, {time: -1}, function (err, result) {
+  var getLatestBeauties = function (callback) {
+    News.findLimit({tags: {'$in': ['妹子图', '妹子控', 'Show妹子']}}, 4, {time: -1}, function (err, result) {
       if (! err) {
-        callback(null, {latestTuCao: result});
+        callback(null, {result: result});
       } else {
         callback(err);
       }
     });
   };
 
-  var getLatestFunNews = function (callback) {
-    News.findLimit({tags:'FUN来了'}, 3, {time: -1}, function (err, result) {
+  var getLatestGifs = function (callback) {
+    News.findLimit({tags: {'$in': ['gif怪兽', '爆笑gif图', '图片.趣图']}}, 4, {time: -1}, function (err, result) {
       if (! err) {
-        callback(null, {latestFun: result});
+        callback(null, {result: result});
+      } else {
+        callback(err);
+      }
+    });
+  };
+
+  var getLatestVideos = function (callback) {
+    News.findLimit({tags: {'$in': ['所谓娱乐', '街头会易', '每日一囧']}}, 4, {time: -1}, function (err, result) {
+      if (! err) {
+        callback(null, {result: result});
       } else {
         callback(err);
       }
@@ -91,9 +101,10 @@ var index = function (req, res, next) {
   async.parallel({
     newss: getNewss,
     //hotNewss: getHotNewss,
-    getLatestQingSong: getLatestQingSongNews,
-    getLatestTuCao: getLatestTuCaoNews,
-    getLatestFun: getLatestFunNews,
+    latestNews: getLatestNews,
+    latestBeauties: getLatestBeauties,
+    latestGifs: getLatestGifs,
+    latestVideos: getLatestVideos,
     //getRandomImages: getRandomImages,
   },
   function (err, results) {
@@ -101,9 +112,11 @@ var index = function (req, res, next) {
       res.render('home', {pageTitle: '看点网---有看点，更精彩！',
         currentPage: results.newss.currentPage, pages: results.newss.pages,
         news: results.newss.newss, baseUrl: '/page/',
-        latestQingSongNews: results.getLatestQingSong.latestQingSong,
-        latestTuCaoNews: results.getLatestTuCao.latestTuCao,
-        latestFunNews: results.getLatestFun.latestFun,
+        isHomePage: (page == 1),
+        latestNews: results.latestNews.result,
+        latestBeauties: results.latestBeauties.result,
+        latestGifs: results.latestGifs.result,
+        latestVideos: results.latestVideos.result,
         //randomImages: results.getRandomImages.randomImages,
       });
     } else {

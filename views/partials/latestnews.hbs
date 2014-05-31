@@ -1,51 +1,61 @@
-﻿<div class="row-fluid">
-  {{#each latestQingSongNews}}
+﻿{{#if isHomePage}}
+<div class="row-fluid">
+  {{#each latestNews}}
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
-      <h4>{{this.title}}</h4>
+      <h5>{{this.title}}</h5>
       <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
       <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
+    <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
   </div>
   {{/each}}
-  <div class="span3">
-    <a href="/tag/轻松一刻"><h4>更多轻松...</h4></a>
-  </div>
 </div>
 <hr>
 
 <div class="row-fluid">
-  {{#each latestTuCaoNews}}
+  {{#each latestGifs}}
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
-      <h4>{{this.title}}</h4>
+      <h5>{{this.title}}</h5>
       <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
       <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
+    <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
   </div>
   {{/each}}
-  <div class="span3">
-    <a href="/tag/神吐槽"><h4>更多吐槽...</h4></a>
-  </div>
 </div>
 <hr>
 
 <div class="row-fluid">
-  {{#each latestFunNews}}
+  {{#each latestBeauties}}
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
-      <h4>{{this.title}}</h4>
+      <h5>{{this.title}}</h5>
       <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
       <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
+    <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
   </div>
   {{/each}}
+</div>
+<hr>
+
+<div class="row-fluid">
+  {{#each latestVideos}}
   <div class="span3">
-    <a href="/tag/FUN来了"><h4>更多FUN...</h4></a>
+    <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
+      <h5>{{this.title}}</h5>
+      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
+      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
+      {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
+    </a>
+    <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
   </div>
+  {{/each}}
 </div>
 <hr>
 
@@ -59,7 +69,8 @@
   </div>
   {{/each}}
   <div class="span2">
-    <a href="/image/"><h4>更多美女...</h4></a>
+    <a href="/image/"><h5>更多美女...</h5></a>
   </div>
 </div>
 <hr>-->
+{{/if}}
