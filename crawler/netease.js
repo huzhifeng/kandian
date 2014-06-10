@@ -24,7 +24,7 @@ var site = "netease";
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
 var neteaseSubscribes = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
-  {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历', '最跟帖', '数码贱男', '科学搬主任']},
+  {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历', '科学搬主任']},
   // 原创
   //{tname:'原创', tid:'T1367050859308', tags:[]},
   {tname:'轻松一刻', tid:'T1350383429665', tags:[]},
@@ -34,7 +34,7 @@ var neteaseSubscribes = [
   {tname:'今日环球侃客', tid:'T1381482353221', tags:[]},
   {tname:'易百科', tid:'T1355887570398', tags:[]},
   {tname:'看客', tid:'T1387970173334', tags:[]},
-  {tname:'微历史', tid:'T1376554225976', tags:[]},
+  {tname:'微历史', tid:'T1376554225976', tags:[], stopped:1}, // 2014-01-03 停止更新
   {tname:'娱乐BigBang', tid:'T1359605557219', tags:[]},
   //{tname:'娱乐BigBang语音版', tid:'T1394711522757', tags:[]},
   {tname:'独家解读', tid:'T1348654778699', tags:[]},

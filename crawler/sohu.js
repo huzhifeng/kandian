@@ -31,14 +31,12 @@ var sohuSubscribes = [
   // http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=2&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&pull=0&more=1&net=wifi&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
   // 文章详情
   // http://api.k.sohu.com/api/news/article.go?newsId=15278351&channelId=1&imgTag=1&recommendNum=2&net=wifi&updateTime=1388802120000&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
-  {tname:'要闻', tid:'1', tags:['狐揭秘', '涨姿势', '搜查科', '开心一刻', '数说IT', '红人红事榜', '快评']},
+  {tname:'要闻', tid:'1', tags:['狐揭秘', '涨姿势', '开心一刻', '数说IT', '红人红事榜', '快评']},
   // 原创
-  {tname:'先知道', tid:'681', tags:[]},
+  {tname:'先知道', tid:'681', tags:[], stopped:1}, // 2014-03-27 停止更新
   {tname:'神吐槽', tid:'682', tags:[]},
-  {tname:'热辣评', tid:'683', tags:[]},
+  {tname:'热辣评', tid:'683', tags:[], stopped:1}, // 2014-04-18 停止更新
   {tname:'我来说两句', tid:'915', tags:[], stopped:1}, // 2014-01-09 停止更新
-  //{tname:'变态辣椒', tid:'677', tags:[], stopped:1}, // 停止更新
-  //{tname:'IQ问答', tid:'684', tags:[], stopped:1}, // 2013-09-22 停止更新
 ];
 var videoSubscribes = [
   // 视频频道

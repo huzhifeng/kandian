@@ -26,7 +26,6 @@ var ifengSubscribes = [
     tid:'1',
     tags:[
       '洞见', // 2014-02-02 停止更新
-      //'深度',
       '独家评',
       '轻新闻', // 2013-11-19 停止更新
       '影像志', // 2013-09-26 停止更新
@@ -37,7 +36,6 @@ var ifengSubscribes = [
       '每日热词', // 2013-09-03 停止更新
       '教科书之外', // 2013-09-06 停止更新
       '科技能见度', // 2014-01-31 停止更新
-      //'凤凰调查局', // TODO
       '历史上的今天',
     ]
   },
@@ -51,22 +49,22 @@ var ifengSubscribes = [
   // http://api.3g.ifeng.com/android2GList?id=aid=ORIGIN16908&type=list&pagesize=20&pageindex=1
   // 某篇文章内容
   // http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_80779130&channel=push&chid=push&android=1&gv=4.1.5&av=4.1.5&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
-  {tname:'健康365', tid:'21701', tags:[]},
-  {tname:'有报天天读', tid:'16908', tags:[]},
+  {tname:'健康365', tid:'21701', tags:[], stopped:1}, // 2014-03-16 停止更新
+  {tname:'有报天天读', tid:'16908', tags:[], stopped:1}, // 2014-03-16 停止更新
   {tname:'FUN来了', tid:'16917', tags:[]},
   {tname:'凤凰知道', tid:'17594', tags:[]},
   {tname:'今日最大声', tid:'17593', tags:[]},
   {tname:'军魂100分', tid:'18316', tags:[]},
   {tname:'史林拍案', tid:'18505', tags:[]},
   {tname:'一周人物', tid:'18026', tags:[]},
-  {tname:'话说', tid:'18017', tags:[]},
+  {tname:'话说', tid:'18017', tags:[], stopped:1}, // 2014-02-15 停止更新
   {tname:'财知道', tid:'19355', tags:[]},
   {tname:'锵锵三人行', tid:'19357', tags:[]},
   {tname:'防务短评', tid:'19593', tags:[]},
   {tname:'独家体育评论', tid:'19352', tags:[]},
   {tname:'情感夜话', tid:'21702', tags:[]},
-  {tname:'专家谈', tid:'19350', tags:[], stopped:1}, // 2013-12-09 停止更新
-  {tname:'热追踪', tid:'19349', tags:[], stopped:1}, // 2013-12-16 停止更新
+  {tname:'专家谈', tid:'19350', tags:[], stopped:1}, // 2014-03-26 停止更新
+  {tname:'热追踪', tid:'19349', tags:[], stopped:1}, // 2014-05-24 停止更新
   {tname:'精英范', tid:'19348', tags:[], stopped:1}, // 2013-11-11 停止更新
   {tname:'年代访', tid:'19354', tags:[]},
   {tname:'观世变', tid:'19353', tags:[]},
@@ -80,7 +78,6 @@ var ifengSubscribes = [
     tname:'非新闻',
     tid:'YC10',
     tags:[
-      '刺点',
       '洋跟帖',
       '独家图解',
     ]
