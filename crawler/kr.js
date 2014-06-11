@@ -9,6 +9,8 @@ var genFindCmd = utils.genFindCmd;
 var encodeDocID = utils.encodeDocID;
 var data2Json = utils.data2Json;
 var genDigest = utils.genDigest;
+var findTagName = utils.findTagName;
+var crawlFlag = require('config').Config.crawlFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 
@@ -18,24 +20,24 @@ var headers = {
   'Connection': 'Keep-Alive',
   'User-Agent':'android-async-http/1.4.1 (http://loopj.com/android-async-http)',
 };
-var krTags = [
-  '8点1氪',
-  '创业说',
-  '氪周刊',
-  '氪月报',
-  '超人计划',
-  '36氪+',
-  '36氪开放日',
-  'WISE前奏',
-];
-var categorys = [
-  {cateid:1, first:0, label:"首页", name:"topics", pagesize:10, maxpage:1719},
-  //{cateid:2, first:0, label:"国外创业公司", name:"topics/category/us-startups", pagesize:10, maxpage:114},
-  //{cateid:3, first:0, label:"国内创业公司", name:"topics/category/cn-startups", pagesize:10, maxpage:56},
-  //{cateid:4, first:0, label:"国外资讯", name:"topics/category/breaking", pagesize:10, maxpage:706},
-  //{cateid:5, first:0, label:"国内资讯", name:"topics/category/cn-news", pagesize:10, maxpage:64},
-  //{cateid:6, first:0, label:"生活方式", name:"topics/category/digest", pagesize:10, maxpage:82},
-  //{cateid:7, first:0, label:"专栏文章", name:"topics/category/column", pagesize:10, maxpage:160},//该栏目没有body_html属性,可以通过util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id)得到
+var krSubscribes = [
+  {
+    tname:'首页',
+    tid:'topics',
+    tags:[
+      '8点1氪',
+      '创业说',
+      '氪周刊',
+      '氪月报',
+      '36氪开放日',
+    ]
+  },
+  //{tname:'国外创业公司', tid:'topics/category/us-startups', tags:[]},
+  //{tname:'国内创业公司', tid:'topics/category/cn-startups', tags:[]},
+  //{tname:'国外资讯', tid:'topics/category/breaking', tags:[]},
+  //{tname:'国内资讯', tid:'topics/category/cn-news', tags:[]},
+  //{tname:'生活方式', tid:'topics/category/digest', tags:[]},
+  //{tname:'专栏文章', tid:'topics/category/column', tags:[]}, //该栏目没有body_html属性,可以通过util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id)得到
 ];
 
 var startGetDetail = new EventEmitter();
@@ -111,68 +113,81 @@ var getNewsDetail = function(entry) {
   }); // News.findOne
 };
 
-var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
-  var page = 1;
-
-  if(entry.first == 1) {
-    entry.first = 0;
-    MAX_PAGE_NUM = entry.maxpage;
+var crawlerSubscribe = function (entry) {
+  //http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
+  //http://apis.36kr.com/api/v1/topics/category/column.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
+  var url = util.format("http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d", entry.tid, entry.page, entry.pageSize);
+  var req = {uri: url, method: "GET", headers: headers};
+  if(proxyEnable) {
+    req.proxy = proxyUrl;
   }
-
-  for(page=1; page<=MAX_PAGE_NUM; page++) {
-    (function(page) {
-    //http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
-    //http://apis.36kr.com/api/v1/topics/category/column.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
-    var url = util.format("http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d", entry.name, page, entry.pagesize);
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
+  request(req, function (err, res, body) {
+    var json = data2Json(err, res, body);
+    if(!json) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+      return;
     }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
+    var newsList = json;
+    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
+      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if(!newsEntry.title || !newsEntry.id || !newsEntry.body_html) {
         return;
       }
-      var newsList = json;
-      if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():newsList empty in url " + url);
+      newsEntry.tagName = findTagName(newsEntry.title, entry);
+      if(!newsEntry.tagName) {
         return;
       }
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.id || !newsEntry.body_html) {
+      News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
+        if(err || result) {
           return;
         }
-        for(var i=0; i<krTags.length; i++) {
-          if (newsEntry.title.indexOf(krTags[i]) !== -1) {
-            newsEntry.tagName = krTags[i];
-            newsEntry.cateid = entry.cateid;
-            newsEntry.pageindex = page;
-
-            News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-              if(err || result) {
-                return;
-              }
-              startGetDetail.emit('startGetNewsDetail', newsEntry);
-            }); // News.findOne
-            break;
-          } // if
-        }//for
-      });//forEach
-    });//request
-    })(page);
-  }//for
+        startGetDetail.emit('startGetNewsDetail', newsEntry);
+      }); // News.findOne
+    });//forEach
+    if(entry.crawlFlag) {
+      if(newsList.length >= entry.pageSize) {
+        entry.page += 1;
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
+        setTimeout(function() {
+          crawlerSubscribe(entry);
+        }, 3000); // crawl next page after 3 seconds
+      }else {
+        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
+        entry.crawlFlag = 0;
+      }
+    }
+  });//request
 };
+
+var crawlerKrSubscribes = function () {
+  krSubscribes.forEach(function(entry) {
+    if(!crawlFlag && entry.stopped) {
+      return;
+    }
+    entry.page = 1;
+    entry.pageSize = 10;
+    crawlerSubscribe(entry);
+  });
+}
 
 var krCrawler = function() {
   console.log('Start krCrawler() at ' + new Date());
-  categorys.forEach(function(entry) {
-    crawlerCategory(entry);
-  });
-
+  crawlerKrSubscribes();
   setTimeout(krCrawler, 4000 * 60 * 60);
 }
 
+var crawlerInit = function() {
+  if(process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
+  krSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+}
+
 exports.krCrawler = krCrawler;
+crawlerInit();
 krCrawler();
