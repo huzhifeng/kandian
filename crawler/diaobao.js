@@ -30,7 +30,10 @@ var diaobaoSubscribes = [
   // http://api.diaobao.in/index.php/community/content/index?last=1402712667-1168217-2&size=10&id=1000040
   {tname:'每日囧图', tid:'16', tags:[]},
   {tname:'碉民早爆', tid:'5', tags:[]},
+  {tname:'每日一撸', tid:'8', tags:[]},
   {tname:'十万个冷知识', tid:'9', tags:[]},
+  {tname:'帅哥暖床图', tid:'139', tags:[]},
+  {tname:'碉堡微小说', tid:'140', tags:[]},
 ];
 
 var startGetDetail = new EventEmitter();
@@ -54,7 +57,7 @@ var getNewsDetail = function(entry) {
       return;
     }
     var jObj = json.data.detail;
-    var obj = entry;
+    var obj = {};
 
     News.findOne(genFindCmd(site, docid), function(err, result) {
       if(err || result) {
