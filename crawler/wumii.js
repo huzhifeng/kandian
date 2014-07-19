@@ -399,7 +399,7 @@ var crawlerSubscribe = function(entry) {
 }
 
 var crawlerWumiiSubscribes = function() {
-  var subscribes = meizituSubscribes.concat(meizicoSubscribes, chaoyouhuoSubscribes, v7mmSubscribes, showmeiziSubscribes, umeiSubscribes, mobudeSubscribes, yunduoSubscribes, ameiSubscribes);
+  var subscribes = meizituSubscribes.concat(meizicoSubscribes, umeiSubscribes, ameiSubscribes);
   subscribes.forEach(function(entry) {
     if(!crawlFlag && entry.stopped) {
       return;
