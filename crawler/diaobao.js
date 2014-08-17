@@ -212,4 +212,6 @@ var init = function() {
 exports.main = main;
 exports.diaobaoTags = diaobaoSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

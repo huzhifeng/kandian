@@ -1,19 +1,27 @@
 #!/usr/bin/env node
-process.env.TZ = require('./config').timezone;
 var http = require('http');
+var _ = require('underscore');
 var app = require('./app');
-var neteaseCrawler = require('./crawler/netease').main;
-var sohuCrawler = require('./crawler/sohu').main;
-var sinaCrawler = require('./crawler/sina').main;
-var qqCrawler = require('./crawler/qq').main;
-var ifengCrawler = require('./crawler/ifeng').main;
-var yokaCrawler = require('./crawler/yoka').main;
-var krCrawler = require('./crawler/kr').main;
-var huxiuCrawler = require('./crawler/huxiu').main;
-var businessvalueCrawler = require('./crawler/businessvalue').main;
-var wumiiCrawler = require('./crawler/wumii').main;
-var diaobaoCrawler = require('./crawler/diaobao').main;
+var logger = require('./logger');
+process.env.TZ = require('./config').timezone;
+var crawlers = [
+  require('./crawler/netease').main,
+  require('./crawler/sohu').main,
+  require('./crawler/ifeng').main,
+  require('./crawler/qq').main,
+  require('./crawler/sina').main,
+  require('./crawler/diaobao').main,
+  require('./crawler/kr').main,
+  require('./crawler/huxiu').main,
+  require('./crawler/businessvalue').main,
+  require('./crawler/yoka').main,
+  require('./crawler/wumii').main,
+];
 
 http.createServer(app).listen(app.get('port'), function(){
-  console.log("Express Start server.js at http://127.0.0.1:" + app.get('port') + "  " + new Date());
+  logger.log('Express Start server.js at http://127.0.0.1:%s', app.get('port'));
+});
+
+_.each(crawlers, function(crawler, i, crawlers) {
+  setTimeout(crawler, i * 1000 * 60 * 10);
 });

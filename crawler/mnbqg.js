@@ -143,4 +143,6 @@ var main = function() {
 }
 
 exports.main = main;
-main();
+if (require.main === module) {
+  main();
+}

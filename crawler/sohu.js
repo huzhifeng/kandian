@@ -595,4 +595,6 @@ var init = function() {
 exports.main = main;
 exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags, videoSubscribes);
 init();
-main();
+if (require.main === module) {
+  main();
+}

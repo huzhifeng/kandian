@@ -272,4 +272,6 @@ var init = function() {
 exports.main = main;
 exports.ifengTags = ifengSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

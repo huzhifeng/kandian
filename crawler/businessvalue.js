@@ -213,4 +213,6 @@ var init = function() {
 exports.main = main;
 exports.businessvalueTags = businessvalueSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

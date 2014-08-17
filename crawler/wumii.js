@@ -539,4 +539,6 @@ var main = function() {
 exports.main = main;
 wumiiTags = meizituSubscribes.concat(meizicoSubscribes,zeiniuSubscribes,hexiesheSubscribes,timetimetimeSubscribes,chaoyouhuoSubscribes,v7mmSubscribes,showmeiziSubscribes,umeiSubscribes,mobudeSubscribes,wuxianbkSubscribes,yunduoSubscribes,ameiSubscribes,mm33Subscribes,jiecao8Subscribes,lequhaSubscribes,hugao8Subscribes);
 init();
-main();
+if (require.main === module) {
+  main();
+}

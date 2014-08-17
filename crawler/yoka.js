@@ -247,4 +247,6 @@ var init = function() {
 exports.main = main;
 exports.yokaTags = yokaSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

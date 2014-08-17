@@ -182,4 +182,6 @@ var init = function() {
 exports.main = main;
 exports.iheimaTags = iheimaSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

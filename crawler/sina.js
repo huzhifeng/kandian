@@ -274,4 +274,6 @@ var init = function() {
 exports.main = main;
 exports.sinaTags = sinaSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

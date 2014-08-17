@@ -379,4 +379,6 @@ var init = function() {
 exports.main = main;
 exports.qqTags = qqSubscribes.concat(otherSubscribes, photoTags);
 init();
-main();
+if (require.main === module) {
+  main();
+}

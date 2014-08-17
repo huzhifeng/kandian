@@ -168,4 +168,6 @@ var init = function() {
 exports.main = main;
 exports.baiduTags = baiduSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

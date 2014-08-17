@@ -195,4 +195,6 @@ var init = function() {
 exports.main = main;
 exports.huxiuTags = huxiuSubscribes;
 init();
-main();
+if (require.main === module) {
+  main();
+}

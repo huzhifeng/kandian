@@ -154,4 +154,6 @@ var init = function() {
 
 exports.main = main;
 init();
-main();
+if (require.main === module) {
+  main();
+}
