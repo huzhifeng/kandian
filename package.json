@@ -9,24 +9,20 @@
     "start": "node server"
   },
   "dependencies": {
+    "async": "*",
+    "cheerio": "*",
+    "connect-flash": "*",
     "express": "~3.0.0",
     "express-hbs": "*",
-    "moment": "*",
-    "connect-flash": "*",
-    "request": "*",
-    "async": "*",
-    "rss": "*",
-    "cheerio": "*",
+    "jsdom": "*",
     "lodash": "*",
-    "config": "*",
+    "moment": "*",
     "mongojs": "*",
-    "xml2json": "*",
-    "jsdom": "*"
-  },
-  "devDependencies": {
-    "grunt": "~0.4.0",
-    "grunt-contrib-cssmin": "~0.4.2",
-    "grunt-contrib-uglify": ">=0.1.0"
+    "request": "*",
+    "rss": "*",
+    "tracer": "^0.7.1",
+    "underscore": "^1.6.0",
+    "xml2json": "*"
   },
   "engines": {
     "node": ">= 0.6.0"

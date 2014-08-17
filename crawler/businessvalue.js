@@ -1,275 +1,216 @@
-﻿var util = require('util');
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
+var _ = require('underscore');
+var moment = require('moment');
+var config = require('../config');
 var News = require('../models/news');
-var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var timestamp2date = utils.timestamp2date;
+var utils = require('../lib/utils');
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
-
+var site = 'businessvalue';
 var headers = {
-  'Content-Type': 'application/x-www-form-urlencoded',
+  'User-Agent':'android-async-http/1.4.4 (http://loopj.com/android-async-http)',
+  'APP_KEY': '38e232e936c33ac8a378fb1820c66a04',
   'Host': 'api.businessvalue.com.cn',
   'Connection': 'Keep-Alive',
-  'User-Agent':'Android',
 };
-
-var site = "businessvalue";
-var categorys = [
-  {cateid:0, first:0, label:"首页", bs_key:"AA97FAE9A19E2C73AEF0E54A8A70F07C", pagesize:10, maxpage:250, tags:['今日看点','硅谷观察','营销大爆炸']},
-  {cateid:4, first:0, label:"特别策划", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:17},
-  {cateid:30, first:0, label:"价值文摘", bs_key:"7E32C1BE34196A11094DB3970BEFA0CD", pagesize:10, maxpage:6},
-  {cateid:11, first:0, label:"先锋", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:11},
-  {cateid:8, first:0, label:"创新潮流", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:19},
-  {cateid:6, first:0, label:"资本动向", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:15},
-  {cateid:7, first:0, label:"企业变革", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:18},
-  {cateid:10, first:0, label:"焦点行业", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:18},
-  {cateid:9, first:0, label:"基本面", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:14},
-  {cateid:14, first:0, label:"新视野", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:28},
-  {cateid:3, first:0, label:"反潮流", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:2},
-  {cateid:5, first:0, label:"对话", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:6},
-  {cateid:12, first:0, label:"CSR竞争力", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:10},
-  {cateid:13, first:0, label:"关键时候", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:5},
-  {cateid:15, first:0, label:"商学院", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:15},
-  {cateid:16, first:0, label:"思想速读", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:10},
-  {cateid:17, first:0, label:"态度", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:20},
-  {cateid:24, first:0, label:"编者的话", bs_key:"177C57B2BD9F7CE4EF6C545C756C9E58", pagesize:10, maxpage:5},
+var businessvalueSubscribes = [
+  {tname:'首页', tid:0, tags:['今日看点', '周末荐书', '硅谷观察', '营销大爆炸']},
 ];
 
-function genBodyHtmlAndImg(obj) {
-  var body = "";
-  var img = [];
-  var text = "";
-  var i = 0;
-  var reg = new RegExp("<img.+?src=[\'\"]http(?!http).+?[\'\"].+?\\/>","g");
-  var regrn = new RegExp("\r\n","g");
-  var regr = new RegExp("\r","g");
-  var regn = new RegExp("\n","g");
-
-  if((!obj) || (!obj.sections)) {
-    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    return "";
-  }
-  if(obj.top_image) {
-    img.push(obj.top_image);
-    body += genLazyLoadHtml(obj.top_image_info, obj.top_image);
-  }
-  if(obj.snippet1) {
-    body += "<h2>浓缩观点</h2>"+obj.snippet1 + "<br />";
-  }
-  if(obj.snippet2) {
-    body += obj.snippet2 + "<br />";
-  }
-  if(obj.snippet3) {
-    body += obj.snippet3 + "<br />";
-  }
-  if(obj.snippet4) {
-    body += obj.snippet4 + "<br />";
-  }
-  if(obj.snippet5) {
-    body += obj.snippet5 + "<br />";
-  }
-  body += "<h2>正文</h2>"
-
-  var sections = obj.sections;
-  for(var key in sections) {
-    var section = sections[key];
-    body += "<br />";
-    if(section.image) {
-      img.push(section.image);
-      body += genLazyLoadHtml(section.image_info, section.image);
-    }
-    if(section.section_title) {
-      body += "<h3>"+section.section_title+"</h3>";
-    }
-    if(section.section_body.length) {
-      text = section.section_body;
-      text = text.replace(reg, function(url){
-        var document = jsdom(url);
-        var e = document.getElementsByTagName('img');
-        url = e[0].getAttribute("src");
-        img.push(url);
-        return genLazyLoadHtml(obj.title, url);
-      });
-      text = text.replace(regrn,function(match) {
-        return "<br/>";
-      });
-      text = text.replace(regr,function(match) {
-        return "<br/>";
-      });
-      text = text.replace(regn,function(match) {
-        return "<br/>";
-      });
-      body += text;
-    }
-  }
-
-  return {"body":body, "img":img};
-}
-
 var startGetDetail = new EventEmitter();
-
 startGetDetail.on('startGetNewsDetail', function (entry) {
   getNewsDetail(entry);
 });
 
 var getNewsDetail = function(entry) {
-  // ACT=43&current_version=android_1.0&android_version=1.4&version=1.6.0&bs_key=3512362EB28C70BF8D8720EB585B1617&via=android&MsgID=articleDetails&entry_id=6492&top_image_width=480&cache=false&load_comments=true&fontType=simple&isHDMode=true
-  var pd = {'ACT':'43', 'current_version':'android_1.0', 'android_version':'1.4', 'version':'1.6.0', 'bs_key':'3512362EB28C70BF8D8720EB585B1617', 'via':'android', 'MsgID':'articleDetails', 'entry_id':entry.entry_id, 'top_image_width':'480', 'cache':'false', 'load_comments':'true', 'fontType':'simple', 'isHDMode':'true'};
-  if(30 == entry.cateid) {
-    pd.bs_key = "79045D343471029727A5606B734AE87F";
-    pd.MsgID = "digestDetails";
-  }
-  var url = 'http://api.businessvalue.com.cn/index.php';
-  var req = {uri: url, method: "POST", headers: headers, form: pd};
-  if(proxyEnable) {
+  var url = util.format('http://api.businessvalue.com.cn/rest/v2/archives/%s?encode=GB18030&is_cached=false&user_guid=0&session_id=&device=androidApp&paragraph_image_width=%5B%22720%22%2C%22original%22%5D&banner=%5B%22720%22%2C%22original%22%5D&market_id=xiaomi&agent=android+MI+2+4.1.1&entity_guid=%s', entry.entity_guid, entry.entity_guid);
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !utils.hasKeys(json, ['headline', 'entity_guid', 'paragraphs', 'summaries'])) {
+      logger.warn('Invalid json data in %s', url);
+      return;
+    }
+    if (!_.isArray(json.paragraphs) || _.isEmpty(json.paragraphs)) {
+      logger.warn('Invalid body in %s', url);
+      return;
+    }
+    if (!_.isArray(json.summaries) || _.isEmpty(json.summaries)) {
+      logger.warn('Invalid digest in %s', url);
       return;
     }
 
-    News.findOne(genFindCmd(site, entry.entry_id), function(err, result) {
-      if(err || result) {
+    News.findOne(utils.genFindCmd(site, entry.entity_guid), function(err, result) {
+      if (err) {
         return;
       }
-      var bodyimg = genBodyHtmlAndImg(json);
-      var obj = json;
-      obj.docid = encodeDocID(site, entry.entry_id);
-      obj.site = site;
-      obj.body = bodyimg.body;
-      obj.img = bodyimg.img;
-      obj.link = "";
-      if(obj.origin) {
-        obj.link = obj.origin; // http://content.businessvalue.com.cn/post/10031.html
-      }else if(obj.short_url) {
-        obj.link = obj.short_url; // http://bvm.bz/4dn
-      }else if(obj.source) {
-        obj.link = obj.source; // http://bvm.bz/4dn
-      }
-      obj.title = entry.title;
-      obj.ptime = timestamp2date(entry.entry_date);
-      obj.time = new Date(Date.parse(obj.ptime));
-      obj.marked = obj.body;
-      obj.created = new Date();
-      obj.views = 1;
-      obj.tags = entry.tagName;
-      obj.digest = genDigest(obj.body);
-      obj.cover = obj.top_image;
-      if (!obj.top_image && obj.img && obj.img[0]) {
-        obj.cover = obj.img[0];
-      }
-
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-        }
-      }); // News.insert
-    }); // News.findOne
-  }); // request
-};
-
-var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
-  var page = 1;
-
-  if(entry.first == 1) {
-    entry.first = 0;
-    MAX_PAGE_NUM = entry.maxpage;
-  }
-
-  for(page=1; page<=MAX_PAGE_NUM; page++) {
-    (function(page) {
-    var url = "http://api.businessvalue.com.cn/index.php";
-    // ACT=43&current_version=android_1.0&android_version=1.4&version=1.6.0&bs_key=177C57B2BD9F7CE4EF6C545C756C9E58&via=android&MsgID=getArticleByCategory&offset=0&limit=10&cat_id=14&fontType=simple
-    // ACT=43&current_version=android_1.0&android_version=1.4&version=1.6.0&bs_key=177C57B2BD9F7CE4EF6C545C756C9E58&via=android&MsgID=getArticleByCategory&offset=11&limit=10&cat_id=14&fontType=simple
-    var pd = {'ACT':'43', 'current_version':'android_1.0', 'android_version':'1.4', 'version':'1.6.0', 'bs_key':entry.bs_key, 'via':'android', 'MsgID':'getArticleByCategory', 'offset':(page-1)*entry.pagesize, 'limit':entry.pagesize, 'cat_id':entry.cateid, 'fontType':'simple'};
-    if(1 != page) {
-      pd.offset = (page-1)*entry.pagesize + 1;
-    }
-    if(30 == entry.cateid) {
-      pd.MsgID = 'getDigestByCategory';
-    }else if(0 == entry.cateid) {
-      pd.MsgID = 'articles';
-      pd.view_type = 'list';
-      pd.sort = 'time';
-      delete pd.cat_id;
-    }
-    var req = {uri: url, method: "POST", headers: headers, form: pd};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
-    }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
-        return;
-      }
-      var news_num = (30 == entry.cateid)?json.digests_num:json.articles_num;
-      if(parseInt(news_num) <= 0) {
-        return;
-      }
-      var newsList = (30 == entry.cateid)?json.digests:json.articles;
-      if(!newsList) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():newsList empty in url " + url);
-        return;
-      }
-      var articles = [];
-      for(var k in newsList) {
-        articles.push(newsList[k]);
-      }
-      newsList = articles;
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.entry_id) {
+      if (result) {
+        if (updateFlag) {
+          entry.updateFlag = 1;
+        } else {
           return;
         }
-        newsEntry.tagName = entry.label;
-        newsEntry.cateid = entry.cateid;
-        newsEntry.pageindex = page;
-
-        if(entry.tags) {
-          var flag = 0;
-          for(var i=0; i<entry.tags.length; i++) {
-            if(newsEntry.title.indexOf(entry.tags[i]) !== -1) {
-              flag = 1;
-              newsEntry.tagName = entry.tags[i];
-              break;
-            }
+      }
+      var jObj = json;
+      var obj = {};
+      obj.docid = utils.encodeDocID(site, entry.entity_guid);
+      obj.site = site;
+      obj.link = jObj.external_link || util.format('http://content.businessvalue.com.cn/post/%s.html', entry.entity_guid);
+      obj.title = entry.headline;
+      var t1 = moment(parseInt(jObj.time_created, 10) * 1000);
+      var t2 = moment(parseInt(entry.time_created, 10) * 1000);
+      var t3 = moment(parseInt(entry.edit_date, 10) * 1000);
+      var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
+      if (!ptime.isValid()) {
+        logger.warn('Invalid time in %s', url);
+        return;
+      }
+      obj.time = ptime.toDate();
+      obj.created = new Date();
+      obj.views = entry.updateFlag ? result.views : 1;
+      obj.tags = entry.tagName;
+      obj.digest = jObj.summaries.join();
+      if (_.has(jObj, 'banner') && _.has(jObj.banner, 'original')) {
+        obj.marked = utils.genLazyLoadHtml('', jObj.banner.original.url);
+        obj.cover = _.has(jObj.banner, '720') ? jObj.banner['720'].url : jObj.banner.original.url;
+      }
+      obj.marked += '<h2>浓缩观点</h2>';
+      _.each(jObj.summaries, function(summary, i, summaries) {
+        obj.marked += summary + '<hr>';
+      });
+      _.each(jObj.paragraphs, function(paragraph, i, paragraphs) {
+        if (!utils.hasKeys(paragraph, ['paragraph_header', 'paragraph_body']) || (!paragraph.paragraph_header && !paragraph.paragraph_body)) {
+          return;
+        }
+        obj.marked += '<br /><h3>' + paragraph.paragraph_header + '</h3>';
+        if (utils.hasKeys(paragraph.paragraph_image, ['original', '720'])) {
+          obj.marked += utils.genLazyLoadHtml(paragraph.paragraph_header, paragraph.paragraph_image.original.url);
+          if (!obj.cover) {
+            obj.cover = paragraph.paragraph_image['720'].url;
           }
-          if(!flag) {
+        }
+        obj.marked += paragraph.paragraph_body
+      });
+      obj.marked = obj.marked.replace(/\r\n/g, '<br />').replace(/\r/g, '<br />').replace(/\n/g, '<br />');
+
+      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, entry.aid, obj.docid, entry.updateFlag);
+      if (entry.updateFlag) {
+        News.update({docid: obj.docid}, obj, function (err, result) {
+          if (err || !result) {
+            logger.warn('update error: %j', err);
+          }
+        });
+      } else {
+        News.insert(obj, function (err, result) {
+          if (err) {
+            logger.warn('insert error: %j', err);
+          }
+        });
+      }
+    });
+  });
+};
+
+var crawlerSubscribe = function (entry) {
+  var url = 'http://api.businessvalue.com.cn/rest/v2/archives/?' +
+            'encode=GB18030&orderby=recent&sort=DESC&user_guid=0&session_id=' +
+            '&device=androidApp&subtypes=%5B%22article%22%5D' +
+            util.format('&offset=%d&market_id=xiaomi&agent=android+MI+2+4.1.1&limit=%d',
+                        entry.page * entry.pageSize, entry.pageSize);
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !utils.hasKeys(json, ['item_total_rows', 'items'])) {
+      logger.warn('Invalid json data in %s', url);
+      return;
+    }
+    var newsList = json.items;
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if (!utils.hasKeys(newsEntry, ['headline', 'entity_guid'])) {
+        return;
+      }
+      newsEntry.tagName = utils.findTagName(newsEntry.headline, entry);
+      if (!newsEntry.tagName) {
+        return;
+      }
+      News.findOne(utils.genFindCmd(site, newsEntry.entity_guid), function(err, result) {
+        if (err) {
+          return;
+        }
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
             return;
           }
         }
-
-        News.findOne(genFindCmd(site, newsEntry.entry_id), function(err, result) {
-          if(err || result) {
-            return;
-          }
-          startGetDetail.emit('startGetNewsDetail', newsEntry);
-        }); // News.findOne
-      });//forEach
-    });//request
-    })(page);
-  }//for
+        startGetDetail.emit('startGetNewsDetail', newsEntry);
+      });
+    });
+    if (entry.crawlFlag) {
+      if (newsList.length === entry.pageSize) {
+        entry.page += 1;
+        logger.info('[%s] next page: %d', entry.tname, entry.page);
+        setTimeout(crawlerSubscribe, 3000, entry);
+      }else {
+        logger.info('[%s] last page: %d', entry.tname, entry.page);
+        entry.crawlFlag = 0;
+      }
+    }
+  });
 };
 
-var businessvalueCrawler = function() {
-  console.log('Start businessvalueCrawler() at ' + new Date());
-  categorys.forEach(function(entry) {
-    crawlerCategory(entry);
+var crawlerBusinessvalueSubscribes = function () {
+  businessvalueSubscribes.forEach(function(entry) {
+    if (!crawlFlag && entry.stopped) {
+      return;
+    }
+    entry.page = 0;
+    entry.pageSize = 10;
+    crawlerSubscribe(entry);
   });
-
-  setTimeout(businessvalueCrawler, 4000 * 60 * 60);
 }
 
-exports.businessvalueCrawler = businessvalueCrawler;
-businessvalueCrawler();
+var main = function() {
+  logger.log('Start');
+  crawlerBusinessvalueSubscribes();
+  setTimeout(main, config.crawlInterval);
+}
+
+var init = function() {
+  if (process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
+  businessvalueSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+}
+
+exports.main = main;
+exports.businessvalueTags = businessvalueSubscribes;
+init();
+main();

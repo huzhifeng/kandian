@@ -1,4 +1,4 @@
-﻿var util = require('util');
+var util = require('util');
 var request = require('request');
 var xml2json = require('xml2json');
 var Image = require('../models/image');
@@ -21,7 +21,7 @@ var crawlerCategory = function (entry) {
   var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
   var page = 1;
 
-  if(entry.first == 1) {
+  if (entry.first == 1) {
     entry.first = 0;
     MAX_PAGE_NUM = entry.maxpage;
   }
@@ -31,28 +31,28 @@ var crawlerCategory = function (entry) {
     //http://newxml3.b0.upaiyun.com/3/1_2.xml
     var url = util.format('http://newxml3.b0.upaiyun.com/3/%d_%d.xml', entry.id, page);
     var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
+    if (proxyEnable) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      if(err || (res.statusCode != 200) || (!body)) {
+      if (err || (res.statusCode != 200) || (!body)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory().request():error");
         console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
         return;
       }
       var json = xml2json.toJson(body,{object:true, sanitize:false});
-      if(!json) {
+      if (!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory().xml2json() error");
         return;
       }
       var imageList = json.list.i;
-      if((!imageList) || (!imageList.length) || (imageList.length <= 0)) {
+      if ((!imageList) || (!imageList.length) || (imageList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():imageList empty in url " + url);
         return;
       }
       imageList.forEach(function(imageEntry) {
         Image.findOne({'site':site, 'id':imageEntry.id}, function(err, result) {
-          if(err || result) {
+          if (err || result) {
             return;
           }
           var obj = imageEntry;
@@ -64,7 +64,7 @@ var crawlerCategory = function (entry) {
           obj.middleImgs = [];
           obj.originalImgs = [];
           obj.num = imageEntry.c - 1;
-          if(obj.num < 1) {
+          if (obj.num < 1) {
             console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), no image");
             return;
           }
@@ -83,7 +83,7 @@ var crawlerCategory = function (entry) {
 
           console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+obj.tags+"]"+",id="+obj.id+",imgid="+obj.imgid);
           Image.insert(obj, function (err, result) {
-            if(err) {
+            if (err) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.insert():error " + err);
               return;
             }
@@ -98,23 +98,23 @@ var crawlerCategory = function (entry) {
 var initCatalogList = function() {
   var url = 'http://newxml3.b0.upaiyun.com/3/tab.xml';
   var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    if(err || (res.statusCode != 200) || (!body)) {
+    if (err || (res.statusCode != 200) || (!body)) {
       console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():error");
       console.log(err);console.log(url);/*console.log(util.inspect(res));*/console.log(body);
       return;
     }
     var json = xml2json.toJson(body,{object:true, sanitize:false});
-    if(!json) {
+    if (!json) {
       console.log("hzfdbg file[" + __filename + "]" + " initCatalogList().xml2json() error");
       return;
     }
     //console.log(util.inspect(json.app.tabs));
     var catalogList = json.app.tabs.t;
-    if((!catalogList) || (!catalogList.length) || (catalogList.length <= 0)) {
+    if ((!catalogList) || (!catalogList.length) || (catalogList.length <= 0)) {
       console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():catalogList empty in url " + url);
       return;
     }
@@ -129,18 +129,18 @@ var initCatalogList = function() {
 
 var crawlerAllCategory = function() {
   categorys.forEach(function(entry) {
-    //if(entry.id == 250)
+    //if (entry.id == 250)
     crawlerCategory(entry);
   });//forEach
 
   setTimeout(crawlerAllCategory, 1000 * 60 * 60 * 8); // 8 hours
 }
 
-var mnbqgCrawler = function() {
-  console.log('Start mnbqgCrawler() at ' + new Date());
+var main = function() {
+  console.log('Start main() at ' + new Date());
   initCatalogList();
   setTimeout(crawlerAllCategory, 1000 * 5); // delay 5 seconds
 }
 
-exports.mnbqgCrawler = mnbqgCrawler;
-mnbqgCrawler();
+exports.main = main;
+main();

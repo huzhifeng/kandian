@@ -1,11 +1,11 @@
-﻿var util = require('util');
+var util = require('util');
 var request = require('request');
 //var fs = require('fs');
 //var http = require('http-get');
 var Image = require('./models/image');
 var utils = require('../lib/utils')
 var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
+var parseJSON = utils.parseJSON;
 var site = "xgmn";
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
@@ -382,7 +382,7 @@ var crawlerCategory = function (entry) {
   var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
   var page = 1;
 
-  if(entry.first == 1) {
+  if (entry.first == 1) {
     entry.first = 0;
     MAX_PAGE_NUM = entry.maxpage;
   }
@@ -392,23 +392,23 @@ var crawlerCategory = function (entry) {
     //http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/GetCataloguePictures.php?catalogueId=28&currentPage=2&pageSize=15
     var url = util.format('http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/GetCataloguePictures.php?catalogueId=%d&currentPage=%d&pageSize=%d', entry.id, page, entry.pagesize);
     var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
+    if (proxyEnable) {
       req.proxy = proxyUrl;
     }
     request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json) {
+      var json = parseJSON(err, res, body);
+      if (!json) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
         return;
       }
       var imageList = json.returnContent;
-      if((!imageList) || (!imageList.length) || (imageList.length <= 0)) {
+      if ((!imageList) || (!imageList.length) || (imageList.length <= 0)) {
         console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():imageList empty in url " + url);
         return;
       }
       imageList.forEach(function(imageEntry) {
         Image.findOne({'site':site, 'id':imageEntry.itemId}, function(err, result) {
-          if(err || result) {
+          if (err || result) {
             return;
           }
           var obj = imageEntry;
@@ -448,7 +448,7 @@ var crawlerCategory = function (entry) {
 
           console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():["+obj.tags+"]"+",id="+obj.id+",imgid="+obj.imgid);
           Image.insert(obj, function (err, result) {
-            if(err) {
+            if (err) {
               console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory(), Image.insert():error " + err);
             }
           }); // Image.insert
@@ -469,7 +469,7 @@ var initCatalogList = function() {
   /*categorys.forEach(function(entry) {
     var dir = './test/image/'+entry.name;
     fs.stat(dir, function(err, stat){
-      if(err){
+      if (err){
         console.log('initCatalogList(),mkdir:'+dir);
         fs.mkdirSync(dir, 0766);
       }
@@ -477,17 +477,17 @@ var initCatalogList = function() {
   });*/
   //var url = 'http://beautyimage.xicp.net/web/beautyimage/APIV1_4_NewPay/Catalogue.php';
   //var req = {uri: url, method: "GET", headers: headers};
-  //if(proxyEnable) {
+  //if (proxyEnable) {
   //  req.proxy = proxyUrl;
   //}
   //request(req, function (err, res, body) {
-  //  var json = data2Json(err, res, body);
-  //  if(!json || (json.returnMsg != 'sucess')) {
+  //  var json = parseJSON(err, res, body);
+  //  if (!json || (json.returnMsg != 'sucess')) {
   //    console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():JSON.parse() error");
   //    return;
   //  }
   //  var catalogList = json.returnContent.CataLogList;
-  //  if((!catalogList) || (!catalogList.length) || (catalogList.length <= 0)) {
+  //  if ((!catalogList) || (!catalogList.length) || (catalogList.length <= 0)) {
   //    console.log("hzfdbg file[" + __filename + "]" + " initCatalogList():catalogList empty in url " + url);
   //    return;
   //  }
@@ -508,11 +508,11 @@ var crawlerAllCategory = function() {
   setTimeout(crawlerAllCategory, 1000 * 60 * 60 * 8); // 8 hours
 }
 
-var xgmnCrawler = function() {
-  console.log('Start xgmnCrawler() at ' + new Date());
+var main = function() {
+  console.log('Start main() at ' + new Date());
   initCatalogList();
   setTimeout(crawlerAllCategory, 1000 * 5); // delay 5 seconds
 }
 
-exports.xgmnCrawler = xgmnCrawler;
-xgmnCrawler();
+exports.main = main;
+main();

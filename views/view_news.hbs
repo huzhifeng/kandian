@@ -2,7 +2,7 @@
   <div class="page-header">
     <h2>{{news.title}}</h2>
     <small>
-        <em>来源: {{news.site}},&nbsp;&nbsp;{{news.ptime}},
+        <em>来源: {{news.site}},&nbsp;&nbsp;{{timeFormat news.time}},
             &nbsp;&nbsp;<a href="/tag/{{news.tags}}">{{news.tags}}</a>,
             &nbsp;&nbsp;{{#if news.views}}{{news.views}}{{else}}2{{/if}} 人围观,
             &nbsp;&nbsp;<a href="#comments"><span class="ds-thread-count" data-thread-key="{{news.docid}}"></span></a>
@@ -42,8 +42,8 @@ document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static
   <li class="span2">
     <a href="/news/{{this.docid}}" title="{{this.title}}">
     <div class="thumbnail">
-      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="200" height="150">
-      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="200" height="150"></noscript>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover}}" alt="{{this.title}}" width="200" height="150">
+      <noscript><img src="{{miniImg this.cover}}" alt="{{this.title}}" width="200" height="150"></noscript>
       <h6>{{this.title}}</h6>
     </div>
     </a>

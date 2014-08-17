@@ -1,17 +1,14 @@
-﻿var util = require('util');
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
+var _ = require('underscore');
+var moment = require('moment');
+var config = require('../config');
 var News = require('../models/news');
-var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genJwPlayerEmbedCode = utils.genJwPlayerEmbedCode;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag;
-
+var utils = require('../lib/utils');
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
@@ -98,118 +95,149 @@ var getNewsDetail = function(entry) {
   // http://api.3g.ifeng.com/ipadtestdoc?aid=74868287&channel=%E6%96%B0%E9%97%BB
   // http://api.3g.ifeng.com/ipadtestdoc?aid=74868287
   // http://api.3g.ifeng.com/ipadtestdoc?aid=imcp_74868287
-  var docid = util.format("%s",entry.documentId);
+  var docid = util.format('%s',entry.documentId);
   var url = entry.id;
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json.body || !json.body.text) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():[" + entry.tagName + "] json null");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !_.has(json, 'body') || !_.has(json.body, 'text')) {
+      logger.warn('Invalid json data %j in %s', json, res ? res.request.href : url);
       return;
     }
     var jObj = json.body;
-    var obj = entry;
-    News.findOne(genFindCmd(site, docid), function(err, result) {
-      if(err || result) {
+    var obj = {};
+    News.findOne(utils.genFindCmd(site, docid), function(err, result) {
+      if (err) {
         return;
       }
-      obj.docid = encodeDocID(site, docid);
+      if (result) {
+        if (updateFlag) {
+          entry.updateFlag = 1;
+        } else {
+          return;
+        }
+      }
+      obj.docid = utils.encodeDocID(site, docid);
       obj.site = site;
-      obj.body = '';
-      if(jObj.videos) {
-        for(var i=0; i<jObj.videos.length; i++) {
-          obj.body += genJwPlayerEmbedCode(util.format("vid_%s", jObj.videos[i].guid), jObj.videos[i].video.HD.src || jObj.videos[i].video.Normal.src, jObj.videos[i].thumbnail, i===0);
-        }
+      obj.link = jObj.wapurl || jObj.wwwurl || jObj.shareurl || util.format('http://i.ifeng.com/news?aid=%s', docid);
+      obj.title = entry.title || jObj.title;
+      var t1 = moment(entry.updateTime);
+      var t2 = moment(jObj.editTime);
+      var t3 = moment(entry.editTime);
+      var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
+      if (!ptime.isValid()) {
+        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        return;
       }
-      obj.body += jObj.text.replace(/width=["']140["']/g, '');
-      obj.img = jObj.img;
-      if(jObj.wapurl) {
-        obj.link = jObj.wapurl; // http://i.ifeng.com/news?aid=74868287
-      }else if(jObj.wwwurl) {
-        obj.link = jObj.wwwurl; // http://wap.ifeng.com/news.jsp?aid=74868287
-      }else if(jObj.shareurl) {
-        obj.link = jObj.shareurl; // http://i.ifeng.com/news/sharenews.f?aid=74868287
-      }else {
-        obj.link = util.format("http://i.ifeng.com/news?aid=%s", docid); // http://i.ifeng.com/news?aid=74868287
+      obj.time = ptime.toDate();
+      obj.cover = entry.thumbnail || jObj.thumbnail || '';
+      obj.marked = '';
+      if (_.isArray(jObj.videos) && !_.isEmpty(jObj.videos)) {
+        _.each(jObj.videos, function(v, i, videos) {
+          if (!utils.hasKeys(v, ['guid', 'thumbnail', 'video'])) {
+            logger.info('Invalid video data %j', v);
+            return;
+          }
+          if (!obj.cover) {
+            obj.cover = v.thumbnail;
+          }
+          obj.marked += utils.genJwPlayerEmbedCode(util.format('vid_%s', v.guid),
+            v.video.HD.src || v.video.Normal.src, v.thumbnail, i === 0);
+          if (!obj.hasVideo) {
+            obj.hasVideo = 1;
+          }
+        });
       }
-      obj.title = entry.title;
-      obj.ptime = jObj.editTime; // 2014-01-12 13:30:00
-      obj.time = Date.parse(obj.ptime); // 1389504600000
-      obj.marked = obj.body;
+      obj.marked += jObj.text.replace(/width=["']140["']/g, '');
       obj.created = new Date();
-      obj.views = 1;
+      obj.views = entry.updateFlag ? result.views : 1;
       obj.tags = entry.tagName;
-      obj.digest = genDigest(obj.body);
-      if(entry.thumbnail) {
-        obj.cover = entry.thumbnail;
-      } else if(jObj.thumbnail) {
-        obj.cover = jObj.thumbnail;
-      } else if(obj.img[0]) {
-        obj.cover = obj.img[0].url;
-      }else {
-        obj.cover = '';
-        console.log("hzfdbg file[" + __filename + "] could not fine a cover");
-      }
+      obj.digest = utils.genDigest(jObj.text);
 
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-        }
-      }); // News.insert
+      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      if (entry.updateFlag) {
+        News.update({docid: obj.docid}, obj, function (err, result) {
+          if (err || !result) {
+            logger.warn('update error: %j', err);
+          }
+        }); // News.update
+      } else {
+        News.insert(obj, function (err, result) {
+          if (err) {
+            logger.warn('insert error: %j', err);
+          }
+        }); // News.insert
+      }
     }); // News.findOne
   });// request
 };
 
 var crawlerSubscribe = function (entry) {
   var url = util.format('http://api.3g.ifeng.com/android2GList?id=aid=ORIGIN%s&type=list&pagesize=20&pageindex=%d', entry.tid, entry.page);
-  if(entry.tid === '1') { // 头条
+  if (entry.tid === '1') { // 头条
     url = util.format('http://api.3g.ifeng.com/iosNews?id=SYLB10,SYDT10&page=%d&gv=4.1.5&av=4.1.5&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005', entry.page);
-  }else if(entry.tid === 'YC10') { // 非新闻
+  }else if (entry.tid === 'YC10') { // 非新闻
     url = util.format('http://api.3g.ifeng.com/iosNews?id=YC10&page=%d&gv=4.1.5&av=4.1.5&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005', entry.page);
   }
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json[0] || !json[0].body || !json[0].body.item) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+    var json = utils.parseJSON(err, res, body);
+    if (!_.isArray(json) ||
+        _.isEmpty(json) ||
+        !_.has(json[0], 'body') ||
+        !_.has(json[0].body, 'item')) {
+      logger.warn('Invalid json data in %s', res ? res.request.href : url);
       return;
     }
     var newsList = json[0].body.item;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
       return;
     }
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.title || !newsEntry.documentId) {
+      if (!utils.hasKeys(newsEntry, ['documentId', 'title'])) {
         return;
       }
-      newsEntry.tagName = findTagName(newsEntry.title, entry);
-      if(!newsEntry.tagName) {
+      newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
+      if (!newsEntry.tagName) {
         return;
       }
-      News.findOne(genFindCmd(site, newsEntry.documentId), function(err, result) {
-        if(err || result) {
+      News.findOne(utils.genFindCmd(site, newsEntry.documentId), function(err, result) {
+        if (err) {
           return;
+        }
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
         }
         startGetDetail.emit('startGetNewsDetail', newsEntry);
       }); // News.findOne
     });//forEach
-    if(entry.crawlFlag) {
-      if(newsList.length === 20) {
+    if (entry.crawlFlag) {
+      if (newsList.length === 20) {
         entry.page += 1;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
-        setTimeout(function() {
-          crawlerSubscribe(entry);
-        }, 3000); // crawl next page after 3 seconds
+        logger.info('[%s] next page: %d', entry.tname, entry.page);
+        setTimeout(crawlerSubscribe, 3000, entry);
       }else {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
+        logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
       }
     }
@@ -218,22 +246,22 @@ var crawlerSubscribe = function (entry) {
 
 var crawlerIfengSubscribes = function() {
   ifengSubscribes.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
     entry.page = 1;
     crawlerSubscribe(entry);
-  });//forEach
+  });
 }
 
-var ifengCrawler = function() {
-  console.log('Start ifengCrawler() at ' + new Date());
+var main = function() {
+  logger.log('Start');
   crawlerIfengSubscribes();
-  setTimeout(ifengCrawler, 2000 * 60 * 60);
+  setTimeout(main, config.crawlInterval);
 }
 
-var crawlerInit = function() {
-  if(process.argv[2] == 1) {
+var init = function() {
+  if (process.argv[2] == 1) {
     crawlFlag = 1;
   }
   ifengSubscribes.forEach(function(entry) {
@@ -241,7 +269,7 @@ var crawlerInit = function() {
   });
 }
 
-exports.ifengCrawler = ifengCrawler;
+exports.main = main;
 exports.ifengTags = ifengSubscribes;
-crawlerInit();
-ifengCrawler();
+init();
+main();

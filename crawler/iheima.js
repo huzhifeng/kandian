@@ -1,26 +1,17 @@
-﻿var util = require('util');
-var EventEmitter = require('events').EventEmitter;
+var util = require('util');
 var request = require('request');
+var _ = require('underscore');
+var moment = require('moment');
+var config = require('../config');
 var News = require('../models/news');
 var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var timestamp2date = utils.timestamp2date;
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
-
-var site = "iheima";
-var headers = {
-  'app': '43',
-  'device': 'aries',
-  'Host': 'zhiyue.cutt.com',
-  'Connection': 'Keep-Alive',
-  'User-Agent': 'app43 2.0 (Xiaomi,MI 2; Android 4.1.1)'
-};
-var iheimaTags = [
+var site = 'iheima';
+var tags = [
   '每日一黑马',
   '案例',
   '每日黑马',
@@ -39,163 +30,156 @@ var iheimaTags = [
   '大买家',
   '黑马YY',
 ];
-var categorys = [
-  {cateid:1, label:"抄本质", clipId:"100238521", pagesize:20, curpage:0, maxpage:2, offset:0},
-  {cateid:2, label:"找灵感", clipId:"100238528", pagesize:20, curpage:0, maxpage:2, offset:0},
-  //{cateid:3, label:"挖黑马", clipId:"100238575", pagesize:20, curpage:0, maxpage:2, offset:0},
-  //{cateid:4, label:"项目诊断", clipId:"100238675", pagesize:20, curpage:0, maxpage:2, offset:0},
-  //{cateid:5, label:"评热点", clipId:"100185712", pagesize:20, curpage:0, maxpage:2, offset:0},
-  //{cateid:6, label:"国外精选", clipId:"100238826", pagesize:20, curpage:0, maxpage:2, offset:0},
+var iheimaSubscribes = [
+  {tname: '抄本质', tid: '100238521', tags: tags},
+  {tname: '找灵感', tid: '100238528', tags: tags},
+  {tname: '挖黑马', tid: '100238575', tags: tags},
+  //{tname: '项目诊断', tid: '100238675', tags: tags},
+  //{tname: '评热点', tid: '100185712', tags: tags},
+  //{tname: '国外精选', tid: '100238826', tags: tags},
 ];
 
-var startGetDetail = new EventEmitter();
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
-});
-
-function genBodyHtmlAndImg(obj) {
-  var body = "";
-  var img = [];
-  var text = "";
-  var reg = new RegExp("##zhiyueImageTag##.+?##zhiyueImageTag##","g");
-  var regrn = new RegExp("\r\n","g");
-  var regr = new RegExp("\r","g");
-  var regn = new RegExp("\n","g");
-
-  if((!obj) || (!obj.content)) {
-    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    return "";
-  }
-
-  if(obj.note) {
-    body += "<h2>浓缩观点</h2>"+obj.note + "<br />";
-  }
-
-  if(obj.content.length) {
-    text = obj.content;
-    text = text.replace(reg, function(url){
-      url = url.replace("##zhiyueImageTag##","");
-      url = url.replace("##zhiyueImageTag##","");
-      url = util.format("http://img1.cutt.com/img/%s", url);
-      img.push(url);
-      return genLazyLoadHtml(obj.title, url);
-    });
-    text = text.replace(regrn,function(match) {
-      return "<br/>";
-    });
-    text = text.replace(regr,function(match) {
-      return "<br/>";
-    });
-    text = text.replace(regn,function(match) {
-      return "<br/>";
-    });
-    body += text;
-  }
-
-  return {"body":body, "img":img};
-}
-
-var getNewsDetail = function(entry) {
-  var bodyimg = genBodyHtmlAndImg(entry);
-
-  News.findOne(genFindCmd(site, entry.id), function(err, result) {
-    if(err || result) {
-      return;
-    }
-    var obj = entry;
-    obj.docid = encodeDocID(site, entry.id);
-    obj.site = site;
-    obj.body = bodyimg.body;
-    obj.img = bodyimg.img;
-    obj.link = "";
-    if(obj.cuttURL) { // http://hyb.im/43/1jAN5H
-      obj.link = obj.cuttURL;
-    }else if(obj.url) {
-      obj.link = obj.url; // http://www.iheima.com/archives/46814.html
-    }
-    obj.title = entry.title;
-    obj.ptime = timestamp2date(entry.articleTime); // entry.timestamp
-    obj.time = new Date(Date.parse(obj.ptime));
-    obj.marked = obj.body;
-    obj.created = new Date();
-    obj.views = 1;
-    obj.tags = entry.tagName;
-    obj.digest = genDigest(obj.body);
-    obj.cover = "";
-    if (obj.imageId) {
-      obj.cover = util.format("http://img1.cutt.com/img/%s", obj.imageId); // http://img1.cutt.com/img/120612080915925554292423
-    }else if(obj.img[0]) {
-      obj.cover = obj.img[0];
-    }
-
-    console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-    News.insert(obj, function (err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-      }
-    }); // News.insert
-  }); // News.findOne
-};
-
-var crawlerCategory = function (entry) {
-  //http://zhiyue.cutt.com/api/clip/items?clipId=100238521&full=1&offset=0&note=1
-  //http://zhiyue.cutt.com/api/clip/items?clipId=100238521&full=1&offset=3896353985&note=1
-  var url = util.format("http://zhiyue.cutt.com/api/clip/items?clipId=%s&full=1&offset=%s&note=1", entry.clipId, entry.offset);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+var crawlerSubscribe = function (entry) {
+  var url = util.format('http://zhiyue.cutt.com/api/clip/items?clipId=%s&full=1&offset=%s&note=1', entry.tid, entry.page);
+  var headers = {
+    'app': '43',
+    'device': 'aries',
+    'Host': 'zhiyue.cutt.com',
+    'Connection': 'Keep-Alive',
+    'User-Agent': 'app43 2.0 (Xiaomi,MI 2; Android 4.1.1)'
+  };
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json.articles) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !utils.hasKeys(json, ['articles', 'next'])) {
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json.articles;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():newsList empty in url " + url);
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
-    entry.curpage += 1;
-    if((-1 == json.next) || (entry.curpage >= entry.maxpage)) {
-      entry.curpage = 0;
-      entry.offset = 0;
-    }else {
-      entry.offset = json.next;
-      setTimeout(function() {
-        crawlerCategory(entry);
-      }, 100);
-    }
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.title || !newsEntry.id) {
+      if (!utils.hasKeys(newsEntry, ['title', 'id', 'content', 'articleTime', 'timestamp'])) {
         return;
       }
-      for(var i=0; i<iheimaTags.length; i++) {
-        if (newsEntry.title.indexOf(iheimaTags[i]) !== -1) {
-          newsEntry.tagName = iheimaTags[i];
-          newsEntry.cateid = entry.cateid;
-
-          News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-            if(err || result) {
-              return;
+      newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
+      if (!newsEntry.tagName) {
+        return;
+      }
+      News.findOne(utils.genFindCmd(site,newsEntry.id), function(err, result) {
+        if (err) {
+          return;
+        }
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
+        }
+        var obj = {};
+        obj.docid = utils.encodeDocID(site, newsEntry.id);
+        obj.site = site;
+        obj.link = newsEntry.url || newsEntry.cuttURL;
+        obj.title = newsEntry.title;
+        var t1 = moment(parseInt(newsEntry.articleTime, 10) * 1000);
+        var t2 = moment(parseInt(newsEntry.timestamp, 10) * 1000);
+        var ptime = t1.isValid() ? t1 : t2;
+        if (!ptime.isValid()) {
+          logger.warn('Invalid time in %s', url);
+          return;
+        }
+        obj.time = ptime.toDate();
+        obj.created = new Date();
+        obj.views = newsEntry.updateFlag ? result.views : 1;
+        obj.tags = newsEntry.tagName;
+        if (newsEntry.imageId) {
+          obj.cover = util.format('http://img1.cutt.com/img/%s', newsEntry.imageId);
+        }
+        obj.marked = '';
+        if (newsEntry.note) {
+          obj.marked += '<h2>浓缩观点</h2>'+newsEntry.note + '<br />';
+        }
+        obj.marked += newsEntry.content;
+        obj.marked = obj.marked.replace(/\r\n/g, '<br />').replace(/\r/g, '<br />').replace(/\n/g, '<br />');
+        if (_.isArray(newsEntry.imageIds) && !_.isEmpty(newsEntry.imageIds)) {
+          _.each(newsEntry.imageIds, function(imageId, i, imageIds) {
+            var imageTag = util.format('##zhiyueImageTag##%s##zhiyueImageTag##', imageId);
+            var src = util.format('http://img1.cutt.com/img/%s', imageId);
+            obj.marked = obj.marked.replace(imageTag, utils.genLazyLoadHtml('', src));
+            if (!obj.cover) {
+              obj.cover = src;
             }
-            startGetDetail.emit('startGetNewsDetail', newsEntry);
-          }); // News.findOne
-          break;
-        } // if
-      }//for
-    });//forEach
-  });//request
+          });
+        }
+        obj.digest = utils.genDigest(obj.marked);
+
+        logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, newsEntry.id, obj.docid, newsEntry.updateFlag);
+        if (newsEntry.updateFlag) {
+          News.update({docid: obj.docid}, obj, function (err, result) {
+            if (err || !result) {
+              logger.warn('update error: %j', err);
+            }
+          });
+        } else {
+          News.insert(obj, function (err, result) {
+            if (err) {
+              logger.warn('insert error: %j', err);
+            }
+          });
+        }
+      });
+    });
+    if (entry.crawlFlag) {
+      if (newsList.length === entry.pageSize && json.next != -1) {
+        entry.page = json.next;
+        logger.info('[%s] next page: %d', entry.tname, entry.page);
+        setTimeout(crawlerSubscribe, 3000, entry);
+      }else {
+        logger.info('[%s] last page: %d', entry.tname, entry.page);
+        entry.crawlFlag = 0;
+      }
+    }
+  });
 };
 
-var iheimaCrawler = function() {
-  console.log('Start iheimaCrawler() at ' + new Date());
-  categorys.forEach(function(entry) {
-    crawlerCategory(entry);
+var crawlerSubscribes = function() {
+  iheimaSubscribes.forEach(function(entry) {
+    if (!crawlFlag && entry.stopped) {
+      return;
+    }
+    entry.page = 0;
+    entry.pageSize = 20;
+    crawlerSubscribe(entry);
   });
-
-  setTimeout(iheimaCrawler, 8000 * 60 * 60);
 }
 
-exports.iheimaCrawler = iheimaCrawler;
-iheimaCrawler();
+var main = function() {
+  logger.log('Start');
+  crawlerSubscribes();
+  setTimeout(main, config.crawlInterval);
+}
+
+var init = function() {
+  if (process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
+  iheimaSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+}
+
+exports.main = main;
+exports.iheimaTags = iheimaSubscribes;
+init();
+main();

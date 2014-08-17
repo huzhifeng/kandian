@@ -1,32 +1,18 @@
-﻿var util = require('util');
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
+var _ = require('underscore');
+var moment = require('moment');
+var config = require('../config');
 var News = require('../models/news');
-var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var timestamp2date = utils.timestamp2date;
+var utils = require('../lib/utils');
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
-
-var site = "huxiu";
-var headers = {
-  'mAuthorKey': '',
-  'x-uid': '',
-  'x-username': '',
-  'x-platform': 'AndroidMI 2',
-  'x-machine-id': '00000000-7c2c-2bc9-0000-000000000000',
-  'x-client-version': '0.3.0',
-  'x-app-version': '2',
-  'x-timeline': '1375336249000',
-  'Host': 'android.m.huxiu.com',
-  'Connection': 'Keep-Alive',
-  'User-Agent': 'Apache-HttpClient/UNAVAILABLE (java 1.4)'
-};
-var huxiuTags = [
+var site = 'huxiu';
+var tags = [
   '早报',
   '今日嗅评',
   '娱见',
@@ -34,10 +20,10 @@ var huxiuTags = [
   '大话科技',
   '移动观察',
 ];
-var categorys = [
-  {cateid:1, first:0, label:"看点", name:"/portal/1/", pagesize:20, maxpage:276},
-  {cateid:6, first:0, label:"读点", name:"/portal/6/", pagesize:20, maxpage:18},
-  {cateid:4, first:0, label:"观点", name:"/portal/4/", pagesize:20, maxpage:164},
+var huxiuSubscribes = [
+  {tname:'看点', tid:'1', tags:tags},
+  {tname:'观点', tid:'4', tags:tags},
+  {tname:'读点', tid:'6', tags:tags},
 ];
 
 var startGetDetail = new EventEmitter();
@@ -45,155 +31,168 @@ startGetDetail.on('startGetNewsDetail', function (entry) {
   getNewsDetail(entry);
 });
 
-function genBodyHtmlAndImg(obj) {
-  var body = "";
-  var img = [];
-  var text = "";
-  var j = 0;
-  var reg = new RegExp("<img.+?src=[\'\"]http(?!http).+?[\'\"].+?\\/>","g");
-  var regrn = new RegExp("\r\n","g");
-
-  if((!obj) || (!obj.content)) {
-    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    return "";
-  }
-
-  if(obj.content.length) {
-    text = obj.content;
-    text = text.replace(reg, function(url){
-      var document = jsdom(url);
-      var e = document.getElementsByTagName('img');
-      url = e[0].getAttribute("src");
-      img[j] = url;
-      j += 1;
-      return genLazyLoadHtml(obj.title, url);
-    });
-    text = text.replace(regrn,function(match) {
-      return "<br/>";
-    });
-    body += text;
-  }
-
-  return {"body":body, "img":img};
-}
-
 var getNewsDetail = function(entry) {
-  // http://android.m.huxiu.com/article/17962/1
-  var url = util.format('http://android.m.huxiu.com/article/%s/1', entry.aid);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var url = util.format('http://m.api.huxiu.com/article/%s?screen_size=720&client_ver=5&platform=Android&mid=', entry.aid);
+  var headers = {
+    'User-Agent': 'Apache-HttpClient/UNAVAILABLE (java 1.4)',
+    'Host': 'm.api.huxiu.com',
+    'Connection': 'Keep-Alive'
+  };
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json.content || (json.result && json.result != 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():ret="+json.result);
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !utils.hasKeys(json, ['content', 'result']) || !utils.hasKeys(json.content, ['content', 'summary'])) {
+      logger.warn('Invalid json data in %s', url);
       return;
     }
 
-    News.findOne(genFindCmd(site, entry.aid), function(err, result) {
-      if(err || result) {
+    News.findOne(utils.genFindCmd(site, entry.aid), function(err, result) {
+      if (err) {
         return;
       }
-      var obj = json.content;
-      var bodyimg = genBodyHtmlAndImg(json.content);
-      obj.docid = encodeDocID(site, entry.aid);
-      obj.site = site;
-      obj.body = bodyimg.body;
-      obj.img = bodyimg.img;
-      obj.link = json.content.url;
-      if(!obj.link) {
-        obj.link = util.format("http://www.huxiu.com/article/%s/1.html", entry.aid); // http://www.huxiu.com/article/17962/1.html
-      }
-      obj.title = entry.title;
-      obj.ptime = timestamp2date(entry.dateline);
-      obj.time = new Date(Date.parse(obj.ptime));
-      obj.marked = obj.body;
-      obj.created = new Date();
-      obj.views = 1;
-      obj.tags = entry.tagName;
-      obj.cateid = entry.cateid;
-      obj.pageindex = entry.pageindex;
-      obj.digest = genDigest(obj.body);
-      obj.cover = entry.img;
-      if (!entry.img && obj.img[0]) {
-        obj.cover = obj.img[0];
-      }
-
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-        }
-      }); // News.insert
-    }); // News.findOne
-  }); // request
-};
-
-var crawlerCategory = function (entry) {
-  var MAX_PAGE_NUM = entry.maxpage > 3 ? 3 : entry.maxpage;
-  var page = 1;
-
-  if(entry.first == 1) {
-    entry.first = 0;
-    MAX_PAGE_NUM = entry.maxpage;
-  }
-
-  for(page=1; page<=MAX_PAGE_NUM; page++) {
-    (function(page) {
-    // http://android.m.huxiu.com/portal/1/1
-    var url = util.format("http://android.m.huxiu.com/portal/%d/%d", entry.cateid, page);
-    var req = {uri: url, method: "GET", headers: headers};
-    if(proxyEnable) {
-      req.proxy = proxyUrl;
-    }
-    request(req, function (err, res, body) {
-      var json = data2Json(err, res, body);
-      if(!json || !json.content || (json.result && json.result != 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():JSON.parse() error");
-        return;
-      }
-      var newsList = json.content;
-      if(!newsList || !newsList.length || (newsList.length <= 0)) {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerCategory():newsList empty in url " + url);
-        return;
-      }
-      newsList.forEach(function(newsEntry) {
-        if(!newsEntry.title || !newsEntry.aid) {
+      if (result) {
+        if (updateFlag) {
+          entry.updateFlag = 1;
+        } else {
           return;
         }
-        for(var i=0; i<huxiuTags.length; i++) {
-          if (newsEntry.title.indexOf(huxiuTags[i]) !== -1) {
-            newsEntry.tagName = huxiuTags[i];
-            newsEntry.cateid = entry.cateid;
-            newsEntry.pageindex = page;
-            if("早报" == newsEntry.tagName) {
-              newsEntry.tagName = "虎嗅早报";
-            }
+      }
+      var jObj = json.content;
+      var obj = {};
+      obj.docid = utils.encodeDocID(site, entry.aid);
+      obj.site = site;
+      obj.link = jObj.url || util.format('http://www.huxiu.com/article/%s/1.html', entry.aid);
+      obj.title = entry.title;
+      var t1 = moment(parseInt(jObj.dateline, 10) * 1000);
+      var t2 = moment(parseInt(entry.dateline, 10) * 1000);
+      var t3 = moment(parseInt(entry.updateline, 10) * 1000);
+      var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
+      if (!ptime.isValid()) {
+        logger.warn('Invalid time in %s', url);
+        return;
+      }
+      obj.time = ptime.toDate();
+      obj.created = new Date();
+      obj.views = entry.updateFlag ? result.views : 1;
+      obj.tags = entry.tagName;
+      obj.digest = jObj.summary;
+      obj.marked = jObj.content.replace(/\r\n/g, '<br />').replace(/\r/g, '<br />').replace(/\n/g, '<br />');
+      obj.cover = entry.img || jObj.img || jObj.pic;
 
-            News.findOne(genFindCmd(site,newsEntry.aid), function(err, result) {
-              if(err || result) {
-                return;
-              }
-              startGetDetail.emit('startGetNewsDetail', newsEntry);
-            }); // News.findOne
-            break;
-          } // if
-        }//for
-      });//forEach
-    });//request
-    })(page);
-  }//for
+      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, entry.aid, obj.docid, entry.updateFlag);
+      if (entry.updateFlag) {
+        News.update({docid: obj.docid}, obj, function (err, result) {
+          if (err || !result) {
+            logger.warn('update error: %j', err);
+          }
+        });
+      } else {
+        News.insert(obj, function (err, result) {
+          if (err) {
+            logger.warn('insert error: %j', err);
+          }
+        });
+      }
+    });
+  });
 };
 
-var huxiuCrawler = function() {
-  console.log('Start huxiuCrawler() at ' + new Date());
-  categorys.forEach(function(entry) {
-    crawlerCategory(entry);
+var crawlerSubscribe = function (entry) {
+  var url = util.format('http://m.api.huxiu.com/portal/%s/%d?client_ver=5&platform=Android&mid=', entry.tid, entry.page);
+  var headers = {
+    'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.1.1; MI 2 MIUI/JLB34.0)',
+    'Host': 'm.api.huxiu.com',
+    'Connection': 'Keep-Alive'
+  };
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
+    req.proxy = proxyUrl;
+  }
+  request(req, function (err, res, body) {
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !utils.hasKeys(json, ['content', 'result'])) {
+      logger.warn('Invalid json data in %s', url);
+      return;
+    }
+    var newsList = json.content;
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      return;
+    }
+    newsList.forEach(function(newsEntry) {
+      if (!utils.hasKeys(newsEntry, ['title', 'aid'])) {
+        return;
+      }
+      newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
+      if (!newsEntry.tagName) {
+        return;
+      }
+      News.findOne(utils.genFindCmd(site, newsEntry.aid), function(err, result) {
+        if (err) {
+          return;
+        }
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
+        }
+        startGetDetail.emit('startGetNewsDetail', newsEntry);
+      });
+    });
+    if (entry.crawlFlag) {
+      if ((entry.page === 1) || (newsList.length === entry.pageSize)) {
+        entry.page += 1;
+        logger.info('[%s] next page: %d', entry.tname, entry.page);
+        setTimeout(crawlerSubscribe, 3000, entry);
+      }else {
+        logger.info('[%s] last page: %d', entry.tname, entry.page);
+        entry.crawlFlag = 0;
+      }
+    }
   });
+};
 
-  setTimeout(huxiuCrawler, 4000 * 60 * 60);
+var crawlerHuxiuSubscribes = function () {
+  huxiuSubscribes.forEach(function(entry) {
+    if (!crawlFlag && entry.stopped) {
+      return;
+    }
+    entry.page = 1;
+    entry.pageSize = 20;
+    crawlerSubscribe(entry);
+  });
 }
 
-exports.huxiuCrawler = huxiuCrawler;
-huxiuCrawler();
+var main = function() {
+  logger.log('Start');
+  crawlerHuxiuSubscribes();
+  setTimeout(main, config.crawlInterval);
+}
+
+var init = function() {
+  if (process.argv[2] == 1) {
+    crawlFlag = 1;
+  }
+  huxiuSubscribes.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+}
+
+exports.main = main;
+exports.huxiuTags = huxiuSubscribes;
+init();
+main();

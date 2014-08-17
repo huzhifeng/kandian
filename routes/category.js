@@ -1,6 +1,5 @@
 ﻿var async = require('async');
 var News = require('../models/news');
-var hotQty = require('config').Config.hotQty;
 var categoryTags = {
   'hot': [
     '轻松一刻',
@@ -147,7 +146,11 @@ var index = function (req, res, next) {
     };
     News.page(query, page, function (err, currentPage, pages, result) {
       if (! err) {
-        callback(null, {currentPage: currentPage, pages: pages, newss: result});
+        callback(null, {
+          currentPage: currentPage,
+          pages: pages,
+          newss: result
+        });
       } else {
         callback(err);
       }
@@ -156,13 +159,17 @@ var index = function (req, res, next) {
 
   async.parallel({
     newss: getNewss
-  },
-  function (err, results) {
+  }, function (err, results) {
     if (! err) {
-      res.render('category', {pageTitle: category,
-        currentPage: results.newss.currentPage, pages: results.newss.pages,
-        news: results.newss.newss, category: category, active: category,
-        baseUrl: '/category/' + encodeURIComponent(category) + '/page/'});
+      res.render('category', {
+        pageTitle: category,
+        currentPage: results.newss.currentPage,
+        pages: results.newss.pages,
+        news: results.newss.newss,
+        category: category,
+        active: category,
+        baseUrl: '/category/' + encodeURIComponent(category) + '/page/'
+      });
     } else {
       next(new Error(err.message));
     }

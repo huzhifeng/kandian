@@ -1,11 +1,7 @@
-﻿var async = require('async');
+var async = require('async');
 var News = require('../models/news');
 var Image = require('../models/image');
-var hotQty = require('config').Config.hotQty;
 var utils = require('../lib/utils')
-var mergeDict = utils.mergeDict;
-var decodeDocID = utils.decodeDocID;
-var encodeDocID = utils.encodeDocID;
 
 var index = function (req, res, next) {
   var page = req.params.page || 1;
@@ -26,16 +22,6 @@ var index = function (req, res, next) {
     News.page(cmd, page, function (err, currentPage, pages, result) {
       if (! err) {
         callback(null, {currentPage: currentPage, pages: pages, newss: result});
-      } else {
-        callback(err);
-      }
-    });
-  };
-
-  var getHotNewss = function (callback) {
-    News.findLimit({}, hotQty, {views: -1}, function (err, result) {
-      if (! err) {
-        callback(null, {hotNewss: result});
       } else {
         callback(err);
       }
@@ -100,7 +86,6 @@ var index = function (req, res, next) {
 
   async.parallel({
     newss: getNewss,
-    //hotNewss: getHotNewss,
     latestNews: getLatestNews,
     latestBeauties: getLatestBeauties,
     latestGifs: getLatestGifs,
@@ -136,21 +121,36 @@ var sitemap = function (req, res, next) {
 
 var viewNews = function (req, res, next) {
   var cmd = {"docid": req.params.docid};
-  var decode_id = decodeDocID(req.params.docid);
-  if(decode_id == req.params.docid) {
-    cmd = {"docid": {"$in": [req.params.docid, encodeDocID("netease", req.params.docid), encodeDocID("sohu", req.params.docid), encodeDocID("sina", req.params.docid), encodeDocID("qq", req.params.docid), encodeDocID("ifeng", req.params.docid), encodeDocID("yoka", req.params.docid), encodeDocID("36kr", req.params.docid)]}};
+  var decode_id = utils.decodeDocID(req.params.docid);
+  if (decode_id == req.params.docid) {
+    cmd = {
+      "docid": {
+        "$in": [
+          req.params.docid,
+          utils.encodeDocID("netease", req.params.docid),
+          utils.encodeDocID("sohu", req.params.docid),
+          utils.encodeDocID("sina", req.params.docid),
+          utils.encodeDocID("qq", req.params.docid),
+          utils.encodeDocID("ifeng", req.params.docid),
+          utils.encodeDocID("yoka", req.params.docid),
+          utils.encodeDocID("36kr", req.params.docid)
+        ]
+      }
+    };
   }else {
-    cmd = {"docid": {"$in": [req.params.docid, decode_id]}};
+    cmd = {
+      "docid": {
+        "$in": [
+          req.params.docid,
+          decode_id
+        ]
+      }
+    };
   }
   News.findOne(cmd, function (err, result) {
     if (!err) {
       if (result) {
-        if (result.views && result.views > 0) {
-          result.views += 1;
-        } else {
-          result.views = 2;
-        }
-        News.update({docid: result.docid}, {views: result.views}, function (err4, result4) {
+        News.incViews({docid: result.docid}, {views: 1}, function (err4, result4) {
           if (err4) {
             // next(new Error(err4.message));
           }

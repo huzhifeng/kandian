@@ -1,25 +1,17 @@
-﻿var util = require('util');
-var EventEmitter = require('events').EventEmitter;
+var util = require('util');
 var request = require('request');
-var jsdom = require("jsdom").jsdom;
+var _ = require('underscore');
+var moment = require('moment');
+var jsdom = require('jsdom').jsdom;
+var config = require('../config');
 var News = require('../models/news');
-var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag;
+var utils = require('../lib/utils');
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
-
-var site = "36kr";
-var headers = {
-  'Host': 'apis.36kr.com',
-  'Connection': 'Keep-Alive',
-  'User-Agent':'android-async-http/1.4.1 (http://loopj.com/android-async-http)',
-};
+var site = '36kr';
 var krSubscribes = [
   {
     tname:'首页',
@@ -37,125 +29,97 @@ var krSubscribes = [
   //{tname:'国外资讯', tid:'topics/category/breaking', tags:[]},
   //{tname:'国内资讯', tid:'topics/category/cn-news', tags:[]},
   //{tname:'生活方式', tid:'topics/category/digest', tags:[]},
-  //{tname:'专栏文章', tid:'topics/category/column', tags:[]}, //该栏目没有body_html属性,可以通过util.format("http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710", newsEntry.id)得到
+  //{tname:'专栏文章', tid:'topics/category/column', tags:[]}, //该栏目没有body_html属性,可以通过util.format('http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710', newsEntry.id)得到
 ];
 
-var startGetDetail = new EventEmitter();
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
-});
-
-function genBodyHtmlAndImg(obj) {
-  var body = "";
-  var img = [];
-  var text = "";
-  var j = 0;
-  var reg = new RegExp("<img.+?src=[\'\"]http(?!http).+?[\'\"].+?\\/>","g");
-  var regrn = new RegExp("\r\n","g");
-
-  if((!obj) || (!obj.body_html)) {
-    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtmlAndImg():null");
-    return "";
-  }
-
-  if(obj.body_html.length) {
-    text = obj.body_html;
-    text = text.replace(reg, function(url){
-      var document = jsdom(url);
-      var e = document.getElementsByTagName('img');
-      url = e[0].getAttribute("src");
-      img[j] = url;
-      j += 1;
-      return genLazyLoadHtml(obj.title, url);
-    });
-    text = text.replace(regrn,function(match) {
-      return "<br/>";
-    });
-    body += text;
-  }
-
-  return {"body":body, "img":img};
-}
-
-var getNewsDetail = function(entry) {
-  var bodyimg = genBodyHtmlAndImg(entry);
-
-  News.findOne(genFindCmd(site, entry.id), function(err, result) {
-    if(err || result) {
-      return;
-    }
-    var obj = entry;
-    obj.docid = encodeDocID(site, entry.id);
-    obj.site = site;
-    obj.body = bodyimg.body;
-    obj.img = bodyimg.img;
-    obj.link = util.format("http://www.36kr.com/t/%s", entry.id); // http://www.36kr.com/t/204970
-    obj.title = entry.title;
-    obj.excerpt = entry.excerpt;
-    obj.ptime = entry.created_at;
-    obj.time = new Date(Date.parse(entry.created_at));
-    obj.marked = obj.body;
-    obj.created = new Date();
-    obj.views = 1;
-    obj.tags = entry.tagName;
-    obj.digest = genDigest(obj.body);
-    obj.cover = entry.feature_img;
-    if (!entry.feature_img && obj.img[0]) {
-      obj.cover = obj.img[0];
-    }
-
-    console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-    News.insert(obj, function (err, result) {
-      if(err) {
-        console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-      }
-    }); // News.insert
-  }); // News.findOne
-};
-
 var crawlerSubscribe = function (entry) {
-  //http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
-  //http://apis.36kr.com/api/v1/topics/category/column.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
-  var url = util.format("http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d", entry.tid, entry.page, entry.pageSize);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  // http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
+  // http://apis.36kr.com/api/v1/topics/category/column.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
+  var url = util.format('http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d', entry.tid, entry.page, entry.pageSize);
+  var headers = {
+    'Host': 'apis.36kr.com',
+    'Connection': 'Keep-Alive',
+    'User-Agent':'android-async-http/1.4.1 (http://loopj.com/android-async-http)',
+  };
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !_.isArray(json) || _.isEmpty(json)) {
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
-      return;
-    }
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.title || !newsEntry.id || !newsEntry.body_html) {
+      if (!utils.hasKeys(newsEntry, ['id', 'title', 'body_html'])) {
         return;
       }
-      newsEntry.tagName = findTagName(newsEntry.title, entry);
-      if(!newsEntry.tagName) {
+      newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
+      if (!newsEntry.tagName) {
         return;
       }
-      News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-        if(err || result) {
+      News.findOne(utils.genFindCmd(site,newsEntry.id), function(err, result) {
+        if (err) {
           return;
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
+        }
+        var obj = {};
+        obj.docid = utils.encodeDocID(site, newsEntry.id);
+        obj.site = site;
+        obj.link = util.format('http://www.36kr.com/t/%s', newsEntry.id);
+        obj.title = newsEntry.title;
+        var t1 = moment(newsEntry.created_at);
+        var t2 = moment(newsEntry.updated_at);
+        var t3 = moment(newsEntry.replied_at);
+        var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
+        if (!ptime.isValid()) {
+          logger.warn('Invalid time in %s', res ? res.request.href : url);
+          return;
+        }
+        obj.time = ptime.toDate();
+        obj.created = new Date();
+        obj.views = newsEntry.updateFlag ? result.views : 1;
+        obj.tags = newsEntry.tagName;
+        obj.marked = newsEntry.body_html;
+        obj.digest = utils.genDigest(newsEntry.excerpt + obj.marked);
+        obj.cover = newsEntry.feature_img || '';
+
+        logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, newsEntry.id, obj.docid, newsEntry.updateFlag);
+        if (newsEntry.updateFlag) {
+          News.update({docid: obj.docid}, obj, function (err, result) {
+            if (err || !result) {
+              logger.warn('update error: %j', err);
+            }
+          }); // News.update
+        } else {
+          News.insert(obj, function (err, result) {
+            if (err) {
+              logger.warn('insert error: %j', err);
+            }
+          }); // News.insert
+        }
       }); // News.findOne
     });//forEach
-    if(entry.crawlFlag) {
-      if(newsList.length >= entry.pageSize) {
+    if (entry.crawlFlag) {
+      if (newsList.length === entry.pageSize) {
         entry.page += 1;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
-        setTimeout(function() {
-          crawlerSubscribe(entry);
-        }, 3000); // crawl next page after 3 seconds
+        logger.info('[%s] next page: %d', entry.tname, entry.page);
+        setTimeout(crawlerSubscribe, 3000, entry);
       }else {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
+        logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
       }
     }
@@ -164,7 +128,7 @@ var crawlerSubscribe = function (entry) {
 
 var crawlerKrSubscribes = function () {
   krSubscribes.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
     entry.page = 1;
@@ -173,14 +137,14 @@ var crawlerKrSubscribes = function () {
   });
 }
 
-var krCrawler = function() {
-  console.log('Start krCrawler() at ' + new Date());
+var main = function() {
+  logger.log('Start');
   crawlerKrSubscribes();
-  setTimeout(krCrawler, 4000 * 60 * 60);
+  setTimeout(main, config.crawlInterval);
 }
 
-var crawlerInit = function() {
-  if(process.argv[2] == 1) {
+var init = function() {
+  if (process.argv[2] == 1) {
     crawlFlag = 1;
   }
   krSubscribes.forEach(function(entry) {
@@ -188,6 +152,6 @@ var crawlerInit = function() {
   });
 }
 
-exports.krCrawler = krCrawler;
-crawlerInit();
-krCrawler();
+exports.main = main;
+init();
+main();

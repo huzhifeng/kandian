@@ -1,18 +1,15 @@
-﻿var util = require('util');
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
 var SysUrl = require('url');
+var _ = require('underscore');
+var moment = require('moment');
+var config = require('../config');
 var News = require('../models/news');
-var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genJwPlayerEmbedCode = utils.genJwPlayerEmbedCode;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag;
-
+var utils = require('../lib/utils');
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
@@ -20,7 +17,7 @@ var headers = {
   'Connection': 'Keep-Alive',
   'Host': 'c.m.163.com',
 };
-var site = "netease";
+var site = 'netease';
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
 var neteaseSubscribes = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
@@ -228,314 +225,355 @@ startGetDetail.on('startGetPhotoDetail', function (entry) {
 });
 
 var getNewsDetail = function(entry) {
-  // http://c.m.163.com/nc/article/8GOVEI0L00964JJM/full.html
-  var docid = util.format("%s",entry.docid);
+  var docid = util.format('%s',entry.docid);
   var url = util.format('http://c.m.163.com/nc/article/%s/full.html', docid);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || !json[docid]) {
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():json null");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !_.has(json, docid) || !utils.hasKeys(json[docid], ['docid', 'title', 'body', 'ptime'])) {
+      logger.warn('Invalid json data in %s', res ? res.request.href : url);
       return;
     }
     var jObj = json[docid];
-    var obj = entry;
-    News.findOne(genFindCmd(site, docid), function(err, result) {
-      if (err || result) {
+    var obj = {};
+    News.findOne(utils.genFindCmd(site, docid), function(err, result) {
+      if (err) {
         return;
       }
-      obj.docid = encodeDocID(site, docid);
-      obj.site = site;
-      obj.body = jObj.body;
-      obj.img = jObj.img;
-      obj.link = "";
-      if(entry.url_3w) {
-        obj.link = entry.url_3w; // http://help.3g.163.com/13/0611/08/912V2VCS00963VRO.html
-      }else if(entry.url) {
-        obj.link = entry.url; // http://3g.163.com/ntes/13/0611/08/912V2VCS00963VRO.html
-      }else {
-        obj.link = util.format("http://3g.163.com/touch/article.html?docid=%s", docid); // http://3g.163.com/touch/article.html?docid=912V2VCS00963VRO
+      if (result) {
+        if (updateFlag) {
+          entry.updateFlag = 1;
+        } else {
+          return;
+        }
       }
+      obj.docid = utils.encodeDocID(site, docid);
+      obj.site = site;
+      obj.link = entry.url_3w || entry.url || util.format('http://3g.163.com/touch/article.html?docid=%s', docid);
       obj.title = jObj.title;
-      obj.ptime = jObj.ptime; // 2014-01-04 09:47:48
-      obj.time = Date.parse(obj.ptime); // 1388800068000
+      var t1 = moment(jObj.ptime);
+      var t2 = moment(entry.ptime);
+      var t3 = moment(entry.lmodify);
+      var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
+      if (!ptime.isValid()) {
+        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        return;
+      }
+      obj.time = ptime.toDate();
       obj.marked = jObj.body;
       obj.created = new Date();
-      obj.views = 1;
+      obj.views = entry.updateFlag ? result.views : 1;
       obj.tags = entry.tagName;
-      obj.digest = genDigest(obj.body);
-      if(entry.imgsrc) {
-        obj.cover = entry.imgsrc;
-      } else if (obj.img[0]) {
-        obj.cover = obj.img[0].src;
-      }
-
-      // img lazyloading
-      obj.img.forEach(function (img) {
-        var imgHtml = genLazyLoadHtml(img.alt, img.src);
-        obj.marked = obj.marked.replace(img.ref, imgHtml);
-      });
-      if(jObj.video) {
-        for(var i=0; i<jObj.video.length; i++) {
-          var v = jObj.video[i];
-          var link = v.url_m3u8 || v.url_mp4;
-          if(!v.alt || !link || !v.ref) {
-            continue;
+      obj.digest = utils.genDigest(jObj.body);
+      obj.cover = entry.imgsrc;
+      if (_.isArray(jObj.img) && !_.isEmpty(jObj.img)) {
+        _.each(jObj.img, function(img, i, imgs) {
+          if (!utils.hasKeys(img, ['src', 'ref'])) {
+            logger.info('Invalid img data %j', img);
+            return;
           }
-          link = link.replace(/&amp;/g,'&');
-          var query = SysUrl.parse(decodeURIComponent(link),true).query;
-          var url = query['url'] || link;
-          var html = '';
-          html += util.format('<br/><a href="%s" target="_blank">%s</a><br/>', url, v.alt);
-          html += genJwPlayerEmbedCode(util.format("vid_%s_%d", jObj.docid, i), url, v.cover, i===0);
-          obj.marked = obj.marked.replace(v.ref, html);
-          if(!obj.cover) {
+          if (!obj.cover) {
+            obj.cover = img.src;
+          }
+          var imgHtml = utils.genLazyLoadHtml(img.alt, img.src);
+          obj.marked = obj.marked.replace(img.ref, imgHtml);
+        });
+      }
+      if (_.isArray(jObj.video) && !_.isEmpty(jObj.video)) {
+        _.each(jObj.video, function(v, i, videos) {
+          if (!utils.hasKeys(v, ['url_m3u8', 'url_mp4', 'cover', 'ref'])) {
+            logger.info('Invalid video data %j', v);
+            return;
+          }
+          if (!obj.cover) {
             obj.cover = v.cover;
           }
-        }
+          var link = v.url_m3u8 || v.url_mp4;
+          var html = util.format('<br/><a href="%s" target="_blank">%s</a><br/>', link, v.alt);
+          link = link.replace(/&amp;/g, '&');
+          var query = SysUrl.parse(decodeURIComponent(link), true).query;
+          var url = query.url || link;
+          if (utils.isAudioVideoExt(url)) {
+            html += utils.genJwPlayerEmbedCode(util.format('vid_%s_%d', jObj.docid, i), url, v.cover, i===0);
+          }
+          obj.marked = obj.marked.replace(v.ref, html);
+          if (!obj.hasVideo) {
+            obj.hasVideo = 1;
+          }
+        });
       }
 
-      console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getNewsDetail(), News.insert():error " + err);
-        }
-      }); // News.insert
-    }); // News.findOne
-  });// request
+      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      if (entry.updateFlag) {
+        News.update({docid: obj.docid}, obj, function (err, result) {
+          if (err || !result) {
+            logger.warn('update error: %j', err);
+          }
+        });
+      } else {
+        News.insert(obj, function (err, result) {
+          if (err) {
+            logger.warn('insert error: %j', err);
+          }
+        });
+      }
+    });
+  });
 };
 
-function genBodyHtml(obj) {
-  var body = "";
-  var i = 0;
-
-  if((!obj) || (!obj.photos)) {
-    console.log("hzfdbg file[" + __filename + "]" + " genBodyHtml():null");
-    return "";
-  }
-
-  body = obj.desc + "<br>";
-
-  for(i=0; i<obj.photos.length; i++) {
-    body += obj.photos[i].note?obj.photos[i].note: obj.photos[i].imgtitle;
-    body += genLazyLoadHtml("", obj.photos[i].imgurl);
-  }
-
-  return body;
-}
-
-function pickImg(obj) {
-  var img = [];
-  var i = 0;
-
-  if((!obj) || (!obj.photos)) {
-    console.log("hzfdbg file[" + __filename + "]" + " pickImg():null");
-    return "";
-  }
-
-  for(i=0; i<obj.photos.length; i++) {
-    img[i] = obj.photos[i].imgurl;
-  }
-
-  return img;
-}
-
 var getPhotoDetail = function(entry) {
-  var docid = util.format("%s",entry.setid);
-  var url = util.format("http://c.m.163.com/photo/api/set/0096/%s.json",entry.setid);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var docid = util.format('%s',entry.setid);
+  var url = util.format('http://c.m.163.com/photo/api/set/0096/%s.json',entry.setid);
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():json null");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !utils.hasKeys(json, ['photos', 'createdate'])) {
+      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      return;
+    }
+    if (!_.isArray(json['photos']) || _.isEmpty(json['photos'])) {
+      logger.warn('Invalid photos in %s', res ? res.request.href : url)
       return;
     }
     var jObj = json;
-    var obj = entry;
-    News.findOne(genFindCmd(site, docid), function(err, result) {
-      if (err || result) {
+    var obj = {};
+    News.findOne(utils.genFindCmd(site, docid), function(err, result) {
+      if (err) {
         return;
       }
-      obj.docid = encodeDocID(site, docid);
-      obj.site = site;
-      obj.body = genBodyHtml(jObj);
-      obj.img = pickImg(jObj);
-      obj.link = "";
-      if(jObj.url) {
-        obj.link = jObj.url; // http://sports.163.com/photoview/011U0005/99130.html#p=90Q9LN0D4FFF0005
-      }
-      obj.title = entry.setname ? entry.setname : entry.title;
-      obj.ptime = jObj.createdate; // 2014-01-04 09:47:48
-      obj.time = Date.parse(obj.ptime); // 1388800068000
-      obj.marked = jObj.body;
-      obj.created = new Date();
-      obj.views = 1;
-      obj.tags = entry.tagName;
-      obj.marked = obj.body;
-      obj.digest = genDigest(obj.body);
-      if(entry.clientcover) {
-        obj.cover = entry.clientcover;
-      } else if (entry.clientcover1){
-        obj.cover = entry.clientcover1;
-      }else if (obj.img[0]) {
-        obj.cover = obj.img[0];
-      }
-
-      console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getPhotoDetail(), News.insert():error " + err);
+      if (result) {
+        if (updateFlag) {
+          entry.updateFlag = 1;
+        } else {
+          return;
         }
-      }); // News.insert
-    }); // News.findOne
-  });// request
+      }
+      obj.docid = utils.encodeDocID(site, docid);
+      obj.site = site;
+      obj.link = entry.seturl || jObj.url || util.format('http://help.3g.163.com/photoview/%s/%s.html', entry.tid, entry.setid);
+      obj.title = entry.setname || jObj.setname || entry.title;
+      var t1 = moment(jObj.createdate);
+      var t2 = moment(jObj.datatime);
+      var t3 = moment(entry.createdate);
+      var t4 = moment(entry.datetime);
+      var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : (t3.isValid() ? t3 : t4));
+      if (!ptime.isValid()) {
+        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        return;
+      }
+      obj.time = ptime.toDate();
+      obj.created = new Date();
+      obj.views = entry.updateFlag ? result.views : 1;
+      obj.tags = entry.tagName;
+      obj.marked = jObj.desc || '';
+      obj.cover = jObj.cover || jObj.tcover || jObj.scover ||entry.cover ||  entry.tcover || entry.scover || entry.clientcover || entry.clientcover1;
+      _.each(jObj.photos, function (img, i, imgs) {
+        if (!_.has(img, 'imgurl')) {
+          logger.info('Invalid img data %j', img);
+          return;
+        }
+        if (!obj.cover) {
+          obj.cover = img.imgurl;
+        }
+        obj.marked += img.note ? img.note: img.imgtitle;
+        obj.marked += utils.genLazyLoadHtml('', img.imgurl);
+      });
+      obj.digest = utils.genDigest(obj.marked);
+
+      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      if (entry.updateFlag) {
+        News.update({docid: obj.docid}, obj, function (err, result) {
+          if (err || !result) {
+            logger.warn('update error: %j', err);
+          }
+        });
+      } else {
+        News.insert(obj, function (err, result) {
+          if (err) {
+            logger.warn('insert error: %j', err);
+          }
+        });
+      }
+    });
+  });
 };
 
 var crawlerPhotoTag = function(entry) {
-  var req = {uri: entry.url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: entry.url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():JSON.parse() error");
+    var json = utils.parseJSON(err, res, body);
+    if (!json) {
+      logger.warn('Invalid json data in %s', res ? res.request.href : entry.url);
       return;
     }
     var newsList = json;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():newsList empty in url " + entry.url);
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', res ? res.request.href : entry.url);
       return;
     }
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.setid || !newsEntry.setname) {
+      if (!utils.hasKeys(newsEntry, ['setid', 'setname'])) {
+        logger.warn('Invalid newsEntry in %s', res ? res.request.href : entry.url);
         return;
       }
-      newsEntry.tagName = findTagName(newsEntry.setname, entry);
-      if(!newsEntry.tagName) {
+      newsEntry.tagName = utils.findTagName(newsEntry.setname, entry);
+      if (!newsEntry.tagName) {
         return;
       }
-      News.findOne(genFindCmd(site, newsEntry.setid), function(err, result) {
-        if(err || result) {
+      newsEntry.tid = entry.tid;
+      News.findOne(utils.genFindCmd(site, newsEntry.setid), function(err, result) {
+        if (err) {
           return;
         }
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
+        }
         startGetDetail.emit('startGetPhotoDetail', newsEntry);
-      }); // News.findOne
-    });//forEach
-    if(entry.crawlFlag) {
-      if(newsList.length === 10) {
-        entry.url = util.format("http://c.m.163.com/photo/api/morelist/0096/%s/%s.json", entry.tid, newsList[9].setid);
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():["+entry.tname+"] next page="+entry.url);
-        setTimeout(function() {
-          crawlerPhotoTag(entry);
-        }, 3000); // crawl next page after 3 seconds
+      });
+    });
+    if (entry.crawlFlag) {
+      if (newsList.length === 10) {
+        entry.url = util.format('http://c.m.163.com/photo/api/morelist/0096/%s/%s.json', entry.tid, newsList[9].setid);
+        logger.info('[%s] next page: %s', entry.tname, entry.url);
+        setTimeout(crawlerPhotoTag, 3000, entry);
       }else {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerPhotoTag():["+entry.tname+"] last page");
+        logger.info('[%s] last page: %s', entry.tname, entry.url);
         entry.crawlFlag = 0;
       }
     }
-  });//request
+  });
 }
 
 var crawlerSubscribe = function (entry) {
-  var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, entry.page*20);
-  if(entry.tid === 'T1348647909107') { // 头条
-    url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, entry.page*20);
+  var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, entry.page * 20);
+  if (entry.tid === 'T1348647909107') { // 头条
+    url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, entry.page * 20);
   }
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || !_.has(json, entry.tid)) {
+      logger.warn('Invalid json data in %s', res ? res.request.href : url);
       return;
     }
     var newsList = json[entry.tid];
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
       return;
     }
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.docid || !newsEntry.title) {
+      if (!utils.hasKeys(newsEntry, ['docid', 'title'])) {
+        logger.warn('Invalid newsEntry in %s', res ? res.request.href : url);
         return;
       }
-      newsEntry.tagName = findTagName(newsEntry.title, entry);
-      if(!newsEntry.tagName) {
+      newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
+      if (!newsEntry.tagName) {
         return;
       }
-      News.findOne(genFindCmd(site, newsEntry.docid), function(err, result) {
-        if(err || result) {
+      News.findOne(utils.genFindCmd(site, newsEntry.docid), function(err, result) {
+        if (err) {
           return;
         }
-        if('T1387970173334' == entry.tid) { // 看客
-          if(newsEntry.photosetID){
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
+        }
+        if ('T1387970173334' == entry.tid) { // 看客
+          if (newsEntry.photosetID){
             var l = newsEntry.photosetID.split('|') //photosetID=54GJ0096|33178
-            if(l && l.length === 2) {
+            if (l && l.length === 2) {
               newsEntry.setid = l[1]
             }
           }
-          if(!newsEntry.setid) {
+          if (!newsEntry.setid) {
             return;
           }
           startGetDetail.emit('startGetPhotoDetail', newsEntry);
         }else {
           startGetDetail.emit('startGetNewsDetail', newsEntry);
         }
-      }); // News.findOne
-    });//forEach
-    if(entry.crawlFlag) {
-      if(newsList.length === 20) {
+      });
+    });
+    if (entry.crawlFlag) {
+      if (newsList.length === 20) {
         entry.page += 1;
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] next page="+entry.page);
-        setTimeout(function() {
-          crawlerSubscribe(entry);
-        }, 3000); // crawl next page after 3 seconds
+        logger.info('[%s] next page: %d', entry.tname, entry.page);
+        setTimeout(crawlerSubscribe, 3000, entry);
       }else {
-        console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():["+entry.tname+"] last page");
+        logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
       }
     }
-  });//request
+  });
 };
 
 var crawlerPhotoTags = function() {
   photoTags.forEach(function(entry) {
-    entry.url = util.format('http://c.m.163.com/photo/api/list/0096/%s.json', entry.tid);
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
+    entry.url = util.format('http://c.m.163.com/photo/api/list/0096/%s.json', entry.tid);
     crawlerPhotoTag(entry);
-  });//forEach
+  });
 }
 
 var crawlerSubscribes = function() {
   var subscribes = neteaseSubscribes;
   subscribes.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
     entry.page = 0;
     crawlerSubscribe(entry);
-  });//forEach
+  });
 }
 
-var neteaseCrawler = function() {
-  console.log('Start neteaseCrawler() at ' + new Date());
+var main = function() {
+  logger.log('Start');
   crawlerSubscribes();
   crawlerPhotoTags();
-  setTimeout(neteaseCrawler, 2000 * 60 * 60);
+  setTimeout(main, config.crawlInterval);
 }
 
-var crawlerInit = function() {
-  if(process.argv[2] == 1) {
+var init = function() {
+  if (process.argv[2] == 1) {
     crawlFlag = 1;
   }
   neteaseSubscribes.forEach(function(entry) {
@@ -549,7 +587,7 @@ var crawlerInit = function() {
   });
 }
 
-exports.neteaseCrawler = neteaseCrawler;
+exports.main = main;
 exports.neteaseTags = neteaseSubscribes.concat(photoTags);
-crawlerInit();
-neteaseCrawler();
+init();
+main();

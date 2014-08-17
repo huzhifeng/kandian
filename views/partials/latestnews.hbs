@@ -1,11 +1,11 @@
-﻿{{#if isHomePage}}
+{{#if isHomePage}}
 <div class="row-fluid">
   {{#each latestNews}}
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h5>{{this.title}}</h5>
-      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover '140x100'}}" alt="{{this.title}}">
-      <noscript><img src="{{miniImg this.cover '140x100'}}" alt="{{this.title}}"></noscript><br>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover}}" alt="{{this.title}}">
+      <noscript><img src="{{miniImg this.cover}}" alt="{{this.title}}"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
     <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
@@ -19,8 +19,8 @@
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h5>{{this.title}}</h5>
-      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
-      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover}}" alt="{{this.title}}" width="144" height="100">
+      <noscript><img src="{{miniImg this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
     <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
@@ -34,8 +34,8 @@
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h5>{{this.title}}</h5>
-      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
-      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover}}" alt="{{this.title}}" width="144" height="100">
+      <noscript><img src="{{miniImg this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
     <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>
@@ -49,8 +49,8 @@
   <div class="span3">
     <a href="/news/{{this.docid}}" title="{{this.title}}" target="_blank">
       <h5>{{this.title}}</h5>
-      <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="144" height="100">
-      <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
+      <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover}}" alt="{{this.title}}" width="144" height="100">
+      <noscript><img src="{{miniImg this.cover}}" alt="{{this.title}}" width="144" height="100"></noscript><br>
       {{newsDigest this.digest}}...<br>[<time>{{dateFormat this.time}}</time>&nbsp;&nbsp;{{this.views}}人围观]
     </a>
     <a href="/tag/{{this.tags}}"><h5>更多{{this.tags}}...</h5></a>

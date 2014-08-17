@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 //Modules
-var CONFIG = require('config').Config;
-process.env.TZ = CONFIG.timezone;
+var config = require('./config');
+process.env.TZ = config.timezone;
 var http = require('http');
 var path = require('path');
 var express = require('express');
@@ -22,7 +22,7 @@ hbs.registerHelper('tags2sitemap', helpers.tags2sitemap);
 hbs.registerHelper('pagination', helpers.pagination);
 
 //App config
-app.set('port', CONFIG.port);
+app.set('port', config.port);
 app.engine('hbs', hbs.express3({
   defaultLayout: __dirname + '/views/layout.hbs',
   partialsDir: __dirname + '/views/partials'
@@ -33,7 +33,7 @@ app.use(express.compress());
 app.use(express.favicon(path.join(__dirname, 'public/favicon.ico')));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
-app.use(express.cookieParser(CONFIG.cookieSecret));
+app.use(express.cookieParser(config.cookieSecret));
 app.use(express.session());
 app.use(express.csrf());
 app.use(function (req, res, next) {
@@ -44,9 +44,9 @@ app.use(function (req, res, next) {
 app.use(flash());
 app.use(app.router);
 app.use(express.compress());
-app.use(express.static(path.join(__dirname, 'public'), {maxAge: CONFIG.staticMaxAge}));
+app.use(express.static(path.join(__dirname, 'public'), {maxAge: config.staticMaxAge}));
 app.disable('x-powered-by');
-app.set('siteName', CONFIG.siteName);
+app.set('siteName', config.siteName);
 // 404
 app.use(function(req, res, next){
   res.status(404);

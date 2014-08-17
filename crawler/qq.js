@@ -1,16 +1,14 @@
-﻿var util = require('util');
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var request = require('request');
+var _ = require('underscore');
+var moment = require('moment');
+var config = require('../config');
 var News = require('../models/news');
-var utils = require('../lib/utils')
-var genLazyLoadHtml = utils.genLazyLoadHtml;
-var genFindCmd = utils.genFindCmd;
-var encodeDocID = utils.encodeDocID;
-var data2Json = utils.data2Json;
-var genDigest = utils.genDigest;
-var findTagName = utils.findTagName;
-var crawlFlag = require('config').Config.crawlFlag;
-
+var utils = require('../lib/utils');
+var logger = require('../logger');
+var crawlFlag = config.crawlFlag;
+var updateFlag = config.updateFlag;
 var proxyEnable = 0;
 var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
@@ -18,7 +16,7 @@ var headers = {
   'Host': 'r.inews.qq.com',
   'Connection': 'Keep-Alive',
 };
-var site = "qq";
+var site = 'qq';
 var qqSubscribes = [
   //{tname:'要闻', tid:'news_news_top', tags:['娱乐午报', '留声机', '西洋镜', '问编辑', '新闻周考', '猜新闻', '数据控', '视界', '新闻当事人']},
   //{tname:'科技', tid:'news_news_tech', tags:[]},
@@ -117,106 +115,115 @@ var genVideoPlayerHtml = function(vid) {
   // <embed src="http://static.video.qq.com/TPout.swf?auto=1&vid=y0013oow0k2" quality="high" width="460" height="372" align="middle" allowScriptAccess="sameDomain" allowFullscreen="true" type="application/x-shockwave-flash"></embed>
   // 页面地址
   // http://v.qq.com/page/y/k/2/y0013oow0k2.html
-  var html = '';
-  html = util.format('<p><embed src="http://static.video.qq.com/TPout.swf?auto=1&vid=%s" quality="high" width="460" height="372" align="middle" allowScriptAccess="sameDomain" allowFullscreen="true" type="application/x-shockwave-flash"></embed></p>', vid);
+  var html = util.format('<p><embed src="http://static.video.qq.com/TPout.swf?auto=1&vid=%s" quality="high" width="460" height="372" align="middle" allowScriptAccess="sameDomain" allowFullscreen="true" type="application/x-shockwave-flash"></embed></p>', vid);
   html += util.format('</br><a href="http://v.qq.com/page/y/k/2/%s.html" target="_blank">传送门</a></br>', vid);
-
   return html;
 }
 
 var getDetail = function(entry) {
   // http://r.inews.qq.com/getSubNewsContent?id=20131129A000H600&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1
   var subscribeNewsDetailLink = 'http://r.inews.qq.com/getSubNewsContent?id=%s&qqnetwork=wifi&qn-rid=515897579&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&qn-sig=6839f4724164cda53c18d93f882ca729&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&imsi=460001112558692&apptype=android&appver=16_android_3.3.0';
-  var docid = util.format("%s",entry.id);
+  var docid = util.format('%s',entry.id);
   var url = util.format(subscribeNewsDetailLink, docid);
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if((!json) || (json.ret != 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " getDetail():ret="+json.ret);
+    var json = utils.parseJSON(err, res, body);
+    if (!json || (json.ret != 0) ||
+        !utils.hasKeys(json, ['id', 'content', 'attribute'])) {
+      logger.warn('Invalid json data %j in %s', json, res ? res.request.href : url);
       return;
     }
     var jObj = json;
-    var obj = entry;
+    var obj = {};
 
-    News.findOne(genFindCmd(site, entry.id), function(err, result) {
-      if(err || result) {
+    News.findOne(utils.genFindCmd(site, entry.id), function(err, result) {
+      if (err) {
         return;
       }
-      obj.docid = encodeDocID(site, docid);
+      if (result) {
+        if (updateFlag) {
+          entry.updateFlag = 1;
+        } else {
+          return;
+        }
+      }
+      obj.docid = utils.encodeDocID(site, docid);
       obj.site = site;
-      obj.body = jObj.content.text;
-      obj.body = obj.body.replace(/<!--H2-->/g, '<H4>')
-      obj.body = obj.body.replace(/<!--\/H2-->/g, '</H4>')
-      obj.img = [];
-      for(key in jObj.attribute) {
+      obj.link = entry.url || jObj.url || jObj.surl || util.format('http://view.inews.qq.com/a/%s', entry.id);
+      obj.title = entry.title;
+      var t1 = moment(entry.time);
+      var t2 = moment(parseInt(entry.timestamp, 10) * 1000);
+      var ptime = t1.isValid() ? t1 : t2;
+      if (!ptime.isValid()) {
+        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        return;
+      }
+      obj.time = ptime.toDate();
+      obj.created = new Date();
+      obj.views = entry.updateFlag ? result.views : 1;
+      obj.tags = entry.tagName;
+      obj.cover = '';
+      if (_.isArray(entry.thumbnails) && !_.isEmpty(entry.thumbnails)) {
+        obj.cover = entry.thumbnails[0];
+      } else if (_.isArray(entry.thumbnails_big) && !_.isEmpty(entry.thumbnails_big)) {
+        obj.cover = entry.thumbnails_big[0];
+      } else if (_.isArray(entry.thumbnails_qqnews) && !_.isEmpty(entry.thumbnails_qqnews)) {
+        obj.cover = entry.thumbnails_qqnews[0];
+      } else if (_.isArray(entry.thumbnails_qqnews_photo) && !_.isEmpty(entry.thumbnails_qqnews_photo)) {
+        obj.cover = entry.thumbnails_qqnews_photo[0];
+      } else if (_.has(entry, 'chlsicon')) {
+        obj.cover = entry.chlsicon;
+      } else if (_.has(entry, 'chlicon')) {
+        obj.cover = entry.chlicon;
+      } else if (_.has(jObj, 'card') && _.has(jObj.card, 'icon')) {
+        obj.cover = jObj.card.icon;
+      }
+      obj.marked = jObj.content.text.replace(/<!--H2-->/g, '<H4>').replace(/<!--\/H2-->/g, '</H4>');
+      for (key in jObj.attribute) {
         var url = jObj.attribute[key].url || jObj.attribute[key].img;
         var html = '';
-        if(key.indexOf('VIDEO') !== -1) {
-          if(jObj.attribute[key].vid) {
+        if (key.indexOf('VIDEO') !== -1) {
+          if (jObj.attribute[key].vid) {
             html = genVideoPlayerHtml(jObj.attribute[key].vid);
           }
-        }else if(key.indexOf('IMG') !== -1) {
-          html = genLazyLoadHtml(entry.title, url);
-        }else {
+        } else if (key.indexOf('IMG') !== -1) {
+          html = utils.genLazyLoadHtml(entry.title, url);
+        } else {
           continue;
         }
-        if(jObj.attribute[key].desc) {
+        if (jObj.attribute[key].desc) {
           html = html + jObj.attribute[key].desc + '<br/>';
         }
-        obj.img[obj.img.length] = url;
-        obj.body = obj.body.replace(util.format('<!--%s-->', key), html);
-      }
-      obj.link = '';
-      if(entry.url) {
-        obj.link = entry.url;
-      }else if(jObj.url) {
-        obj.link = jObj.url;
-      }else if(jObj.surl) {
-        obj.link = jObj.surl;
-      }else {
-        obj.link = util.format("http://view.inews.qq.com/a/%s", entry.id);
-      }
-      obj.title = entry.title;
-      obj.ptime = entry.time; // 2014-01-16 19:38:01
-      obj.time = Date.parse(obj.ptime); // 1389872281000
-      obj.marked = obj.body;
-      obj.created = new Date();
-      obj.views = 1;
-      obj.tags = entry.tagName;
-      obj.digest = genDigest(obj.body);
-      obj.cover = '';
-      if(entry.thumbnails && entry.thumbnails[0]) {
-        obj.cover = entry.thumbnails[0];
-      }else if(entry.thumbnails_big && entry.thumbnails_big[0]) {
-        obj.cover = entry.thumbnails_big[0];
-      }else if(entry.thumbnails_qqnews && entry.thumbnails_qqnews[0]) {
-        obj.cover = entry.thumbnails_qqnews[0];
-      }else if(entry.thumbnails_qqnews_photo && entry.thumbnails_qqnews_photo[0]) {
-        obj.cover = entry.thumbnails_qqnews_photo[0];
-      }else if(entry.chlsicon) {
-        obj.cover = entry.chlsicon;
-      }else if(entry.chlicon) {
-        obj.cover = entry.chlicon;
-      }else if(jObj.card && jObj.card.icon) {
-        obj.cover = jObj.card.icon;
-      }else if(obj.img) {
-        obj.cover = obj.img[0];
-      }else {
-        obj.cover = '';
-      }
-
-      console.log("hzfdbg file[" + __filename + "]" + " getDetail():["+obj.tags+"]"+obj.title+",docid="+obj.docid);
-      News.insert(obj, function (err, result) {
-        if(err) {
-          console.log("hzfdbg file[" + __filename + "]" + " getDetail(), News.insert():error " + err);
+        if (!obj.cover) {
+          obj.cover = url;
         }
-      });
-    });//News.findOne
-  });//request
+        obj.marked = obj.marked.replace(util.format('<!--%s-->', key), html);
+      }
+      obj.digest = utils.genDigest(jObj.content.text) || utils.genDigest(obj.marked);
+
+      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      if (entry.updateFlag) {
+        News.update({docid: obj.docid}, obj, function (err, result) {
+          if (err || !result) {
+            logger.warn('update error: %j', err);
+          }
+        });
+      } else {
+        News.insert(obj, function (err, result) {
+          if (err) {
+            logger.warn('insert error: %j', err);
+          }
+        });
+      }
+    });
+  });
 };
 
 var crawlerSubscribe = function(entry) {
@@ -228,92 +235,100 @@ var crawlerSubscribe = function(entry) {
   var photoListLink = 'http://r.inews.qq.com/getQQNewsListItems?qn-rid=125777722&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&qn-sig=2fe55dd0f7d003bb1b8104dc0372130a&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&chlid=news_photo&appver=16_android_3.3.0&qqnetwork=wifi&imsi=460001112558692&apptype=android';
 
   var url = '';
-  if(entry.ids && entry.ids.length) {
+  if (entry.ids && entry.ids.length) {
     var num = 20 < entry.ids.length ? 20 : entry.ids.length;
     var ids = '';
     var i = 0;
-    for(i=0; i<num; i++) {
-      if(i > 0) {
+    for (i=0; i<num; i++) {
+      if (i > 0) {
         ids = ids + ','
       }
       ids = ids + entry.ids[i].id;
     }
-    if(entry.tid.indexOf('news_news') !== -1) {
+    if (entry.tid.indexOf('news_news') !== -1) {
       url = util.format(headLineListLink, ids);
-    }else if(entry.tid.indexOf('news_photo') !== -1) {
+    } else if (entry.tid.indexOf('news_photo') !== -1) {
       url = util.format(photoListLink, ids);
-    }else {
+    } else {
       url = util.format(subscribeNewsListLink, ids);
     }
-  }else {
-    if(entry.tid.indexOf('news_news') !== -1) {
+  } else {
+    if (entry.tid.indexOf('news_news') !== -1) {
       url = util.format(headlineLink, entry.tid);
-    }else if(entry.tid.indexOf('news_photo') !== -1) {
+    } else if (entry.tid.indexOf('news_photo') !== -1) {
       url = util.format(photoLink, entry.tid);
-    }else {
+    } else {
       url = util.format(subscribeNewsIdsLink, entry.tid);
     }
   }
-  var req = {uri: url, method: "GET", headers: headers};
-  if(proxyEnable) {
+  var req = {
+    uri: url,
+    method: 'GET',
+    headers: headers
+  };
+  if (proxyEnable) {
     req.proxy = proxyUrl;
   }
   request(req, function (err, res, body) {
-    var json = data2Json(err, res, body);
-    if(!json || (json.ret != 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():JSON.parse() error");
+    var json = utils.parseJSON(err, res, body);
+    if (!json || (json.ret != 0)) {
+      logger.warn('Invalid json data in %s', res ? res.request.href : url);
       return;
     }
     var newsList = json.newslist || json.idlist[0].newslist;
-    if((!newsList) || (!newsList.length) || (newsList.length <= 0)) {
-      console.log("hzfdbg file[" + __filename + "]" + " crawlerSubscribe():newsList empty in url " + url);
+    if (!_.isArray(newsList) || _.isEmpty(newsList)) {
+      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
       return;
     }
 
-    if(entry.ids && entry.ids.length) {
+    if (entry.ids && entry.ids.length) {
       var num = 20 < entry.ids.length ? 20 : entry.ids.length;
       entry.ids = entry.ids.slice(num);
-      if(entry.ids.length) {
-        setTimeout(function() {
-          crawlerSubscribe(entry);
-        }, 100);
+      if (entry.ids.length) {
+        setTimeout(crawlerSubscribe, 100, entry);
       }
-    }else if(entry.crawlFlag) {
+    } else if (entry.crawlFlag) {
       entry.crawlFlag = 0;
-      if(json.ids && json.ids.length) {
+      if (json.ids && json.ids.length) {
         entry.ids = json.ids;
-      }else if(json.idlist && json.idlist.length && json.idlist[0].ids && json.idlist[0].ids.length) {
+      } else if (json.idlist && json.idlist.length && json.idlist[0].ids && json.idlist[0].ids.length) {
         entry.ids = json.idlist[0].ids;
-      }else {
+      } else {
         return;
       }
-      setTimeout(function() {
-        crawlerSubscribe(entry);
-      }, 100);
+      setTimeout(crawlerSubscribe, 100, entry);
       return;
     }
 
     newsList.forEach(function(newsEntry) {
-      if(!newsEntry.title || !newsEntry.id) {
+      if (!utils.hasKeys(newsEntry, ['title', 'id'])) {
         return;
       }
-      newsEntry.tagName = findTagName(newsEntry.title, entry);
-      if(!newsEntry.tagName) {
+      newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
+      if (!newsEntry.tagName) {
         return;
       }
-      News.findOne(genFindCmd(site,newsEntry.id), function(err, result) {
-        if(err || result) {
+      News.findOne(utils.genFindCmd(site,newsEntry.id), function(err, result) {
+        if (err) {
           return;
         }
+        newsEntry.updateFlag = 0;
+        if (result) {
+          if (updateFlag) {
+            newsEntry.updateFlag = 1;
+          } else {
+            return;
+          }
+        }
         startGetDetail.emit('startGetDetail', newsEntry);
-      }); // News.findOne
-    });//forEach
-  });//request
+      });
+    });
+  });
 }
 
 var crawlerQqSubscribes = function () {
   qqSubscribes.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
     crawlerSubscribe(entry);
@@ -322,7 +337,7 @@ var crawlerQqSubscribes = function () {
 
 var crawlerOtherSubscribes = function () {
   otherSubscribes.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
     crawlerSubscribe(entry);
@@ -331,23 +346,23 @@ var crawlerOtherSubscribes = function () {
 
 var crawlerPhotos = function () {
   photoTags.forEach(function(entry) {
-    if(!crawlFlag && entry.stopped) {
+    if (!crawlFlag && entry.stopped) {
       return;
     }
     crawlerSubscribe(entry);
   });
 }
 
-var qqCrawler = function() {
-  console.log('Start qqCrawler() at ' + new Date());
+var main = function() {
+  logger.log('Start');
   crawlerQqSubscribes();
   crawlerOtherSubscribes();
   crawlerPhotos();
-  setTimeout(qqCrawler, 4000 * 60 * 60);
+  setTimeout(main, config.crawlInterval);
 }
 
-var crawlerInit = function() {
-  if(process.argv[2] == 1) {
+var init = function() {
+  if (process.argv[2] == 1) {
     crawlFlag = 1;
   }
   qqSubscribes.forEach(function(entry) {
@@ -361,7 +376,7 @@ var crawlerInit = function() {
   });
 }
 
-exports.qqCrawler = qqCrawler;
+exports.main = main;
 exports.qqTags = qqSubscribes.concat(otherSubscribes, photoTags);
-crawlerInit();
-qqCrawler();
+init();
+main();

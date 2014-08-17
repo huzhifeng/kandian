@@ -1,9 +1,9 @@
-﻿<ul class="unstyled topic-list">
+<ul class="unstyled topic-list">
     {{#each news}}
     <li>
         <a title="{{this.title}}" href="/news/{{this.docid}}" target="_blank">
-          <img class="lazy" src="/img/grey.gif" data-original="{{this.cover}}" alt="{{this.title}}" width="200" height="150">
-          <noscript><img src="{{this.cover}}" alt="{{this.title}}" width="200" height="150"></noscript>
+          <img class="lazy" src="/img/grey.gif" data-original="{{miniImg this.cover}}" alt="{{this.title}}" width="200" height="150">
+          <noscript><img src="{{miniImg this.cover}}" alt="{{this.title}}" width="200" height="150"></noscript>
         </a>
         <h3><a href="/news/{{docid}}" class="bigger-size" target="_blank">
             {{this.title}}
