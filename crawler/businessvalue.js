@@ -9,8 +9,6 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var site = 'businessvalue';
 var headers = {
   'User-Agent':'android-async-http/1.4.4 (http://loopj.com/android-async-http)',
@@ -18,24 +16,24 @@ var headers = {
   'Host': 'api.businessvalue.com.cn',
   'Connection': 'Keep-Alive',
 };
-var businessvalueSubscribes = [
+var subscriptions = [
   {tname:'首页', tid:0, tags:['今日看点', '周末荐书', '硅谷观察', '营销大爆炸']},
 ];
 
-var startGetDetail = new EventEmitter();
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+var crawlerEvent = new EventEmitter();
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
-var getNewsDetail = function(entry) {
+var fetchDetail = function(entry) {
   var url = util.format('http://api.businessvalue.com.cn/rest/v2/archives/%s?encode=GB18030&is_cached=false&user_guid=0&session_id=&device=androidApp&paragraph_image_width=%5B%22720%22%2C%22original%22%5D&banner=%5B%22720%22%2C%22original%22%5D&market_id=xiaomi&agent=android+MI+2+4.1.1&entity_guid=%s', entry.entity_guid, entry.entity_guid);
   var req = {
     uri: url,
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -105,7 +103,7 @@ var getNewsDetail = function(entry) {
       });
       obj.marked = obj.marked.replace(/\r\n/g, '<br />').replace(/\r/g, '<br />').replace(/\n/g, '<br />');
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, entry.aid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, entry.aid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -123,7 +121,7 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = 'http://api.businessvalue.com.cn/rest/v2/archives/?' +
             'encode=GB18030&orderby=recent&sort=DESC&user_guid=0&session_id=' +
             '&device=androidApp&subtypes=%5B%22article%22%5D' +
@@ -134,8 +132,8 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -145,7 +143,7 @@ var crawlerSubscribe = function (entry) {
     }
     var newsList = json.items;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
@@ -168,14 +166,14 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        crawlerEvent.emit('onDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length === entry.pageSize) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -184,35 +182,30 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerBusinessvalueSubscribes = function () {
-  businessvalueSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function () {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
     entry.pageSize = 10;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerBusinessvalueSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  businessvalueSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.businessvalueTags = businessvalueSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

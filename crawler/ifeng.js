@@ -9,15 +9,13 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.1.1; MI 2 MIUI/JLB5.0)',
   'Host': 'api.3g.ifeng.com',
   'Connection': 'Keep-Alive',
 };
 var site = 'ifeng';
-var ifengSubscribes = [
+var subscriptions = [
   {
     tname:'头条',
     tid:'1',
@@ -84,13 +82,13 @@ var ifengSubscribes = [
   // http://api.3g.ifeng.com/iosNews?id=ZMT10&page=2&gv=4.1.5&av=4.1.5&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
 ];
 
-var startGetDetail = new EventEmitter();
+var crawlerEvent = new EventEmitter();
 
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
-var getNewsDetail = function(entry) {
+var fetchDetail = function(entry) {
   // http://api.3g.ifeng.com/ipadtestdoc?imgwidth=100&aid=imcp_80779130&channel=push&chid=push&android=1&gv=4.1.5&av=4.1.5&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005
   // http://api.3g.ifeng.com/ipadtestdoc?aid=74868287&channel=%E6%96%B0%E9%97%BB
   // http://api.3g.ifeng.com/ipadtestdoc?aid=74868287
@@ -102,13 +100,13 @@ var getNewsDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !_.has(json, 'body') || !_.has(json.body, 'text')) {
-      logger.warn('Invalid json data %j in %s', json, res ? res.request.href : url);
+      logger.warn('Invalid json data %j in %s', json, url);
       return;
     }
     var jObj = json.body;
@@ -133,7 +131,7 @@ var getNewsDetail = function(entry) {
       var t3 = moment(entry.editTime);
       var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -161,7 +159,7 @@ var getNewsDetail = function(entry) {
       obj.tags = entry.tagName;
       obj.digest = utils.genDigest(jObj.text);
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -173,13 +171,13 @@ var getNewsDetail = function(entry) {
           if (err) {
             logger.warn('insert error: %j', err);
           }
-        }); // News.insert
+        });
       }
-    }); // News.findOne
-  });// request
+    });
+  });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = util.format('http://api.3g.ifeng.com/android2GList?id=aid=ORIGIN%s&type=list&pagesize=20&pageindex=%d', entry.tid, entry.page);
   if (entry.tid === '1') { // 头条
     url = util.format('http://api.3g.ifeng.com/iosNews?id=SYLB10,SYDT10&page=%d&gv=4.1.5&av=4.1.5&uid=c4:6a:b7:de:4d:24&proid=ifengnews&os=android_16&df=androidphone&vt=5&screen=720x1280&publishid=2005', entry.page);
@@ -191,8 +189,8 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -200,12 +198,12 @@ var crawlerSubscribe = function (entry) {
         _.isEmpty(json) ||
         !_.has(json[0], 'body') ||
         !_.has(json[0].body, 'item')) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json[0].body.item;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
@@ -228,50 +226,45 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
-      }); // News.findOne
-    });//forEach
+        crawlerEvent.emit('onDetail', newsEntry);
+      });
+    });
     if (entry.crawlFlag) {
       if (newsList.length === 20) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
       }
     }
-  });//request
+  });
 };
 
-var crawlerIfengSubscribes = function() {
-  ifengSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function() {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 1;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerIfengSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  ifengSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.ifengTags = ifengSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

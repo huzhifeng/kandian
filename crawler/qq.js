@@ -9,15 +9,13 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': '%E8%85%BE%E8%AE%AF%E6%96%B0%E9%97%BB342(android)',
   'Host': 'r.inews.qq.com',
   'Connection': 'Keep-Alive',
 };
 var site = 'qq';
-var qqSubscribes = [
+var newsSubscriptions = [
   //{tname:'要闻', tid:'news_news_top', tags:['娱乐午报', '留声机', '西洋镜', '问编辑', '新闻周考', '猜新闻', '数据控', '视界', '新闻当事人']},
   //{tname:'科技', tid:'news_news_tech', tags:[]},
   //{tname:'社会', tid:'news_news_ssh', tags:[]},
@@ -52,7 +50,7 @@ var qqSubscribes = [
   {tname:'腾讯精品课', tid:'1432', tags:[]}, // Video
   {tname:'腾讯育儿宝典', tid:'1328', tags:[]},
 ];
-var otherSubscribes = [
+var otherSubscriptions = [
   {tname:'贵圈', tid:'32', tags:[]},
   {tname:'封面人物', tid:'33', tags:[]},
   {tname:'娱乐底片', tid:'34', tags:['娱乐底片', '底片']},
@@ -94,7 +92,7 @@ var otherSubscribes = [
   {tname:'百思不得姐', tid:'1838', tags:[]},
   {tname:'狠了去啦', tid:'1707', tags:[]},
 ];
-var photoTags = [
+var photoSubscriptions = [
   {tname:'精选', tid:'news_photo', tags:['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点', '图片故事']},
   {tname:'娱乐', tid:'news_photo_yl', tags:['底片', '趣图', '娱图', '一周', ]},
   //{tname:'美女', tid:'news_photo_mn', tags:[]},
@@ -102,10 +100,10 @@ var photoTags = [
   //{tname:'摄影', tid:'news_photo_sy', tags:[]},
 ];
 
-var startGetDetail = new EventEmitter();
+var crawlerEvent = new EventEmitter();
 
-startGetDetail.on('startGetDetail', function (entry) {
-  getDetail(entry);
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
 var genVideoPlayerHtml = function(vid) {
@@ -120,7 +118,7 @@ var genVideoPlayerHtml = function(vid) {
   return html;
 }
 
-var getDetail = function(entry) {
+var fetchDetail = function(entry) {
   // http://r.inews.qq.com/getSubNewsContent?id=20131129A000H600&qqnetwork=wifi&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&apptype=android&appver=16_android_3.2.1
   var subscribeNewsDetailLink = 'http://r.inews.qq.com/getSubNewsContent?id=%s&qqnetwork=wifi&qn-rid=515897579&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&qn-sig=6839f4724164cda53c18d93f882ca729&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&imsi=460001112558692&apptype=android&appver=16_android_3.3.0';
   var docid = util.format('%s',entry.id);
@@ -130,14 +128,14 @@ var getDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || (json.ret != 0) ||
         !utils.hasKeys(json, ['id', 'content', 'attribute'])) {
-      logger.warn('Invalid json data %j in %s', json, res ? res.request.href : url);
+      logger.warn('Invalid json data %j in %s', json, url);
       return;
     }
     var jObj = json;
@@ -162,7 +160,7 @@ var getDetail = function(entry) {
       var t2 = moment(parseInt(entry.timestamp, 10) * 1000);
       var ptime = t1.isValid() ? t1 : t2;
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -208,7 +206,7 @@ var getDetail = function(entry) {
       }
       obj.digest = utils.genDigest(jObj.content.text) || utils.genDigest(obj.marked);
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -226,7 +224,7 @@ var getDetail = function(entry) {
   });
 };
 
-var crawlerSubscribe = function(entry) {
+var fetchSubscription = function(entry) {
   var subscribeNewsIdsLink = 'http://r.inews.qq.com/getSubNewsIndex?qqnetwork=wifi&qn-rid=252257119&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&qn-sig=92be51a75e268df43aef4e7e1655a9f9&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&imsi=460001112558692&format=json&apptype=android&chlid=%s&appver=16_android_3.3.0';
   var subscribeNewsListLink = 'http://r.inews.qq.com/getSubNewsListItems?uid=22c4d53a-7d52-4f50-9185-90a77c7b80b0&qqnetwork=wifi&qn-rid=1085800932&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&ids=%s&qn-sig=bc391588cf2d4aa75e2042e90822ba84&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&imsi=460001112558692&apptype=android&appver=16_android_3.3.0';
   var headlineLink = 'http://r.inews.qq.com/getQQNewsIndexAndItems?qqnetwork=wifi&qn-rid=209000533&store=118&hw=Xiaomi_MI2&devid=1366805394774330052&qn-sig=4b3cfbeb1d30f935de9630698c586cd5&screen_width=720&mac=c4%253A6a%253Ab7%253Ade%253A4d%253A24&imsi=460001112558692&apptype=android&chlid=%s&appver=16_android_3.3.0';
@@ -266,18 +264,18 @@ var crawlerSubscribe = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || (json.ret != 0)) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json.newslist || json.idlist[0].newslist;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
 
@@ -285,7 +283,7 @@ var crawlerSubscribe = function(entry) {
       var num = 20 < entry.ids.length ? 20 : entry.ids.length;
       entry.ids = entry.ids.slice(num);
       if (entry.ids.length) {
-        setTimeout(crawlerSubscribe, 100, entry);
+        setTimeout(fetchSubscription, 100, entry);
       }
     } else if (entry.crawlFlag) {
       entry.crawlFlag = 0;
@@ -296,7 +294,7 @@ var crawlerSubscribe = function(entry) {
       } else {
         return;
       }
-      setTimeout(crawlerSubscribe, 100, entry);
+      setTimeout(fetchSubscription, 100, entry);
       return;
     }
 
@@ -320,65 +318,41 @@ var crawlerSubscribe = function(entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetDetail', newsEntry);
+        crawlerEvent.emit('onDetail', newsEntry);
       });
     });
   });
 }
 
-var crawlerQqSubscribes = function () {
-  qqSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function () {
+  var subscriptions = newsSubscriptions.concat(otherSubscriptions, photoSubscriptions);
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
-    crawlerSubscribe(entry);
-  });
-}
-
-var crawlerOtherSubscribes = function () {
-  otherSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
-      return;
-    }
-    crawlerSubscribe(entry);
-  });
-}
-
-var crawlerPhotos = function () {
-  photoTags.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
-      return;
-    }
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerQqSubscribes();
-  crawlerOtherSubscribes();
-  crawlerPhotos();
+  newsSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  otherSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  photoSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  qqSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  otherSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  photoTags.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.qqTags = qqSubscribes.concat(otherSubscribes, photoTags);
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = newsSubscriptions.concat(otherSubscriptions, photoSubscriptions);

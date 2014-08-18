@@ -10,8 +10,6 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': 'NTES Android',
   'Connection': 'Keep-Alive',
@@ -19,7 +17,7 @@ var headers = {
 };
 var site = 'netease';
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
-var neteaseSubscribes = [
+var newsSubscriptions = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
   {tname:'头条', tid:'T1348647909107', tags:['新闻故事', '一周新闻日历', '科学搬主任']},
   // 原创
@@ -107,7 +105,7 @@ var neteaseSubscribes = [
   {tname:'碉民早爆', tid:'T1390457192301', tags:[]},
 ];
 
-var otherSubscribes = [
+var otherSubscriptions = [
   // 报刊
   //{tname:'南都娱乐周刊', tid:'T1374537739895', tags:['年度', '头条人物']},
   //{tname:'凤凰周刊', tid:'T1374538012901', tags:[]},
@@ -205,7 +203,7 @@ var otherSubscribes = [
   {tname:'每日钛度', tid:'T1366183190095', tags:[], stopped:1}, // 2013-06-20 停止更新
   {tname:'专业控', tid:'T1348654797196', tags:[], stopped:1}, // 2013-05-16 停止更新
 ];
-var photoTags = [
+var photoSubscriptions = [
   // http://c.m.163.com/photo/api/list/0096/54GI0096.json
   {tname:'热点', tid:'54GI0096', tags:['年度']},
   {tname:'独家图集', tid:'54GJ0096', tags:[]},
@@ -214,17 +212,15 @@ var photoTags = [
   {tname:'精美', tid:'54GN0096', tags:['盘点', '一周外媒动物图片精选']},
 ];
 
-var startGetDetail = new EventEmitter();
-
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+var crawlerEvent = new EventEmitter();
+crawlerEvent.on('onNewsDetail', function (entry) {
+  fetchNewsDetail(entry);
+});
+crawlerEvent.on('onPhotoDetail', function (entry) {
+  fetchPhotoDetail(entry);
 });
 
-startGetDetail.on('startGetPhotoDetail', function (entry) {
-  getPhotoDetail(entry);
-});
-
-var getNewsDetail = function(entry) {
+var fetchNewsDetail = function(entry) {
   var docid = util.format('%s',entry.docid);
   var url = util.format('http://c.m.163.com/nc/article/%s/full.html', docid);
   var req = {
@@ -232,13 +228,13 @@ var getNewsDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !_.has(json, docid) || !utils.hasKeys(json[docid], ['docid', 'title', 'body', 'ptime'])) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var jObj = json[docid];
@@ -263,7 +259,7 @@ var getNewsDetail = function(entry) {
       var t3 = moment(entry.lmodify);
       var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -310,7 +306,7 @@ var getNewsDetail = function(entry) {
         });
       }
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -328,7 +324,7 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var getPhotoDetail = function(entry) {
+var fetchPhotoDetail = function(entry) {
   var docid = util.format('%s',entry.setid);
   var url = util.format('http://c.m.163.com/photo/api/set/0096/%s.json',entry.setid);
   var req = {
@@ -336,17 +332,17 @@ var getPhotoDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !utils.hasKeys(json, ['photos', 'createdate'])) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     if (!_.isArray(json['photos']) || _.isEmpty(json['photos'])) {
-      logger.warn('Invalid photos in %s', res ? res.request.href : url)
+      logger.warn('Invalid photos in %s', url)
       return;
     }
     var jObj = json;
@@ -372,7 +368,7 @@ var getPhotoDetail = function(entry) {
       var t4 = moment(entry.datetime);
       var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : (t3.isValid() ? t3 : t4));
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -394,7 +390,7 @@ var getPhotoDetail = function(entry) {
       });
       obj.digest = utils.genDigest(obj.marked);
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -412,29 +408,30 @@ var getPhotoDetail = function(entry) {
   });
 };
 
-var crawlerPhotoTag = function(entry) {
+var fetchPhotoSubscription = function(entry) {
+  var url = entry.url;
   var req = {
-    uri: entry.url,
+    uri: url,
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : entry.url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : entry.url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
       if (!utils.hasKeys(newsEntry, ['setid', 'setname'])) {
-        logger.warn('Invalid newsEntry in %s', res ? res.request.href : entry.url);
+        logger.warn('Invalid newsEntry in %s', url);
         return;
       }
       newsEntry.tagName = utils.findTagName(newsEntry.setname, entry);
@@ -454,14 +451,14 @@ var crawlerPhotoTag = function(entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetPhotoDetail', newsEntry);
+        crawlerEvent.emit('onPhotoDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length === 10) {
         entry.url = util.format('http://c.m.163.com/photo/api/morelist/0096/%s/%s.json', entry.tid, newsList[9].setid);
         logger.info('[%s] next page: %s', entry.tname, entry.url);
-        setTimeout(crawlerPhotoTag, 3000, entry);
+        setTimeout(fetchPhotoSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %s', entry.tname, entry.url);
         entry.crawlFlag = 0;
@@ -470,7 +467,7 @@ var crawlerPhotoTag = function(entry) {
   });
 }
 
-var crawlerSubscribe = function (entry) {
+var fetchNewsSubscription = function (entry) {
   var url = util.format('http://c.m.163.com/nc/article/list/%s/%d-20.html', entry.tid, entry.page * 20);
   if (entry.tid === 'T1348647909107') { // 头条
     url = util.format('http://c.m.163.com/nc/article/headline/%s/%d-20.html', entry.tid, entry.page * 20);
@@ -480,23 +477,23 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !_.has(json, entry.tid)) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json[entry.tid];
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
       if (!utils.hasKeys(newsEntry, ['docid', 'title'])) {
-        logger.warn('Invalid newsEntry in %s', res ? res.request.href : url);
+        logger.warn('Invalid newsEntry in %s', url);
         return;
       }
       newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
@@ -525,9 +522,9 @@ var crawlerSubscribe = function (entry) {
           if (!newsEntry.setid) {
             return;
           }
-          startGetDetail.emit('startGetPhotoDetail', newsEntry);
+          crawlerEvent.emit('onPhotoDetail', newsEntry);
         }else {
-          startGetDetail.emit('startGetNewsDetail', newsEntry);
+          crawlerEvent.emit('onNewsDetail', newsEntry);
         }
       });
     });
@@ -535,7 +532,7 @@ var crawlerSubscribe = function (entry) {
       if (newsList.length === 20) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchNewsSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -544,50 +541,46 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerPhotoTags = function() {
-  photoTags.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchPhotoSubscriptions = function() {
+  photoSubscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.url = util.format('http://c.m.163.com/photo/api/list/0096/%s.json', entry.tid);
-    crawlerPhotoTag(entry);
+    fetchPhotoSubscription(entry);
   });
 }
 
-var crawlerSubscribes = function() {
-  var subscribes = neteaseSubscribes;
-  subscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchNewsSubscriptions = function() {
+  newsSubscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
-    crawlerSubscribe(entry);
+    fetchNewsSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerSubscribes();
-  crawlerPhotoTags();
+  newsSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  otherSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  photoSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchNewsSubscriptions();
+  fetchPhotoSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  neteaseSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  otherSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  photoTags.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
+if (require.main === module) {
+  main();
 }
 
 exports.main = main;
-exports.neteaseTags = neteaseSubscribes.concat(photoTags);
-init();
-main();
+exports.subscriptions = newsSubscriptions.concat(photoSubscriptions);

@@ -9,8 +9,6 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var site = 'huxiu';
 var tags = [
   '早报',
@@ -20,18 +18,18 @@ var tags = [
   '大话科技',
   '移动观察',
 ];
-var huxiuSubscribes = [
+var subscriptions = [
   {tname:'看点', tid:'1', tags:tags},
   {tname:'观点', tid:'4', tags:tags},
   {tname:'读点', tid:'6', tags:tags},
 ];
 
-var startGetDetail = new EventEmitter();
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+var crawlerEvent = new EventEmitter();
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
-var getNewsDetail = function(entry) {
+var fetchDetail = function(entry) {
   var url = util.format('http://m.api.huxiu.com/article/%s?screen_size=720&client_ver=5&platform=Android&mid=', entry.aid);
   var headers = {
     'User-Agent': 'Apache-HttpClient/UNAVAILABLE (java 1.4)',
@@ -43,8 +41,8 @@ var getNewsDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -86,7 +84,7 @@ var getNewsDetail = function(entry) {
       obj.marked = jObj.content.replace(/\r\n/g, '<br />').replace(/\r/g, '<br />').replace(/\n/g, '<br />');
       obj.cover = entry.img || jObj.img || jObj.pic;
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, entry.aid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, entry.aid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -104,7 +102,7 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = util.format('http://m.api.huxiu.com/portal/%s/%d?client_ver=5&platform=Android&mid=', entry.tid, entry.page);
   var headers = {
     'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.1.1; MI 2 MIUI/JLB34.0)',
@@ -116,8 +114,8 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -127,7 +125,7 @@ var crawlerSubscribe = function (entry) {
     }
     var newsList = json.content;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
@@ -150,14 +148,14 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        crawlerEvent.emit('onDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if ((entry.page === 1) || (newsList.length === entry.pageSize)) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -166,35 +164,30 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerHuxiuSubscribes = function () {
-  huxiuSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function () {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 1;
     entry.pageSize = 20;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerHuxiuSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  huxiuSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.huxiuTags = huxiuSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

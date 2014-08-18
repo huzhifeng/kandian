@@ -9,8 +9,6 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent':'Apache-HttpClient/UNAVAILABLE (java 1.4)',
   'Content-Type': 'application/x-www-form-urlencoded',
@@ -52,7 +50,7 @@ var yokaTags = [
   '一周穿衣红榜',
   '1日1话题',
 ];
-var yokaSubscribes = [
+var subscriptions = [
   {tname: '精华', tid: 12, tags: yokaTags},
   //{tname: '时装', tid: 2, tags: yokaTags},
   //{tname: '美容', tid: 1, tags: yokaTags},
@@ -62,12 +60,12 @@ var yokaSubscribes = [
   //{tname: '奢品', tid: 9, tags: yokaTags},
 ];
 
-var startGetDetail = new EventEmitter();
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+var crawlerEvent = new EventEmitter();
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
-var getNewsDetail = function(entry) {
+var fetchDetail = function(entry) {
   var url = 'http://mobservices3.yoka.com/service.ashx';
   headers.hi = '152';
   var req = {
@@ -76,8 +74,8 @@ var getNewsDetail = function(entry) {
     headers: headers,
     form: {aid: entry.ID}//util.format('aid=%s',entry.ID)
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -136,7 +134,7 @@ var getNewsDetail = function(entry) {
       obj.marked = obj.marked.replace(/\r\n/g, '<br />').replace(/\r/g, '<br />').replace(/\n/g, '<br />');
       obj.digest = utils.genDigest(obj.marked);
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, entry.ID, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, entry.ID, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -154,7 +152,7 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = 'http://mobservices3.yoka.com/service.ashx';
   var formData = {
     count: entry.pageSize,
@@ -168,8 +166,8 @@ var crawlerSubscribe = function (entry) {
     headers: headers,
     form: formData//util.format('count=%d&cateid=%d&arttime=0&previd=%s', entry.pageSize, entry.tid, entry.page)
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -179,7 +177,7 @@ var crawlerSubscribe = function (entry) {
     }
     var newsList = json.Contents.Data;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
@@ -202,14 +200,14 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        crawlerEvent.emit('onDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length === entry.pageSize) {
         entry.page = _.last(newsList).ID;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -218,35 +216,30 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerYokaSubscribes = function() {
-  yokaSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function() {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
     entry.pageSize = 20;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerYokaSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  yokaSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.yokaTags = yokaSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

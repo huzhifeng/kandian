@@ -10,8 +10,6 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'Content-Encoding': 'UTF-8',
   'Content-Type': 'text/plain',
@@ -20,7 +18,7 @@ var headers = {
   'Connection': 'Keep-Alive',
 };
 var site = 'sohu';
-var sohuSubscribes = [
+var newsSubscriptions = [
   // 要闻
   // 文章列表
   // http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=1&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&pull=0&more=0&net=wifi&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
@@ -34,7 +32,7 @@ var sohuSubscribes = [
   {tname:'热辣评', tid:'683', tags:[], stopped:1}, // 2014-04-18 停止更新
   {tname:'我来说两句', tid:'915', tags:[], stopped:1}, // 2014-01-09 停止更新
 ];
-var videoSubscribes = [
+var videoSubscriptions = [
   // 视频频道
   // http://api.k.sohu.com/api/video/channelList.go?p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
   // 文章列表
@@ -71,7 +69,7 @@ var videoSubscribes = [
     ]
   },
 ];
-var otherSubscribes = [
+var otherSubscriptions = [
   //{tname:'知乎每日精选', tid:'416', tags:[]},
   //{tname:'趣图集', tid:'500', tags:[], stopped:1}, // 2013-10-09 停止更新
   //{tname:'捧腹网', tid:'501', tags:[]},
@@ -92,7 +90,7 @@ var otherSubscribes = [
   //{tname:'爱美男', tid:'2141', tags:[]},
   {tname:'蝶女郎', tid:'3446', tags:[], stopped:1}, // 2013-11-28 停止更新
 ];
-var photoTags = [
+var photoSubscriptions = [
   {tname:'搜狐美女', tid:'53', tags:[]},
   {tname:'图粹', tid:'455', tags:[]},
   {tname:'图片故事', tid:'456', tags:[]},
@@ -103,17 +101,15 @@ var photoTags = [
   {tname:'爱新奇', tid:'465', tags:[], stopped:1}, // 2013-02-22 停止更新
 ];
 
-var startGetDetail = new EventEmitter();
-
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+var crawlerEvent = new EventEmitter();
+crawlerEvent.on('onNewsDetail', function (entry) {
+  fetchNewsDetail(entry);
+});
+crawlerEvent.on('onPhotoDetail', function (entry) {
+  fetchPhotoDetail(entry);
 });
 
-startGetDetail.on('startGetPhotoDetail', function (entry) {
-  getPhotoDetail(entry);
-});
-
-var getNewsDetail = function(entry) {
+var fetchNewsDetail = function(entry) {
   var detailLink = 'http://api.k.sohu.com/api/news/article.go?newsId=%s';
   var docid = util.format('%s',entry.newsId);
   var url = util.format(detailLink, docid);
@@ -122,21 +118,21 @@ var getNewsDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     if (err || (res.statusCode != 200) || (!body)) {
         logger.warn('request failed: %j', {
           'err': err,
           'statusCode': res ? res.statusCode : 'null res',
-          'url': res ? res.request.href : url
+          'url': url
         });
         return;
     }
     var json = xml2json.toJson(body, {object: true, sanitize: false});
     if (!json || !_.has(json, 'root') || !utils.hasKeys(json.root, ['newsId', 'title', 'content'])) {
-      logger.warn('Invalid json data %j in %s', json, res ? res.request.href : url);
+      logger.warn('Invalid json data %j in %s', json, url);
       return;
     }
     var jObj = json.root;
@@ -161,7 +157,7 @@ var getNewsDetail = function(entry) {
       var t3 = moment(parseInt(entry.updateTime, 10));
       var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -173,7 +169,7 @@ var getNewsDetail = function(entry) {
       obj.digest = utils.genDigest(obj.marked);
       obj.cover = entry.listpic || entry.bigPic;
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -191,7 +187,7 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var getPhotoDetail = function(entry) {
+var fetchPhotoDetail = function(entry) {
   // http://api.k.sohu.com/api/photos/gallery.go?gid=78233&from=tag&fromId=455&supportTV=1&refer=null&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D
   // http://api.k.sohu.com/api/photos/gallery.go?gid=78233
   var docid = util.format('%s',entry.gid);
@@ -201,25 +197,25 @@ var getPhotoDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     if (err || (res.statusCode != 200) || (!body)) {
         logger.warn('request failed: %j', {
           'err': err,
           'statusCode': res ? res.statusCode : 'null res',
-          'url': res ? res.request.href : url
+          'url': url
         });
         return;
     }
     var json = xml2json.toJson(body,{object:true, sanitize:false});
     if (!json || !_.has(json, 'root') || !utils.hasKeys(json.root, ['newsId', 'title', 'gid', 'gallery'])) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     if (!_.isArray(json.root.gallery.photo) || _.isEmpty(json.root.gallery.photo)) {
-      logger.warn('Invalid gallery photo %j in %s', json.root.gallery, res ? res.request.href : url);
+      logger.warn('Invalid gallery photo %j in %s', json.root.gallery, url);
       return;
     }
     var jObj = json.root;
@@ -243,7 +239,7 @@ var getPhotoDetail = function(entry) {
       var t2 = moment(parseInt(entry.time, 10));
       var ptime = t1.isValid() ? t1 : t2;
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -264,7 +260,7 @@ var getPhotoDetail = function(entry) {
       obj.tags = entry.tagName;
       obj.digest = utils.genDigest(obj.marked);
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -295,7 +291,7 @@ var genVideoPlayerHtml = function(vid, id) {
   return html;
 }
 
-var crawlerVideo = function (entry) {
+var fetchVideoSubscription = function (entry) {
   var pageSize = 20;
   var url = util.format('http://api.k.sohu.com/api/video/multipleMessageList.go?type=0&channelId=%s&cursor=%d&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1', entry.tid, entry.cursor);
   var req = {
@@ -303,23 +299,23 @@ var crawlerVideo = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !_.has(json, 'data')) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json.data;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
       if (!utils.hasKeys(newsEntry, ['id', 'title', 'playurl', 'pubDateName', 'siteInfo'])) {
-        logger.warn('Invalid newsEntry in %s', res ? res.request.href : url);
+        logger.warn('Invalid newsEntry in %s', url);
         return;
       }
       newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
@@ -348,7 +344,7 @@ var crawlerVideo = function (entry) {
         var t3 = moment(parseInt(newsEntry.utime, 10));
         var ptime = t1.isValid() ? t1 : (t2.isValid() ? t2 : t3);
         if (!ptime.isValid()) {
-          logger.warn('Invalid time in %s', res ? res.request.href : url);
+          logger.warn('Invalid time in %s', url);
           return;
         }
         obj.time = ptime.toDate();
@@ -367,7 +363,7 @@ var crawlerVideo = function (entry) {
           }
         }
 
-        logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, newsEntry.id, obj.docid, newsEntry.updateFlag);
+        logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, newsEntry.id, obj.docid);
         if (newsEntry.updateFlag) {
           News.update({docid: obj.docid}, obj, function (err, result) {
             if (err || !result) {
@@ -387,7 +383,7 @@ var crawlerVideo = function (entry) {
       if ((newsList.length === pageSize) && json.hasnext && json.nextCursor) {
         entry.cursor = json.nextCursor;
         logger.info('[%s] next page: %d', entry.tname, entry.cursor);
-        setTimeout(crawlerVideo, 3000, entry);
+        setTimeout(fetchVideoSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.cursor);
         entry.crawlFlag = 0;
@@ -396,7 +392,7 @@ var crawlerVideo = function (entry) {
   });
 };
 
-var crawlerPhoto = function (entry) {
+var fetchPhotoSubscription = function (entry) {
   var pageSize = 10;
   var url = util.format('http://api.k.sohu.com/api/photos/list.go?&tagId=%s&rt=json&pageNo=%d&pageSize=10&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D', entry.tid, entry.page);
   if (1 === entry.page) {
@@ -407,23 +403,23 @@ var crawlerPhoto = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !_.has(json, 'news')) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json.news;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
       if (!utils.hasKeys(newsEntry, ['gid', 'title', 'images'])) {
-        logger.warn('Invalid newsEntry in %s', res ? res.request.href : url);
+        logger.warn('Invalid newsEntry in %s', url);
         return;
       }
       newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
@@ -443,14 +439,14 @@ var crawlerPhoto = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetPhotoDetail', newsEntry);
+        crawlerEvent.emit('onPhotoDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length === pageSize) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerPhoto, 3000, entry);
+        setTimeout(fetchPhotoSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -459,7 +455,7 @@ var crawlerPhoto = function (entry) {
   });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchNewsSubscription = function (entry) {
   var pageSize = 15;
   var url = util.format('http://api.k.sohu.com/api/flow/newslist.go?subId=%s&pubId=0&sid=18&rt=json&pageNum=%d', entry.tid, entry.page);
   if (entry.tid === '1') { // 头条
@@ -471,13 +467,13 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !(_.has(json, 'newsList') || _.has(json, 'articles'))) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json.newsList;
@@ -485,12 +481,12 @@ var crawlerSubscribe = function (entry) {
       newsList = json.articles;
     }
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
       if (!utils.hasKeys(newsEntry, ['newsId', 'title'])) {
-        logger.warn('Invalid newsEntry in %s', res ? res.request.href : url);
+        logger.warn('Invalid newsEntry in %s', url);
         return;
       }
       newsEntry.tagName = utils.findTagName(newsEntry.title, entry);
@@ -509,14 +505,14 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        crawlerEvent.emit('onNewsDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length === pageSize) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchNewsSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -525,76 +521,61 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerVideos = function () {
-  videoSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchVideoSubscriptions = function () {
+  videoSubscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.cursor = 0;
-    crawlerVideo(entry);
+    fetchVideoSubscription(entry);
   });
 }
 
-var crawlerPhotos = function () {
-  photoTags.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchPhotoSubscriptions = function () {
+  photoSubscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 1;
-    crawlerPhoto(entry);
+    fetchPhotoSubscription(entry);
   });
 }
 
-var crawlerOtherSubscribes = function () {
-  otherSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchNewsSubscriptions = function () {
+  var subscriptions = newsSubscriptions.concat(otherSubscriptions);
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 1;
-    crawlerSubscribe(entry);
-  });
-}
-
-var crawlerSohuSubscribes = function () {
-  sohuSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
-      return;
-    }
-    entry.page = 1;
-    crawlerSubscribe(entry);
+    fetchNewsSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerSohuSubscribes();
-  crawlerOtherSubscribes();
-  crawlerPhotos();
-  crawlerVideos();
+  newsSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  otherSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  photoSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  videoSubscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchNewsSubscriptions();
+  fetchPhotoSubscriptions();
+  fetchVideoSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  sohuSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  otherSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  photoTags.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  videoSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.sohuTags = sohuSubscribes.concat(otherSubscribes, photoTags, videoSubscribes);
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = newsSubscriptions.concat(otherSubscriptions, photoSubscriptions, videoSubscriptions);

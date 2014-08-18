@@ -8,8 +8,6 @@ var utils = require('../lib/utils')
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var site = 'iheima';
 var tags = [
   '每日一黑马',
@@ -30,7 +28,7 @@ var tags = [
   '大买家',
   '黑马YY',
 ];
-var iheimaSubscribes = [
+var subscriptions = [
   {tname: '抄本质', tid: '100238521', tags: tags},
   {tname: '找灵感', tid: '100238528', tags: tags},
   {tname: '挖黑马', tid: '100238575', tags: tags},
@@ -39,7 +37,7 @@ var iheimaSubscribes = [
   //{tname: '国外精选', tid: '100238826', tags: tags},
 ];
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = util.format('http://zhiyue.cutt.com/api/clip/items?clipId=%s&full=1&offset=%s&note=1', entry.tid, entry.page);
   var headers = {
     'app': '43',
@@ -53,8 +51,8 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -124,7 +122,7 @@ var crawlerSubscribe = function (entry) {
         }
         obj.digest = utils.genDigest(obj.marked);
 
-        logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, newsEntry.id, obj.docid, newsEntry.updateFlag);
+        logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, newsEntry.id, obj.docid);
         if (newsEntry.updateFlag) {
           News.update({docid: obj.docid}, obj, function (err, result) {
             if (err || !result) {
@@ -144,7 +142,7 @@ var crawlerSubscribe = function (entry) {
       if (newsList.length === entry.pageSize && json.next != -1) {
         entry.page = json.next;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -153,35 +151,30 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerSubscribes = function() {
-  iheimaSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function() {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
     entry.pageSize = 20;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  iheimaSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.iheimaTags = iheimaSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

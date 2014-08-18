@@ -8,14 +8,12 @@ var utils = require('../lib/utils')
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': 'Dalvik/1.6.0 (Linux; U; Android 4.1.1; MI 2 MIUI/JLB34.0)',
   'Connection': 'Keep-Alive',
   'Host': 'www.wumii.com',
 };
-var meizituSubscribes = [
+var meizituSubscriptions = [
   // 首页
   // http://www.wumii.com/app/mobile/auto/site/items?obSiteId=lRlNwXBT&ord=TIME_DESC
   // http://www.wumii.com/app/mobile/auto/site/items?obSiteId=lRlNwXBT&pageMark=1389837304000&ord=TIME_DESC
@@ -32,7 +30,7 @@ var meizituSubscribes = [
   //{tname:'文艺小清新', tid:'beWc1Oxz', tags:[]},
   //{tname:'可爱萌妹子', tid:'GthH6PBu', tags:[]},
 ];
-var meizicoSubscribes = [
+var meizicoSubscriptions = [
   // 首页
   // http://www.wumii.com/app/mobile/auto/site/items?obSiteId=3NxAQlet&ord=TIME_DESC
   // http://www.wumii.com/app/mobile/auto/site/items?obSiteId=3NxAQlet&pageMark=1389319532394&ord=TIME_DESC
@@ -54,7 +52,7 @@ var meizicoSubscribes = [
   //{tname:'淘女郎'    tid:'oYU6BnyD', tags:[]},
 ];
 // 2014/05 停止更新
-var zeiniuSubscribes = [
+var zeiniuSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=iJBlKweU&ord=TIME_DESC
   {tname:'贼牛网', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=iJBlKweU&ord=HOT_DESC
@@ -75,7 +73,7 @@ var zeiniuSubscribes = [
   //{tname:'搞笑漫画', tid:'DXLzhBSg', tags:[]},
   //{tname:'寡妇三代', tid:'2AZ5slcG', tags:[]},
 ];
-var hexiesheSubscribes = [
+var hexiesheSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=Od0ZWlWj&ord=TIME_DESC
   {tname:'和邪社', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=Od0ZWlWj&ord=HOT_DESC
@@ -104,7 +102,7 @@ var hexiesheSubscribes = [
   //{tname:'话题讨论', tid:'k1jeYbEb', tags:[]},
   //{tname:'游戏',     tid:'2zKrT1Mb', tags:[]},
 ];
-var timetimetimeSubscribes = [
+var timetimetimeSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=XWE4tnup&ord=TIME_DESC
   {tname:'阅读时间', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=XWE4tnup&ord=HOT_DESC
@@ -121,7 +119,7 @@ var timetimetimeSubscribes = [
   //{tname:'生活派'    tid:'4ZJoi3gU', tags:[]},
 ];
 // 无数据
-var chaoyouhuoSubscribes = [
+var chaoyouhuoSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=rDp9Zfa2&ord=TIME_DESC
   {tname:'超诱惑', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=rDp9Zfa2&ord=HOT_DESC
@@ -133,7 +131,7 @@ var chaoyouhuoSubscribes = [
   //{tname:'其他', tid:'do6nnnH', tags:[]},
 ];
 // 2014/05 停止更新
-var v7mmSubscribes = [
+var v7mmSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=f694tZZd&ord=TIME_DESC
   {tname:'7v美眉', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=f694tZZd&ord=HOT_DESC
@@ -142,7 +140,7 @@ var v7mmSubscribes = [
   //{tname:'精选美女', tid:'vo3GP7es', tags:[]},
 ];
 // 2014/06 停止更新
-var showmeiziSubscribes = [
+var showmeiziSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=aJqTfv3R&ord=TIME_DESC
   {tname:'Show妹子', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=aJqTfv3R&ord=HOT_DESC
@@ -159,7 +157,7 @@ var showmeiziSubscribes = [
   //{tname:'美女视频', tid:'6hNrL5Mh', tags:[]},
   //{tname:'写真',     tid:'YcmJ2fp',  tags:[]},];
 ];
-var umeiSubscribes = [
+var umeiSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=cO7x9i7y&ord=TIME_DESC
   {tname:'优美高清', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=cO7x9i7y&ord=HOT_DESC
@@ -176,7 +174,7 @@ var umeiSubscribes = [
   //{tname:'倔繁VIP',  tid:'HMrgO9e',  tags:[]},
 ];
 // 2014/02 停止更新
-var mobudeSubscribes = [
+var mobudeSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=3wwUfpKo&ord=TIME_DESC
   {tname:'女神来了', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=3wwUfpKo&ord=HOT_DESC
@@ -185,7 +183,7 @@ var mobudeSubscribes = [
   //{tname:'未分类', tid:'ODRShDPq', tags:[]},
   //{tname:'暂时未分类', tid:'5vWoIU44', tags:[]},
 ];
-var wuxianbkSubscribes = [
+var wuxianbkSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=1rqVGhc&ord=TIME_DESC
   {tname:'无限福利', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=1rqVGhc&ord=HOT_DESC
@@ -202,7 +200,7 @@ var wuxianbkSubscribes = [
   //{tname:'日记本',           tid:'7uBsesaV', tags:[]},
 ];
 // 2014/01 停止更新
-var yunduoSubscribes = [
+var yunduoSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=FjHtYdHL&ord=TIME_DESC
   {tname:'云朵模特', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=FjHtYdHL&ord=HOT_DESC
@@ -213,7 +211,7 @@ var yunduoSubscribes = [
   //{tname:'未分类', tid:'OBfxXryo', tags:[]},
   //{tname:'云朵学生', tid:'CVSgtLS', tags:[]},
 ];
-var ameiSubscribes = [
+var ameiSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=3SvQmov6&ord=TIME_DESC
   {tname:'阿妹高清美女', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=3SvQmov6&ord=HOT_DESC
@@ -222,7 +220,7 @@ var ameiSubscribes = [
   //{tname:'国内美女', tid:'tZIH77jo', tags:[]},
   //{tname:'日韩美女', tid:'vH5biHCf', tags:[]},
 ];
-var mm33Subscribes = [
+var mm33Subscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=GEmukg3G&ord=TIME_DESC
   {tname:'33mm美女图片', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=GEmukg3G&ord=HOT_DESC
@@ -245,7 +243,7 @@ var mm33Subscribes = [
   //{tname:'网友分享',     tid:'7vziCSwV', tags:[]},
 ];
 // 2014/08 请升级官方客户端
-var jiecao8Subscribes = [
+var jiecao8Subscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=ewdBdnG&ord=TIME_DESC
   {tname:'节操吧', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=ewdBdnG&ord=HOT_DESC
@@ -256,7 +254,7 @@ var jiecao8Subscribes = [
   //{tname:'吐槽字幕', tid:'4ZIJWQvh', tags:[]},
 ];
 // 2014/02 停止更新
-var lequhaSubscribes = [
+var lequhaSubscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=ExoT7VwB&ord=TIME_DESC
   {tname:'乐趣哈', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=ExoT7VwB&ord=HOT_DESC
@@ -268,7 +266,7 @@ var lequhaSubscribes = [
   //{tname:'搞笑漫画', tid:'6KUzm3Qg', tags:[]},
 ];
 // 2014/02 停止更新
-var hugao8Subscribes = [
+var hugao8Subscriptions = [
   // 首页 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=PwwmW2tg&ord=TIME_DESC
   {tname:'搞笑吧', tid: 1, tags:[]},
   // 今日热门 http://www.wumii.com/app/mobile/auto/site/items?obSiteId=PwwmW2tg&ord=HOT_DESC
@@ -317,7 +315,7 @@ var hugao8Subscribes = [
   //{tname':'暴走大事件',           tid:'DZ0CXqTB', tags:[]},
   //{tname':'一千种死法,1000种死法',tid:'2KQiRVv',  tags:[]},
 ];
-var crawlerSubscribe = function(entry) {
+var fetchSubscription = function(entry) {
   var url = util.format('http://www.wumii.com/app/mobile/auto/site/items?obSiteId=%s%s&ord=%s%s',
                         entry.obSiteId,
                         entry.page === 0 ? '' : util.format('&pageMark=%s', entry.page),
@@ -328,8 +326,8 @@ var crawlerSubscribe = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -395,7 +393,7 @@ var crawlerSubscribe = function(entry) {
         });
         obj.digest = utils.genDigest(obj.marked);
 
-        logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, newsEntry.item.id, obj.docid, newsEntry.updateFlag);
+        logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, newsEntry.item.id, obj.docid);
         if (newsEntry.updateFlag) {
           News.update({docid: obj.docid}, obj, function (err, result) {
             if (err || !result) {
@@ -415,7 +413,7 @@ var crawlerSubscribe = function(entry) {
       if (newsList.length === entry.pageSize && json.readerModule.nextPageMark != -1) {
         entry.page = json.readerModule.nextPageMark;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -424,106 +422,105 @@ var crawlerSubscribe = function(entry) {
   });
 }
 
-var crawlerSubscribes = function() {
-  var subscribes = meizituSubscribes.concat(meizicoSubscribes, umeiSubscribes, ameiSubscribes);
-  subscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function() {
+  var subscriptions = meizituSubscriptions.concat(meizicoSubscriptions, umeiSubscriptions, ameiSubscriptions);
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
     entry.pageSize = 16;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
+var wumiiSubscriptions = meizituSubscriptions.concat(meizicoSubscriptions,zeiniuSubscriptions,hexiesheSubscriptions,timetimetimeSubscriptions,chaoyouhuoSubscriptions,v7mmSubscriptions,showmeiziSubscriptions,umeiSubscriptions,mobudeSubscriptions,wuxianbkSubscriptions,yunduoSubscriptions,ameiSubscriptions,mm33Subscriptions,jiecao8Subscriptions,lequhaSubscriptions,hugao8Subscriptions);
 var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  wumiiTags.forEach(function(entry) {
+  wumiiSubscriptions.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });
-  meizituSubscribes.forEach(function(entry) {
+  crawlFlag = 0;
+  meizituSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'lRlNwXBT';
     entry.site = 'meizitu';
     entry.website = 'http://www.meizitu.com';
   });
-  meizicoSubscribes.forEach(function(entry) {
+  meizicoSubscriptions.forEach(function(entry) {
     entry.obSiteId = '3NxAQlet';
     entry.site = 'meizico';
     entry.website = 'http://www.meizico.com';
   });
-  zeiniuSubscribes.forEach(function(entry) {
+  zeiniuSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'iJBlKweU';
     entry.site = 'zeiniu';
     entry.website = 'http://www.zei6.com';
   });
-  hexiesheSubscribes.forEach(function(entry) {
+  hexiesheSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'Od0ZWlWj';
     entry.site = 'hexieshe';
     entry.website = 'http://www.hexieshe.com';
   });
-  timetimetimeSubscribes.forEach(function(entry) {
+  timetimetimeSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'XWE4tnup';
     entry.site = 'timetimetime';
     entry.website = 'http://timetimetime.net';
   });
-  chaoyouhuoSubscribes.forEach(function(entry) {
+  chaoyouhuoSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'rDp9Zfa2';
     entry.site = 'chaoyouhuo';
     entry.website = 'http://www.chaoyouhuo.com';
   });
-  v7mmSubscribes.forEach(function(entry) {
+  v7mmSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'f694tZZd';
     entry.site = '7vmm';
     entry.website = 'http://www.7vmm.com';
   });
-  showmeiziSubscribes.forEach(function(entry) {
+  showmeiziSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'aJqTfv3R';
     entry.site = 'showmeizi';
     entry.website = 'http://www.showmeizi.com/';
   });
-  umeiSubscribes.forEach(function(entry) {
+  umeiSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'cO7x9i7y';
     entry.site = 'umei';
     entry.website = 'http://www.umei.cc/';
   });
-  mobudeSubscribes.forEach(function(entry) {
+  mobudeSubscriptions.forEach(function(entry) {
     entry.obSiteId = '3wwUfpKo';
     entry.site = 'mobude';
     entry.website = 'http://mobude.com/';
   });
-  wuxianbkSubscribes.forEach(function(entry) {
+  wuxianbkSubscriptions.forEach(function(entry) {
     entry.obSiteId = '1rqVGhc';
     entry.site = 'wuxianbk';
     entry.website = 'http://wuxianbk.com/';
   });
-  yunduoSubscribes.forEach(function(entry) {
+  yunduoSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'FjHtYdHL';
     entry.site = 'yunduo';
     entry.website = 'http://yunduo.cc/';
   });
-  ameiSubscribes.forEach(function(entry) {
+  ameiSubscriptions.forEach(function(entry) {
     entry.obSiteId = '3SvQmov6';
     entry.site = 'amei';
     entry.website = 'http://www.amei.cc/';
   });
-  mm33Subscribes.forEach(function(entry) {
+  mm33Subscriptions.forEach(function(entry) {
     entry.obSiteId = 'GEmukg3G';
     entry.site = '33mm';
     entry.website = 'http://www.33mm.cc/';
   });
-  jiecao8Subscribes.forEach(function(entry) {
+  jiecao8Subscriptions.forEach(function(entry) {
     entry.obSiteId = 'ewdBdnG';
     entry.site = 'jiecao8';
     entry.website = 'http://jiecao8.net/';
   });
-  lequhaSubscribes.forEach(function(entry) {
+  lequhaSubscriptions.forEach(function(entry) {
     entry.obSiteId = 'ExoT7VwB';
     entry.site = 'lequha';
     entry.website = 'http://www.lequha.com/';
   });
-  hugao8Subscribes.forEach(function(entry) {
+  hugao8Subscriptions.forEach(function(entry) {
     entry.obSiteId = 'PwwmW2tg';
     entry.site = 'hugao8';
     entry.website = 'http://www.hugao8.com/';
@@ -532,13 +529,14 @@ var init = function() {
 
 var main = function() {
   logger.log('Start');
-  crawlerSubscribes();
+  init();
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-exports.main = main;
-wumiiTags = meizituSubscribes.concat(meizicoSubscribes,zeiniuSubscribes,hexiesheSubscribes,timetimetimeSubscribes,chaoyouhuoSubscribes,v7mmSubscribes,showmeiziSubscribes,umeiSubscribes,mobudeSubscribes,wuxianbkSubscribes,yunduoSubscribes,ameiSubscribes,mm33Subscribes,jiecao8Subscribes,lequhaSubscribes,hugao8Subscribes);
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = wumiiSubscriptions;

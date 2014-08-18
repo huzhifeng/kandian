@@ -9,15 +9,13 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': 'Apache-HttpClient/UNAVAILABLE (java 1.4)',
   'Host': 'api.diaobao.in',
   'Connection': 'Keep-Alive',
 };
 var site = 'diaobao';
-var diaobaoSubscribes = [
+var subscriptions = [
   {tname:'人性实验', tid:'78207', tags:[]},
   {tname:'每日囧图', tid:'16', tags:[]},
   {tname:'碉民早爆', tid:'5', tags:[]},
@@ -30,12 +28,12 @@ var diaobaoSubscribes = [
   {tname:'浑圆臀地', tid:'24', tags:[], stopped: 1},
 ];
 
-var startGetDetail = new EventEmitter();
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+var crawlerEvent = new EventEmitter();
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
-var getNewsDetail = function(entry) {
+var fetchDetail = function(entry) {
   var docid = util.format('%s',entry.id);
   var url = util.format('http://api.diaobao.in/index.php/post/view/%s?uid=0&scroll-src=1', docid);
   var req = {
@@ -43,8 +41,8 @@ var getNewsDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     if (!_.isString(body) || _.isEmpty(body)) {
@@ -104,7 +102,7 @@ var getNewsDetail = function(entry) {
         return;
       }
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -122,15 +120,15 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = util.format('http://api.diaobao.in/index.php/topic/articles?topic_id=%s&begin=%d&size=%d&access_token=f9f4f05d1fb4d556ba8b6d75fa1b721f', entry.tid, entry.page * entry.pageSize, entry.pageSize);
   var req = {
     uri: url,
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     if (!_.isString(body) || _.isEmpty(body)) {
@@ -144,7 +142,7 @@ var crawlerSubscribe = function (entry) {
     }
     var newsList = json.data;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
@@ -167,14 +165,14 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        crawlerEvent.emit('onDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length === entry.pageSize) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -183,35 +181,30 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerDiaobaoSubscribes = function () {
-  diaobaoSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function () {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
     entry.pageSize = 20;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerDiaobaoSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  diaobaoSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.diaobaoTags = diaobaoSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

@@ -8,15 +8,13 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var site = 'baidu';
-var baiduSubscribes = [
+var subscriptions = [
   {tname: '推送消息', tid: 'http://api.baiyue.baidu.com/sn/api/getpushlist?rn=%d&time=%s&wf=1', tags: ['星闻速递', '早报', '毒舌秀']},
   //{tname: '头条', tid: 'http://api.baiyue.baidu.com/sn/api/focusnews?rn=%d&time=%s&wf=1', tags: ['要闻速递', '囧哥说事', '科技大事件']},
 ];
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = util.format(entry.tid, entry.pageSize, entry.page);
   var headers = {
     'User-Agent': 'bdnews_android_phone',
@@ -28,8 +26,8 @@ var crawlerSubscribe = function (entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -110,7 +108,7 @@ var crawlerSubscribe = function (entry) {
           });
         }
 
-        logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, newsEntry.nid, obj.docid, newsEntry.updateFlag);
+        logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, newsEntry.nid, obj.docid);
         if (newsEntry.updateFlag) {
           News.update({docid: obj.docid}, obj, function (err, result) {
             if (err || !result) {
@@ -130,7 +128,7 @@ var crawlerSubscribe = function (entry) {
       if (newsList.length === entry.pageSize) {
         entry.page = json.data.st;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -139,35 +137,30 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerSubscribes = function() {
-  baiduSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function() {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 0;
     entry.pageSize = 20;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  baiduSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.baiduTags = baiduSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;

@@ -9,15 +9,13 @@ var utils = require('../lib/utils');
 var logger = require('../logger');
 var crawlFlag = config.crawlFlag;
 var updateFlag = config.updateFlag;
-var proxyEnable = 0;
-var proxyUrl = 'http://127.0.0.1:7788';
 var headers = {
   'User-Agent': 'MI_2__sinanews__4.0.1__android__os4.1.1',
   'Host': 'api.sina.cn',
   'Connection': 'Keep-Alive',
 };
 var site = 'sina';
-var sinaSubscribes = [
+var subscriptions = [
   {
     tname:'头条',
     tid:'news_toutiao',
@@ -77,13 +75,13 @@ var sinaSubscribes = [
   //{tname:'视频.花絮', tid:'video_highlight', tags:[]},
 ];
 
-var startGetDetail = new EventEmitter();
+var crawlerEvent = new EventEmitter();
 
-startGetDetail.on('startGetNewsDetail', function (entry) {
-  getNewsDetail(entry);
+crawlerEvent.on('onDetail', function (entry) {
+  fetchDetail(entry);
 });
 
-var getNewsDetail = function(entry) {
+var fetchDetail = function(entry) {
   var docid = util.format('%s',entry.id);
   var url = util.format('http://api.sina.cn/sinago/article.json?id=%s', docid);
   var req = {
@@ -91,8 +89,8 @@ var getNewsDetail = function(entry) {
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
@@ -100,7 +98,7 @@ var getNewsDetail = function(entry) {
         (json.status == -1) ||
         !_.has(json, 'data') ||
         !utils.hasKeys(json.data, ['id', 'title', 'content'])) {
-      logger.warn('Invalid json data %j in %s', json, res ? res.request.href : url);
+      logger.warn('Invalid json data %j in %s', json, url);
       return;
     }
     var jObj = json.data;
@@ -125,7 +123,7 @@ var getNewsDetail = function(entry) {
       var t2 = moment(parseInt(jObj.pubDate, 10) * 1000);
       var ptime = t1.isValid() ? t1 : t2;
       if (!ptime.isValid()) {
-        logger.warn('Invalid time in %s', res ? res.request.href : url);
+        logger.warn('Invalid time in %s', url);
         return;
       }
       obj.time = ptime.toDate();
@@ -170,7 +168,7 @@ var getNewsDetail = function(entry) {
       obj.tags = entry.tagName;
       obj.digest = utils.genDigest(jObj.content);
 
-      logger.log('[%s]%s, docid=[%s]->[%s],updateFlag=%d', obj.tags, obj.title, docid, obj.docid, entry.updateFlag);
+      logger.log('[%s]%s, docid=[%s]->[%s]', obj.tags, obj.title, docid, obj.docid);
       if (entry.updateFlag) {
         News.update({docid: obj.docid}, obj, function (err, result) {
           if (err || !result) {
@@ -188,25 +186,25 @@ var getNewsDetail = function(entry) {
   });
 };
 
-var crawlerSubscribe = function (entry) {
+var fetchSubscription = function (entry) {
   var url = util.format('http://api.sina.cn/sinago/list.json?channel=%s&p=%d', entry.tid, entry.page);
   var req = {
     uri: url,
     method: 'GET',
     headers: headers
   };
-  if (proxyEnable) {
-    req.proxy = proxyUrl;
+  if (config.proxyEnable) {
+    req.proxy = config.proxyUrl;
   }
   request(req, function (err, res, body) {
     var json = utils.parseJSON(err, res, body);
     if (!json || !_.has(json, 'data') || !_.has(json.data, 'list')) {
-      logger.warn('Invalid json data in %s', res ? res.request.href : url);
+      logger.warn('Invalid json data in %s', url);
       return;
     }
     var newsList = json.data.list;
     if (!_.isArray(newsList) || _.isEmpty(newsList)) {
-      logger.warn('Invalid newsList in %s', res ? res.request.href : url);
+      logger.warn('Invalid newsList in %s', url);
       return;
     }
     newsList.forEach(function(newsEntry) {
@@ -230,14 +228,14 @@ var crawlerSubscribe = function (entry) {
             return;
           }
         }
-        startGetDetail.emit('startGetNewsDetail', newsEntry);
+        crawlerEvent.emit('onDetail', newsEntry);
       });
     });
     if (entry.crawlFlag) {
       if (newsList.length >= 10) {
         entry.page += 1;
         logger.info('[%s] next page: %d', entry.tname, entry.page);
-        setTimeout(crawlerSubscribe, 3000, entry);
+        setTimeout(fetchSubscription, 3000, entry);
       }else {
         logger.info('[%s] last page: %d', entry.tname, entry.page);
         entry.crawlFlag = 0;
@@ -246,34 +244,29 @@ var crawlerSubscribe = function (entry) {
   });
 };
 
-var crawlerSinaSubscribes = function () {
-  sinaSubscribes.forEach(function(entry) {
-    if (!crawlFlag && entry.stopped) {
+var fetchSubscriptions = function () {
+  subscriptions.forEach(function(entry) {
+    if (entry.stopped && !entry.crawlFlag) {
       return;
     }
     entry.page = 1;
-    crawlerSubscribe(entry);
+    fetchSubscription(entry);
   });
 }
 
 var main = function() {
   logger.log('Start');
-  crawlerSinaSubscribes();
+  subscriptions.forEach(function(entry) {
+    entry.crawlFlag = crawlFlag;
+  });
+  crawlFlag = 0;
+  fetchSubscriptions();
   setTimeout(main, config.crawlInterval);
 }
 
-var init = function() {
-  if (process.argv[2] == 1) {
-    crawlFlag = 1;
-  }
-  sinaSubscribes.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-}
-
-exports.main = main;
-exports.sinaTags = sinaSubscribes;
-init();
 if (require.main === module) {
   main();
 }
+
+exports.main = main;
+exports.subscriptions = subscriptions;
