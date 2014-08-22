@@ -11,30 +11,17 @@ var updateFlag = config.updateFlag;
 var site = 'iheima';
 var tags = [
   '每日一黑马',
-  '案例',
-  '每日黑马',
   '挖黑马',
-  '侃产品',
   '头条汇',
   '小败局',
-  '独家分析',
-  '创业说',
-  '找灵感',
-  '产品家',
-  '挖黑马',
-  '商业模式',
-  'i黑马榜',
-  '融资趋势',
-  '大买家',
-  '黑马YY',
 ];
 var subscriptions = [
   {tname: '抄本质', tid: '100238521', tags: tags},
   {tname: '找灵感', tid: '100238528', tags: tags},
   {tname: '挖黑马', tid: '100238575', tags: tags},
-  //{tname: '项目诊断', tid: '100238675', tags: tags},
-  //{tname: '评热点', tid: '100185712', tags: tags},
-  //{tname: '国外精选', tid: '100238826', tags: tags},
+  {tname: '项目诊断', tid: '100238675', tags: tags},
+  {tname: '评热点', tid: '100185712', tags: tags},
+  {tname: '国外精选', tid: '100238826', tags: tags},
 ];
 
 var fetchSubscription = function (entry) {

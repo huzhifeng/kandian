@@ -16,88 +16,52 @@ var headers = {
 };
 var site = 'qq';
 var newsSubscriptions = [
-  //{tname:'要闻', tid:'news_news_top', tags:['娱乐午报', '留声机', '西洋镜', '问编辑', '新闻周考', '猜新闻', '数据控', '视界', '新闻当事人']},
-  //{tname:'科技', tid:'news_news_tech', tags:[]},
-  //{tname:'社会', tid:'news_news_ssh', tags:[]},
-  //{tname:'娱乐', tid:'news_news_ent', tags:[]},
-  //{tname:'军事', tid:'news_news_mil', tags:[]},
-  //{tname:'文化', tid:'news_news_cul', tags:[]},
-  //{tname:'时尚', tid:'news_news_lad', tags:[]},
   //腾讯原创栏目
-  {tname:'新闻晚8点', tid:'94', tags:[]},
-  {tname:'新闻哥', tid:'1033', tags:[]},
-  {tname:'短史记', tid:'1783', tags:[]},
-  {tname:'今日话题', tid:'41', tags:[]},
-  {tname:'新闻百科', tid:'39', tags:[]},
-  {tname:'讲武堂', tid:'47', tags:[]},
-  {tname:'活着', tid:'35', tags:[]},
-  {tname:'科技不怕问', tid:'1597', tags:[]},
-  {tname:'TMT解码', tid:'1780', tags:[]},
-  {tname:'启示录', tid:'1779', tags:[]},
-  {tname:'所谓娱乐', tid:'1451', tags:[]},
-  {tname:'娱乐钢牙哥', tid:'1039', tags:['钢牙八卦']},
-  {tname:'凡人观时尚', tid:'1804', tags:[]},
-  {tname:'图话', tid:'55', tags:[]},
-  {tname:'存照', tid:'49', tags:[]},
-  {tname:'中国人的一天', tid:'37', tags:[]},
-  {tname:'天天看', tid:'44', tags:[]}, // Video
-  {tname:'文化观察', tid:'1258', tags:[]},
-  {tname:'腾讯大家', tid:'45', tags:[]},
-  {tname:'腾讯道学', tid:'1839', tags:[]},
-  {tname:'腾讯佛学', tid:'1420', tags:[]},
-  {tname:'腾讯儒学', tid:'1840', tags:[]},
-  {tname:'腾讯思享会', tid:'1243', tags:[]},
-  {tname:'腾讯精品课', tid:'1432', tags:[]}, // Video
-  {tname:'腾讯育儿宝典', tid:'1328', tags:[]},
+  {tname: '新闻晚8点', tid: '94', tags: []},
+  {tname: '新闻哥', tid: '1033', tags: []},
+  {tname: '短史记', tid: '1783', tags: []},
+  {tname: '今日话题', tid: '41', tags: []},
+  {tname: '新闻百科', tid: '39', tags: []},
+  {tname: '讲武堂', tid: '47', tags: []},
+  {tname: '活着', tid: '35', tags: []},
+  {tname: '科技不怕问', tid: '1597', tags: []},
+  {tname: 'TMT解码', tid: '1780', tags: []},
+  {tname: '启示录', tid: '1779', tags: [], stopped: 1},
+  {tname: '所谓娱乐', tid: '1451', tags: []},
+  {tname: '凡人观时尚', tid: '1804', tags: []},
+  {tname: '图话', tid: '55', tags: []},
+  {tname: '存照', tid: '49', tags: []},
+  {tname: '中国人的一天', tid: '37', tags: []},
+  {tname: '天天看', tid: '44', tags: [], stopped: 1}, // Video
+  {tname: '文化观察', tid: '1258', tags: []},
+  {tname: '腾讯大家', tid: '45', tags: []},
+  {tname: '腾讯道学', tid: '1839', tags: []},
+  {tname: '腾讯佛学', tid: '1420', tags: []},
+  {tname: '腾讯儒学', tid: '1840', tags: []},
+  {tname: '腾讯思享会', tid: '1243', tags: []},
+  {tname: '腾讯精品课', tid: '1432', tags: []}, // Video
+  {tname: '腾讯育儿宝典', tid: '1328', tags: []},
 ];
 var otherSubscriptions = [
-  {tname:'贵圈', tid:'32', tags:[]},
-  {tname:'封面人物', tid:'33', tags:[]},
-  {tname:'娱乐底片', tid:'34', tags:['娱乐底片', '底片']},
-  //{tname:'名家', tid:'51', tags:['名家']},
-  //{tname:'图片报告', tid:'53', tags:['图片报告']},
-  {tname:'财经眼', tid:'54', tags:[]}, // Video
-  {tname:'金错刀', tid:'1032', tags:['每日一干', '独家干', '病毒一干', '干案例', '干调查', '周末一湿']},
-  //{tname:'喷嚏图卦', tid:'1081', tags:['喷嚏图卦']},
-  {tname:'虎扑体育网', tid:'1182', tags:['虎扑健身', '虎扑翻译团']},
-  {tname:'香港凤凰周刊', tid:'1154', tags:['历史档', '奇闻录', '周刊速读', '新刊速读']},
-  {tname:'夜夜谈', tid:'1212', tags:[]}, // Video
-  {tname:'微博搞笑', tid:'1240', tags:[]},
-  //{tname:'冷兔', tid:'1250', tags:[]}, // Refer to netease
-  //{tname:'我们爱讲冷笑话', tid:'1251', tags:[]}, // Refer to netease
-  {tname:'封面秀', tid:'1310', tags:['封面秀']}, // Video 图片防盗链
-  {tname:'洋葱新闻', tid:'1344', tags:['洋葱新闻']},
-  {tname:'趣你的', tid:'1354', tags:[]},
-  {tname:'骂人宝典', tid:'1338', tags:[]},
-  {tname:'M老头', tid:'1410', tags:[]},
-  {tname:'冷知识', tid:'1478', tags:[]}, // Video
-  //{tname:'冷笑话精选', tid:'1503', tags:[]}, // Refer to netease
-  {tname:'每周一品', tid:'1708', tags:[]},
-  {tname:'健康每一天', tid:'1252', tags:[]}, // Video
-  {tname:'捧腹网', tid:'1796', tags:[]},
-  //{tname:'妹子图', tid:'1727', tags:[]},
-  {tname:'哈爸哼妈', tid:'1389', tags:[]},
-  {tname:'时尚有意思', tid:'1312', tags:[]}, // Video
-  {tname:'恋爱高手', tid:'1480', tags:[]}, // Video
-  {tname:'V+视频', tid:'1811', tags:[]}, // Video
-  {tname:'网络新闻联播', tid:'1681', tags:[]},
-  {tname:'笑来了大姨夫', tid:'1373', tags:[]}, // Video
-  {tname:'生活家', tid:'1386', tags:[]}, // Video
-  {tname:'吃货大本营', tid:'1401', tags:[]}, // Video
-  {tname:'家有萌宝', tid:'1268', tags:[]}, // Video
-  {tname:'你说了蒜', tid:'1441', tags:[]}, // Video
-  {tname:'乐呵视频', tid:'1504', tags:[]}, // Video
-  {tname:'雷眼看世界', tid:'1405', tags:[]}, // Video
-  {tname:'推软妹', tid:'1365', tags:[]},
-  {tname:'百思不得姐', tid:'1838', tags:[]},
-  {tname:'狠了去啦', tid:'1707', tags:[]},
+  {tname: '贵圈', tid: '32', tags: []},
+  {tname: '封面人物', tid: '33', tags: []},
+  {tname: '财经眼', tid: '54', tags: []}, // Video
+  {tname: '金错刀', tid: '1032', tags: ['每日一干', '独家干']},
+  {tname: '趣你的', tid: '1354', tags: []},
+  {tname: '骂人宝典', tid: '1338', tags: []},
+  {tname: '冷知识', tid: '1478', tags: []}, // Video
+  {tname: '捧腹网', tid: '1796', tags: []},
+  {tname: '网络新闻联播', tid: '1681', tags: []},
+  {tname: '生活家', tid: '1386', tags: []}, // Video
+  {tname: '家有萌宝', tid: '1268', tags: []}, // Video
+  {tname: '百思不得姐', tid: '1838', tags: []},
 ];
 var photoSubscriptions = [
-  {tname:'精选', tid:'news_photo', tags:['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点', '图片故事']},
-  {tname:'娱乐', tid:'news_photo_yl', tags:['底片', '趣图', '娱图', '一周', ]},
-  //{tname:'美女', tid:'news_photo_mn', tags:[]},
-  //{tname:'奇趣', tid:'news_photo_qiqu', tags:['盘点']},
-  //{tname:'摄影', tid:'news_photo_sy', tags:[]},
+  {tname: '精选', tid: 'news_photo', tags: ['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点', '图片故事']},
+  {tname: '娱乐', tid: 'news_photo_yl', tags: ['底片', '趣图', '娱图', '一周', ]},
+  //{tname: '美女', tid: 'news_photo_mn', tags: []},
+  //{tname: '奇趣', tid: 'news_photo_qiqu', tags: ['盘点']},
+  //{tname: '摄影', tid: 'news_photo_sy', tags: []},
 ];
 
 var crawlerEvent = new EventEmitter();

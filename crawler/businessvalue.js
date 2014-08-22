@@ -17,7 +17,7 @@ var headers = {
   'Connection': 'Keep-Alive',
 };
 var subscriptions = [
-  {tname:'首页', tid:0, tags:['今日看点', '周末荐书', '硅谷观察', '营销大爆炸']},
+  {tname: '首页', tid: 0, tags: ['今日看点', '周末荐书']},
 ];
 
 var crawlerEvent = new EventEmitter();

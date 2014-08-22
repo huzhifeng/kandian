@@ -25,12 +25,12 @@ var newsSubscriptions = [
   // http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=2&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&pull=0&more=1&net=wifi&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
   // 文章详情
   // http://api.k.sohu.com/api/news/article.go?newsId=15278351&channelId=1&imgTag=1&recommendNum=2&net=wifi&updateTime=1388802120000&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
-  {tname:'要闻', tid:'1', tags:['狐揭秘', '涨姿势', '开心一刻', '数说IT', '红人红事榜', '快评']},
+  {tname: '要闻', tid: '1', tags: ['狐揭秘', '涨姿势', '开心一刻', '数说IT', '红人红事榜', '快评']},
   // 原创
-  {tname:'先知道', tid:'681', tags:[], stopped:1}, // 2014-03-27 停止更新
-  {tname:'神吐槽', tid:'682', tags:[]},
-  {tname:'热辣评', tid:'683', tags:[], stopped:1}, // 2014-04-18 停止更新
-  {tname:'我来说两句', tid:'915', tags:[], stopped:1}, // 2014-01-09 停止更新
+  {tname: '神吐槽', tid: '682', tags: []},
+  {tname: '先知道', tid: '681', tags: [], stopped: 1},
+  {tname: '热辣评', tid: '683', tags: [], stopped: 1},
+  {tname: '我来说两句', tid: '915', tags: [], stopped: 1},
 ];
 var videoSubscriptions = [
   // 视频频道
@@ -42,19 +42,19 @@ var videoSubscriptions = [
   // http://api.k.sohu.com/api/video/message.go?id=28561495&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
   // 关联文章
   // http://api.k.sohu.com/api/video/relationMessageList.go?mid=28561495&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
-  //{tname:'热播', tid:'1', tags:[]},
-  //{tname:'美女', tid:'14', tags:[]},
-  //{tname:'搞笑', tid:'13', tags:[]},
-  //{tname:'娱乐', tid:'23', tags:[]},
-  //{tname:'体育', tid:'15', tags:[]},
-  //{tname:'电影', tid:'22', tags:[]},
-  //{tname:'剧集', tid:'20', tags:[]},
-  //{tname:'游戏', tid:'19', tags:[], stopped:1},
-  //{tname:'专辑', tid:'24', tags:[]},
+  //{tname: '热播', tid: '1', tags: []},
+  //{tname: '美女', tid: '14', tags: []},
+  //{tname: '搞笑', tid: '13', tags: []},
+  //{tname: '娱乐', tid: '23', tags: []},
+  //{tname: '体育', tid: '15', tags: []},
+  //{tname: '电影', tid: '22', tags: []},
+  //{tname: '剧集', tid: '20', tags: []},
+  //{tname: '游戏', tid: '19', tags: [], stopped: 1},
+  //{tname: '专辑', tid: '24', tags: []},
   {
-    tname:'搜狐原创视频',
-    tid:'16',
-    tags:[
+    tname: '搜狐原创视频',
+    tid: '16',
+    tags: [
       '每日一囧',
       'Big笑工坊',
       '老陕说穿帮',
@@ -69,36 +69,15 @@ var videoSubscriptions = [
     ]
   },
 ];
-var otherSubscriptions = [
-  //{tname:'知乎每日精选', tid:'416', tags:[]},
-  //{tname:'趣图集', tid:'500', tags:[], stopped:1}, // 2013-10-09 停止更新
-  //{tname:'捧腹网', tid:'501', tags:[]},
-  //{tname:'来福岛', tid:'502', tags:[]},
-  //{tname:'搞笑哦', tid:'528', tags:[]},
-  //{tname:'萝卜网', tid:'530', tags:[]},
-  //{tname:'对路网', tid:'532', tags:[], stopped:1}, // 2013-09-26 停止更新
-  //{tname:'挖段子•冷笑话', tid:'533', tags:[]},
-  //{tname:'无聊哦', tid:'580', tags:[]},
-  //{tname:'妹子图', tid:'581', tags:[]}, // Refer to wumii.js
-  //{tname:'挖段子•趣图', tid:'610', tags:[]},
-  //{tname:'留几手', tid:'671', tags:[]},
-  //{tname:'黑眼睛看世界', tid:'672', tags:[]},
-  //{tname:'微天下', tid:'673', tags:[]},
-  //{tname:'祖德狐说', tid:'674', tags:[]},
-  //{tname:'CAOTV观点保真', tid:'675', tags:[]},
-  //{tname:'司马白话', tid:'676', tags:[]},
-  //{tname:'爱美男', tid:'2141', tags:[]},
-  {tname:'蝶女郎', tid:'3446', tags:[], stopped:1}, // 2013-11-28 停止更新
-];
 var photoSubscriptions = [
-  {tname:'搜狐美女', tid:'53', tags:[]},
-  {tname:'图粹', tid:'455', tags:[]},
-  {tname:'图片故事', tid:'456', tags:[]},
-  {tname:'明星旧照', tid:'457', tags:[], stopped:1}, // 2013-12-25 停止更新
-  {tname:'明星情史', tid:'458', tags:[], stopped:1}, // 2013-01-06 停止更新
-  {tname:'趣图', tid:'459', tags:[], stopped:1}, // 2013-01-17 停止更新
-  {tname:'清纯美女', tid:'460', tags:[], stopped:1}, // 2013-12-10 停止更新
-  {tname:'爱新奇', tid:'465', tags:[], stopped:1}, // 2013-02-22 停止更新
+  {tname: '搜狐美女', tid: '53', tags: []},
+  {tname: '图粹', tid: '455', tags: []},
+  {tname: '图片故事', tid: '456', tags: []},
+  {tname: '明星旧照', tid: '457', tags: [], stopped: 1}, // 2013-12-25 停止更新
+  {tname: '明星情史', tid: '458', tags: [], stopped: 1}, // 2013-01-06 停止更新
+  {tname: '趣图', tid: '459', tags: [], stopped: 1}, // 2013-01-17 停止更新
+  {tname: '清纯美女', tid: '460', tags: [], stopped: 1}, // 2013-12-10 停止更新
+  {tname: '爱新奇', tid: '465', tags: [], stopped: 1}, // 2013-02-22 停止更新
 ];
 
 var crawlerEvent = new EventEmitter();
@@ -542,8 +521,7 @@ var fetchPhotoSubscriptions = function () {
 }
 
 var fetchNewsSubscriptions = function () {
-  var subscriptions = newsSubscriptions.concat(otherSubscriptions);
-  subscriptions.forEach(function(entry) {
+  newsSubscriptions.forEach(function(entry) {
     if (entry.stopped && !entry.crawlFlag) {
       return;
     }
@@ -555,9 +533,6 @@ var fetchNewsSubscriptions = function () {
 var main = function() {
   logger.log('Start');
   newsSubscriptions.forEach(function(entry) {
-    entry.crawlFlag = crawlFlag;
-  });
-  otherSubscriptions.forEach(function(entry) {
     entry.crawlFlag = crawlFlag;
   });
   photoSubscriptions.forEach(function(entry) {
@@ -578,4 +553,4 @@ if (require.main === module) {
 }
 
 exports.main = main;
-exports.subscriptions = newsSubscriptions.concat(otherSubscriptions, photoSubscriptions, videoSubscriptions);
+exports.subscriptions = newsSubscriptions.concat(photoSubscriptions, videoSubscriptions);

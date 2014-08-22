@@ -12,17 +12,9 @@ var updateFlag = config.updateFlag;
 var site = '36kr';
 var subscriptions = [
   {tname: '首页', tid: 'topics', tags: ['8点1氪', '创业说', '氪周刊', '氪月报', '36氪开放日']},
-  //{tname:'国外创业公司', tid:'topics/category/us-startups', tags:[]},
-  //{tname:'国内创业公司', tid:'topics/category/cn-startups', tags:[]},
-  //{tname:'国外资讯', tid:'topics/category/breaking', tags:[]},
-  //{tname:'国内资讯', tid:'topics/category/cn-news', tags:[]},
-  //{tname:'生活方式', tid:'topics/category/digest', tags:[]},
-  //{tname:'专栏文章', tid:'topics/category/column', tags:[]}, //该栏目没有body_html属性,可以通过util.format('http://apis.36kr.com/api/v1/topics/%s.json?token=734dca654f1689f727cc:32710', newsEntry.id)得到
 ];
 
 var fetchSubscription = function (entry) {
-  // http://apis.36kr.com/api/v1/topics.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
-  // http://apis.36kr.com/api/v1/topics/category/column.json?token=734dca654f1689f727cc:32710&page=1&per_page=10
   var url = util.format('http://apis.36kr.com/api/v1/%s.json?token=734dca654f1689f727cc:32710&page=%d&per_page=%d', entry.tid, entry.page, entry.pageSize);
   var headers = {
     'Host': 'apis.36kr.com',

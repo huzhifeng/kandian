@@ -17,62 +17,46 @@ var headers = {
 var site = 'sina';
 var subscriptions = [
   {
-    tname:'头条',
-    tid:'news_toutiao',
-    tags:[
+    tname: '头条',
+    tid: 'news_toutiao',
+    tags: [
       '新观察',
-      '万花筒', // 2013-08-15 停止更新
-      '新历史', // 2014-01-18 停止更新
-      '今日网言', // 2013-12-13 停止更新
-      '海外观察', // 2014-01-31 停止更新
-      '军情茶馆', // 2013-06-21 停止更新
-      '每日深度', // 2013-12-19 停止更新
-      '一周八卦', // 2014-01-12 停止更新
+      '万花筒',
+      '今日网言',
+      '海外观察',
+      '每日深度',
       '茶娱饭后',
       '新闻早点',
       '图解天下',
     ]
   },
-  // 新浪订阅管理 // 2014-02-21 停止更新
   {
-    tname:'搞笑',
-    tid:'news_funny',
-    tags:[
+    tname: '搞笑',
+    tid: 'news_funny',
+    tags: [
       '神最右',
       '囧哥说事',
-      '囧哥囧事', // 2013-12-27 停止更新
       '图哥乐呵',
       '一日一囧',
-      '奇趣壹周', // 2014-02-07 停止更新
+      '奇趣壹周',
       '逗妹吐槽',
       '段子PK秀',
+      '节操精选',
       '搞笑精选',
-      '新闻乐轻松', // 2014-03-07 停止更新
+      '新闻乐轻松',
       '毒舌美少女',
       '一周搞笑精选',
     ]
   },
-  //{tname:'数码', tid:'news_digital', tags:[]},
-  //{tname:'时尚', tid:'news_fashion', tags:[]},
-  //{tname:'星座', tid:'news_ast', tags:[]},
-  //{tname:'历史', tid:'news_history', tags:[]},
-  //{tname:'女性', tid:'news_eladies', tags:[]},
-  //{tname:'科技', tid:'news_tech', tags:[]},
-  //{tname:'体育', tid:'news_sports', tags:[]},
-  //{tname:'财经', tid:'news_finance', tags:[]},
-  //{tname:'娱乐', tid:'news_ent', tags:[]},
-  //{tname:'军事', tid:'news_mil', tags:[]},
-  //{tname:'专栏', tid:'zhuanlan_recommend', tags:[]},
-  // 新浪图片
-  {tname:'图片.精选', tid:'hdpic_toutiao', tags:[]},
-  {tname:'图片.趣图', tid:'hdpic_funny', tags:[]},
-  {tname:'图片.美图', tid:'hdpic_pretty', tags:[]},
-  {tname:'图片.故事', tid:'hdpic_story', tags:[]},
+  {tname: '图片.精选', tid: 'hdpic_toutiao', tags: []},
+  {tname: '图片.趣图', tid: 'hdpic_funny', tags: []},
+  {tname: '图片.美图', tid: 'hdpic_pretty', tags: []},
+  {tname: '图片.故事', tid: 'hdpic_story', tags: []},
   // 新浪视频
-  //{tname:'视频.精选', tid:'video_video', tags:[]},
-  //{tname:'视频.搞笑', tid:'video_funny', tags:[]}, // TODO 自2014-02-10起, 视频地址跳转多次导致JwPlayer无法播放
-  //{tname:'视频.现场', tid:'video_scene', tags:[]},
-  //{tname:'视频.花絮', tid:'video_highlight', tags:[]},
+  //{tname: '视频.精选', tid: 'video_video', tags: []},
+  //{tname: '视频.搞笑', tid: 'video_funny', tags: []}, // TODO 自2014-02-10起, 视频地址跳转多次导致JwPlayer无法播放
+  //{tname: '视频.现场', tid: 'video_scene', tags: []},
+  //{tname: '视频.花絮', tid: 'video_highlight', tags: []},
 ];
 
 var crawlerEvent = new EventEmitter();

@@ -16,16 +16,16 @@ var headers = {
 };
 var site = 'diaobao';
 var subscriptions = [
-  {tname:'人性实验', tid:'78207', tags:[]},
-  {tname:'每日囧图', tid:'16', tags:[]},
-  {tname:'碉民早爆', tid:'5', tags:[]},
-  {tname:'每日一撸', tid:'8', tags:[]},
-  {tname:'十万个冷知识', tid:'9', tags:[]},
-  {tname:'帅哥暖床图', tid:'139', tags:[]},
-  {tname:'美女醒床图', tid:'47', tags:['美女醒床图']},
-  {tname:'碉堡微小说', tid:'140', tags:[]},
-  {tname:'波涛汹涌', tid:'23', tags:[], stopped: 1},
-  {tname:'浑圆臀地', tid:'24', tags:[], stopped: 1},
+  {tname: '碉民早爆', tid: '5', tags: []},
+  {tname: '美女醒床图', tid:'47', tags: ['美女醒床图']},
+  {tname: '帅哥暖床图', tid: '139', tags: []},
+  {tname: '人性实验', tid: '78207', tags: []},
+  {tname: '十万个冷知识', tid: '9', tags: []},
+  {tname: '碉堡微小说', tid: '140', tags: [], stopped: 1},
+  {tname: '波涛汹涌', tid: '23', tags: [], stopped: 1},
+  {tname: '浑圆臀地', tid: '24', tags: [], stopped: 1},
+  {tname: '每日囧图', tid: '16', tags: [], stopped: 1},
+  {tname: '每日一撸', tid: '8', tags: [], stopped: 1},
 ];
 
 var crawlerEvent = new EventEmitter();
