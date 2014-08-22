@@ -1,21 +1,9 @@
 var db = require('../db').db;
 var limit = require('../config').limit;
 var news = db.collection('news');
-var needInitIndex = 1;
-
-var createEnsureIndex = function(sort) {
-  news.ensureIndex(sort, function(err, result) {
-    if (err) {
-      console.log("ensureIndex() Err:"+err);
-    }
-  });
-}
+var fields = {"title":1, "docid":1, "cover":1, "time":1, "tags":1, "views":1, "digest":1};
 
 exports.page = function (query, page, callback) {
-  if (needInitIndex) {
-    createEnsureIndex({time: -1});
-    needInitIndex = 0;
-  }
   news.count(query, function (err, count) {
     if (!err) {
       var maxPage = Math.ceil(count / limit);
@@ -29,7 +17,6 @@ exports.page = function (query, page, callback) {
       currentPage = currentPage > maxPage ? maxPage : currentPage;
 
       var skipFrom = (currentPage - 1) * limit;
-      var fields = {"title":1, "docid":1, "cover":1, "time":1, "tags":1, "views":1, "digest":1};
 
       news.find(query, fields).sort({time: -1}).skip(skipFrom).limit(limit).toArray(function (err, result) {
         if (!err) {
@@ -64,21 +51,13 @@ exports.findOne = function (query, callback) {
 
 exports.findLimit = function (query, limit, sort, callback) {
   sort = sort ? sort : {time: -1};
-  if (needInitIndex) {
-    createEnsureIndex(sort);
-    needInitIndex = 0;
-  }
-  news.find(query).sort(sort).limit(limit).toArray(function (err, result) {
+  news.find(query, fields).sort(sort).limit(limit).toArray(function (err, result) {
     callback(err, result);
   });
 };
 
 
 exports.all = function (callback) {
-  if (needInitIndex) {
-    createEnsureIndex({time: -1});
-    needInitIndex = 0;
-  }
   news.find().sort({time: -1}).toArray(function (err, result) {
     callback(err, result);
   });
