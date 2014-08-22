@@ -142,6 +142,9 @@ var fetchDetail = function(entry) {
           }
         });
       }
+      if (_.has(jObj, 'audio') && _.has(jObj.audio, 'url') && !_.isEmpty(jObj.audio.url) && utils.isAudioVideoExt(jObj.audio.url)) {
+        obj.marked += utils.genJwPlayerEmbedCode(docid, jObj.audio.url, obj.cover, 1);
+      }
       obj.marked += jObj.text.replace(/width=["']140["']/g, '');
       obj.created = new Date();
       obj.views = entry.updateFlag ? result.views : 1;
