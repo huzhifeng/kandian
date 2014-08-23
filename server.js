@@ -2,6 +2,7 @@
 var http = require('http');
 var _ = require('underscore');
 var app = require('./app');
+var config = require('./config');
 var logger = require('./logger');
 process.env.TZ = require('./config').timezone;
 var crawlers = [
@@ -23,5 +24,5 @@ http.createServer(app).listen(app.get('port'), function(){
 });
 
 _.each(crawlers, function(crawler, i, crawlers) {
-  setTimeout(crawler, i * 1000 * 60 * 10);
+  setTimeout(crawler, i * (config.crawlInterval / crawlers.length));
 });
