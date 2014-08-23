@@ -154,6 +154,9 @@ var fetchDetail = function(entry) {
         if (key.indexOf('VIDEO') !== -1) {
           if (jObj.attribute[key].vid) {
             html = genVideoPlayerHtml(jObj.attribute[key].vid);
+            if (!obj.hasVideo) {
+              obj.hasVideo = 1;
+            }
           }
         } else if (key.indexOf('IMG') !== -1) {
           html = utils.genLazyLoadHtml(entry.title, url);

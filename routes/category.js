@@ -77,31 +77,6 @@ var categoryTags = {
   'film': [
     '百部穿影',
   ],
-  'video': [
-    '新闻晚8点',
-    '夜夜谈',
-    '所谓娱乐',
-    '天天看',
-    '腾讯精品课',
-    '腾讯育儿宝典',
-    '封面秀',
-    '健康每一天',
-    '时尚有意思',
-    '恋爱高手',
-    'V+视频',
-    '笑来了大姨夫',
-    '生活家',
-    '家有萌宝',
-    '每日一囧',
-    'Big笑工坊',
-    '老陕说穿帮',
-    '飞碟一分钟',
-    '发热盘点',
-    '十万个冷幽默',
-    '大姨来了吗',
-    '胥渡吧',
-    '胡狼出品',
-  ],
   'joke': [
     '视频.搞笑',
     '冷笑话精选',
@@ -144,6 +119,9 @@ var index = function (req, res, next) {
         '$in': categoryTags[category] || []
       }
     };
+    if (category === 'video') {
+      query = {hasVideo: {$exists: 1}};
+    }
     News.page(query, page, function (err, currentPage, pages, result) {
       if (! err) {
         callback(null, {

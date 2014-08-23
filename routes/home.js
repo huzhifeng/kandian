@@ -59,7 +59,7 @@ var index = function (req, res, next) {
   };
 
   var getLatestVideos = function (callback) {
-    News.findLimit({tags: {'$in': ['所谓娱乐', '街头会易', '每日一囧']}}, 4, {time: -1}, function (err, result) {
+    News.findLimit({hasVideo: {$exists: 1}}, 4, {time: -1}, function (err, result) {
       if (! err) {
         callback(null, {result: result});
       } else {
