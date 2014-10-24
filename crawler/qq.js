@@ -51,7 +51,7 @@ var otherSubscriptions = [
   {tname: '骂人宝典', tid: '1338', tags: []},
   {tname: '冷知识', tid: '1478', tags: []}, // Video
   {tname: '捧腹网', tid: '1796', tags: []},
-  {tname: '网络新闻联播', tid: '1681', tags: []},
+  //{tname: '网络新闻联播', tid: '1681', tags: []},
   {tname: '生活家', tid: '1386', tags: []}, // Video
   {tname: '家有萌宝', tid: '1268', tags: []}, // Video
   {tname: '百思不得姐', tid: '1838', tags: []},
