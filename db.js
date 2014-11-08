@@ -1,23 +1,13 @@
-﻿var mongojs = require('mongojs');
+﻿var util = require('util');
+var mongojs = require('mongojs');
+var config = require('./config');
 
 var generateMongoUrl = function(){
-  obj = {};
-  var vcap = process.env.VCAP_SERVICES;
-  if (vcap) {
-      obj = JSON.parse(vcap)['mongodb-1.8'][0]['credentials'];
-  }
-
-  obj.hostname = (obj.hostname || 'localhost');
-  obj.port = (obj.port || 18888);
-  obj.db = (obj.db || 'kandian');
-  if (obj.username && obj.password) {
-      return "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db;
+  if (config.dbAuth) {
+      return util.format('%s:%s@%s:%s/%s?authSource=admin', config.dbUsername, config.dbPassword, config.dbServer, config.dbPort, config.dbName);
   } else {
-      return "mongodb://" + obj.hostname + ":" + obj.port + "/" + obj.db;
+      return util.format('%s:%s/%s', config.dbServer, config.dbPort, config.dbName);
   }
 };
 
-var dbUrl = generateMongoUrl();
-
-exports.dbUrl = dbUrl;
-exports.db = mongojs(dbUrl);
+exports.db = mongojs(generateMongoUrl());

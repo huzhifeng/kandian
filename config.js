@@ -3,6 +3,12 @@ var flag = process.argv[2] || process.env.flag || 0;
 module.exports = {
   siteName: '看点网',
   port: process.env.expressPort || 80,
+  dbServer: 'localhost',
+  dbPort: process.env.dbPort || 27017,
+  dbAuth: process.env.dbAuth || 1,
+  dbName: process.env.dbName || 'kandian',
+  dbUsername: process.env.dbUsername || 'admin',
+  dbPassword: process.env.dbPassword || 'admin',
   timezone: 'Asia/Shanghai',
   cookieSecret: '#$%ZHU@1314',
   staticMaxAge: 3600000 * 24 * 1,
