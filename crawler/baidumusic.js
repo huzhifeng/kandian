@@ -18,14 +18,18 @@ var headers = {
 };
 var site = 'baidumusic';
 var subscriptions = [
-  {tname: '军旅歌曲', tid: 'tag', tags: []},
-  {tname: '经典老歌', tid: 'tag', tags: []},
-  {tname: '红歌', tid: 'tag', tags: []},
-  {tname: 'dayhot', tid: 'top', tags: []}, // 热歌榜
-  {tname: 'huayu', tid: 'top', tags: []}, // 华语金曲榜
-  {tname: '新歌榜月榜', tid: 'month', tags: []},
-  {tname: '新歌榜周榜', tid: 'week', tags: []},
-  {tname: '新歌榜日榜', tid: 'day', tags: []},
+  //{tname: '军旅歌曲', tid: 'tag', tags: []},
+  //{tname: '经典老歌', tid: 'tag', tags: []},
+  //{tname: '广场舞', tid: 'tag', tags: []},
+  //{tname: '成名曲', tid: 'tag', tags: []},
+  //{tname: '酒吧', tid: 'tag', tags: []},
+  {tname: '武侠', tid: 'tag', tags: []},
+  //{tname: '红歌', tid: 'tag', tags: []},
+  //{tname: 'dayhot', tid: 'top', tags: []}, // 热歌榜
+  //{tname: 'huayu', tid: 'top', tags: []}, // 华语金曲榜
+  //{tname: '新歌榜月榜', tid: 'month', tags: []},
+  //{tname: '新歌榜周榜', tid: 'week', tags: []},
+  //{tname: '新歌榜日榜', tid: 'day', tags: []},
 ];
 
 var crawlerEvent = new EventEmitter();
@@ -78,7 +82,18 @@ var fetchDetail = function(entry) {
         if (songName.indexOf(' ') !== -1) {
           songName = util.format('"%s-%s.mp3"', element.songName, element.artistName);
         }
-        console.log(util.format('wget %s -O %s', songLink, songName));
+        var downloadMp3 = util.format('wget %s -O %s', songLink, songName);
+        console.log(downloadMp3);
+        element.downloadMp3 = downloadMp3;
+        if (_.isString(element.lrcLink) && !_.isEmpty(element.lrcLink)) {
+            element.lrc = element.lrcLink;
+            if (element.lrcLink.indexOf('http://') !== 0) {
+                element.lrc = 'http://music.baidu.com' + element.lrcLink;
+            }
+            downloadLrc =  util.format('wget %s -O %s', element.lrc, songName.replace('.mp3', '.lrc'));
+            element.downloadLrc = downloadLrc;
+            console.log(downloadLrc);
+        }
         element.tname = entry.tname;
         docs.push(element);
       } else {
