@@ -22,7 +22,7 @@
     "rss": "0.3.2",
     "tracer": "0.7.1",
     "underscore": "1.6.0",
-    "xml2json": "0.4.0"
+    "xml2json": "0.6.1"
   },
   "engines": {
     "node": ">= 0.10.15"
