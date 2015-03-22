@@ -19,7 +19,7 @@ var site = 'netease';
 // http://c.m.163.com/nc/topicset/android/v3/subscribe.html
 var newsSubscriptions = [
   // 头条 // http://c.m.163.com/nc/article/headline/T1348647909107/0-20.html
-  {tname: '头条', tid: 'T1348647909107', tags: ['新闻故事', '一周新闻日历', '科学搬主任']},
+  {tname: '头条', tid: 'T1348647909107', tags: ['新闻故事', '一周新闻日历', '科学搬主任'], stopped: 1},
   // 原创
   //{tname: '原创', tid: 'T1367050859308', tags: []},
   {tname: '轻松一刻', tid: 'T1350383429665', tags: []},
@@ -34,23 +34,26 @@ var newsSubscriptions = [
   {tname: '数读', tid: 'T1348654813857', tags: []},
   {tname: '娱乐连环画', tid: 'T1393399130300', tags: []},
   {tname: '一周车坛囧事', tid: 'T1382946585552', tags: []},
-  {tname: '网易UGC实验室', tid: 'T1395385797796', tags: []},
+  {tname: '网易UGC实验室', tid: 'T1395385797796', tags: [], stopped: 1},
   {tname: '深夜畅聊', tid: 'T1396928569598', tags: []},
   {tname: '胖编怪谈', tid: 'T1396928667862', tags: []},
   {tname: '真人秀', tid: 'T1396928753073', tags: []},
   {tname: '街头会易', tid: 'T1399258893359', tags: []},
-  {tname: '午间饭局', tid: 'T1404373616552', tags: []},
-  {tname: '发现者', tid: 'T1405409473430', tags: []},
+  {tname: '午间饭局', tid: 'T1404373616552', tags: [], stopped: 1},
+  {tname: '发现者', tid: 'T1405409473430', tags: [], stopped: 1},
   {tname: '每日易说', tid: 'T1407306259695', tags: []},
+  {tname: '每日易乐', tid: 'T1407306418235', tags: []},
   {tname: '易哥新闻', tid: 'T1407306575787', tags: []},
-  {tname: '图娱', tid: 'T1408070543854', tags: []},
-  {tname: '老友记', tid: 'T1408071657008', tags: []},
-  {tname: '星态度', tid: 'T1408071830625', tags: []},
-  {tname: '锐势力', tid: 'T1408071935583', tags: []},
-  {tname: '核动力', tid: 'T1408072022410', tags: []},
+  {tname: '图娱', tid: 'T1408070543854', tags: [], stopped: 1},
+  {tname: '老友记', tid: 'T1408071657008', tags: [], stopped: 1},
+  {tname: '星态度', tid: 'T1408071830625', tags: [], stopped: 1},
+  {tname: '锐势力', tid: 'T1408071935583', tags: [], stopped: 1},
+  {tname: '核动力', tid: 'T1408072022410', tags: [], stopped: 1},
   {tname: '观剧报告', tid: 'T1408072129469', tags: []},
   {tname: '独家影评', tid: 'T1408072377895', tags: []},
+  {tname: '易奇闻', tid: 'T1417494430169', tags: []},
   {tname: '新闻七点整', tid: 'T1402384628219', tags: []},
+  {tname: '热观察', tid: 'T1423798799565', tags: []},
   {tname: '视野', tid: 'T1382946778301', tags: ['视野'], stopped: 1},
   {tname: '微历史', tid: 'T1376554225976', tags: [], stopped: 1},
   {tname: '独家解读', tid: 'T1348654778699', tags: [], stopped: 1},
@@ -61,15 +64,15 @@ var newsSubscriptions = [
   {tname: '一周军情观察', tid: 'T1359613635637', tags: [], stopped: 1},
   {tname: '一周人物', tid: 'T1385105962170', tags: [], stopped: 1},
   // 专栏
-  {tname: '媒体札记', tid: 'T1374655362262', tags: []},
+  {tname: '媒体札记', tid: 'T1374655362262', tags: [], stopped: 1},
   {tname: '读写客', tid: 'T1374655641708', tags: []},
-  {tname: '科学现场调查', tid: 'T1374655737387', tags: []},
-  {tname: '罗辑思维', tid: 'T1385106069241', tags: []}, // Video
+  {tname: '科学现场调查', tid: 'T1374655737387', tags: [], stopped: 1},
+  {tname: '罗辑思维', tid: 'T1385106069241', tags: [], stopped: 1}, // Video
   {tname: '爱解析', tid: 'T1383639904180', tags: [], stopped: 1},
   //{tname: '理中客', tid: 'T1387349830515', tags: ['真话讲堂']},
-  {tname: '大国小民', tid: 'T1387350092857', tags: ['大国小民']},
+  {tname: '大国小民', tid: 'T1387350092857', tags: []},
   //{tname: '热历史', tid: 'T1387350254612', tags: []},
-  {tname: '真话', tid: 'T1370583240249', tags: []},
+  //{tname: '真话', tid: 'T1370583240249', tags: []},
   {tname: '新闻漫画', tid: 'T1374655548448', tags: [], stopped: 1},
   {tname: '军事控', tid: 'T1374655601172', tags: [], stopped: 1},
   {tname: '读报', tid: 'T1378876118770', tags: [], stopped: 1},
@@ -95,7 +98,7 @@ var newsSubscriptions = [
   //{tname: '精品', tid: '00850FRB', tags: ['新闻52秒', 'YouTube天天精选', '腐女办公室', '超级颜论', '数码贱男', '飞碟一分钟', '飞碟说', '娱乐快报']},
   // 其它订阅
   {tname: '爆笑gif图', tid: 'T1395298452550', tags: []},
-  {tname: 'gif怪兽', tid: 'T1385542280953', tags: []},
+  //{tname: 'gif怪兽', tid: 'T1385542280953', tags: []}, // TODO
 ];
 
 var photoSubscriptions = [

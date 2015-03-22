@@ -28,7 +28,8 @@ var subscriptions = [
       '百部穿影',
       '科技能见度',
       '历史上的今天',
-    ]
+    ],
+    stopped: 1
   },
   // 凤凰独家栏目列表,目前共20个,可以指定pagesize为50一次返回
   // http://api.3g.ifeng.com/channel_list_android?channel=origin&pageindex=1&pagesize=50
@@ -47,11 +48,11 @@ var subscriptions = [
   {tname: '史林拍案', tid: '18505', tags: []},
   {tname: '一周人物', tid: '18026', tags: []},
   {tname: '热追踪', tid: '19349', tags: []},
-  {tname: '财知道', tid: '19355', tags: []},
+  {tname: '财知道', tid: '19355', tags: [], stopped: 1},
   {tname: '防务短评', tid: '19593', tags: []},
   {tname: '独家体育评论', tid: '19352', tags: []},
-  {tname: '情感夜话', tid: '21702', tags: []},
-  {tname: '大学问', tid: '19347', tags: []},
+  {tname: '情感夜话', tid: '21702', tags: [], stopped: 1},
+  {tname: '大学问', tid: '19347', tags: [], stopped: 1},
   {tname: '话说', tid: '18017', tags: [], stopped: 1},
   {tname: '专家谈', tid: '19350', tags: [], stopped: 1},
   {tname: '精英范', tid: '19348', tags: [], stopped: 1},

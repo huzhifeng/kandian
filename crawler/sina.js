@@ -28,7 +28,8 @@ var subscriptions = [
       '茶娱饭后',
       '新闻早点',
       '图解天下',
-    ]
+    ],
+    stopped: 1
   },
   {
     tname: '搞笑',
@@ -46,7 +47,8 @@ var subscriptions = [
       '新闻乐轻松',
       '毒舌美少女',
       '一周搞笑精选',
-    ]
+    ],
+    stopped: 1
   },
   {tname: '图片.精选', tid: 'hdpic_toutiao', tags: []},
   {tname: '图片.趣图', tid: 'hdpic_funny', tags: []},

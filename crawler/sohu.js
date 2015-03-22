@@ -25,7 +25,7 @@ var newsSubscriptions = [
   // http://api.k.sohu.com/api/channel/news.go?channelId=1&num=20&page=2&supportTV=1&supportLive=1&supportPaper=1&supportSpecial=1&showPic=1&picScale=2&rt=json&pull=0&more=1&net=wifi&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
   // 文章详情
   // http://api.k.sohu.com/api/news/article.go?newsId=15278351&channelId=1&imgTag=1&recommendNum=2&net=wifi&updateTime=1388802120000&p1=NTcyODc5OTc0MzU5Nzg3NTIyOQ%3D%3D&gid=02ffff11061111d51802815cbc373a983f89cbb0065ff1&pid=-1
-  {tname: '要闻', tid: '1', tags: ['狐揭秘', '涨姿势', '开心一刻', '数说IT', '红人红事榜', '快评']},
+  {tname: '要闻', tid: '1', tags: ['狐揭秘', '涨姿势', '开心一刻', '数说IT', '红人红事榜', '快评'], stopped: 1},
   // 原创
   {tname: '神吐槽', tid: '682', tags: []},
   {tname: '先知道', tid: '681', tags: [], stopped: 1},
@@ -66,18 +66,19 @@ var videoSubscriptions = [
       '胡狼出品',
       '畅所欲言',
       '雷人囧事'
-    ]
+    ],
+    stopped: 1
   },
 ];
 var photoSubscriptions = [
   {tname: '搜狐美女', tid: '53', tags: []},
-  {tname: '图粹', tid: '455', tags: []},
-  {tname: '图片故事', tid: '456', tags: []},
-  {tname: '明星旧照', tid: '457', tags: [], stopped: 1}, // 2013-12-25 停止更新
-  {tname: '明星情史', tid: '458', tags: [], stopped: 1}, // 2013-01-06 停止更新
-  {tname: '趣图', tid: '459', tags: [], stopped: 1}, // 2013-01-17 停止更新
-  {tname: '清纯美女', tid: '460', tags: [], stopped: 1}, // 2013-12-10 停止更新
-  {tname: '爱新奇', tid: '465', tags: [], stopped: 1}, // 2013-02-22 停止更新
+  {tname: '图粹', tid: '455', tags: [], stopped: 1},
+  {tname: '图片故事', tid: '456', tags: [], stopped: 1},
+  {tname: '明星旧照', tid: '457', tags: [], stopped: 1},
+  {tname: '明星情史', tid: '458', tags: [], stopped: 1},
+  {tname: '趣图', tid: '459', tags: [], stopped: 1},
+  {tname: '清纯美女', tid: '460', tags: [], stopped: 1},
+  {tname: '爱新奇', tid: '465', tags: [], stopped: 1},
 ];
 
 var crawlerEvent = new EventEmitter();

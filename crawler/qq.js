@@ -21,7 +21,7 @@ var newsSubscriptions = [
   {tname: '新闻哥', tid: '1033', tags: []},
   {tname: '短史记', tid: '1783', tags: []},
   {tname: '今日话题', tid: '41', tags: []},
-  {tname: '新闻百科', tid: '39', tags: []},
+  //{tname: '新闻百科', tid: '39', tags: []}, // TODO
   {tname: '讲武堂', tid: '47', tags: []},
   {tname: '活着', tid: '35', tags: []},
   {tname: '科技不怕问', tid: '1597', tags: []},
@@ -46,7 +46,7 @@ var otherSubscriptions = [
   {tname: '贵圈', tid: '32', tags: []},
   {tname: '封面人物', tid: '33', tags: []},
   {tname: '财经眼', tid: '54', tags: []}, // Video
-  {tname: '金错刀', tid: '1032', tags: ['每日一干', '独家干']},
+  {tname: '金错刀', tid: '1032', tags: ['每日一干', '独家干'], stopped: 1},
   {tname: '趣你的', tid: '1354', tags: []},
   {tname: '骂人宝典', tid: '1338', tags: []},
   {tname: '冷知识', tid: '1478', tags: []}, // Video
@@ -57,8 +57,8 @@ var otherSubscriptions = [
   {tname: '百思不得姐', tid: '1838', tags: []},
 ];
 var photoSubscriptions = [
-  {tname: '精选', tid: 'news_photo', tags: ['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点', '图片故事']},
-  {tname: '娱乐', tid: 'news_photo_yl', tags: ['底片', '趣图', '娱图', '一周', ]},
+  {tname: '精选', tid: 'news_photo', tags: ['一周', '脸谱', '去年今日', '影像记忆', '春运', '图刊', '年度', '盘点', '图片故事'], stopped: 1},
+  {tname: '娱乐', tid: 'news_photo_yl', tags: ['底片', '趣图', '娱图', '一周'], stopped: 1},
   //{tname: '美女', tid: 'news_photo_mn', tags: []},
   //{tname: '奇趣', tid: 'news_photo_qiqu', tags: ['盘点']},
   //{tname: '摄影', tid: 'news_photo_sy', tags: []},
